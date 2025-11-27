@@ -1,0 +1,14 @@
+{
+	"name": "api-back",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "server.js",
+	"private": true,
+	"scripts": {
+		"start": "node server.js"
+	},
+	"dependencies": {
+		"fastify": "^4.28.1"
+	}
+}
+

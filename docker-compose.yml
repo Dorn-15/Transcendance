@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    depends_on:
+      - frontend
+      - pong_back
+      - api_back
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+    # for prod -----------------------------------------------
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.http.routers.nginx.rule=Host(`transcendance.adoireau.design`)"
+      - "traefik.http.routers.nginx.entrypoints=web"
+      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    networks:
+      - traefik_proxy
+      - internal
+    # --------------------------------------------------------
+    # for dev ------------------------------------------------
+    # ports:
+    #   - "8080:80"
+
+    # networks:
+    #   - internal
+    # --------------------------------------------------------
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: dockerfile
+    container_name: frontend-react
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - internal
+
+  pong_back:
+    build:
+      context: ./back/pong
+      dockerfile: dockerfile
+    container_name: pong_back
+    command: ["node", "server.js"]
+    expose:
+      - "4001"
+    networks:
+      - internal
+
+  api_back:
+    build:
+      context: ./back/api
+      dockerfile: dockerfile
+    container_name: api_back
+    command: ["node", "server.js"]
+    expose:
+      - "4002"
+    networks:
+      - internal
+
+networks:
+  traefik_proxy:
+    external: true
+  internal:
+    driver: bridge
