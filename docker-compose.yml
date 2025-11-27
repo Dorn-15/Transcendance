@@ -2,16 +2,14 @@ version: "3.9"
 
 services:
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: dockerfile
     container_name: nginx-gateway
     depends_on:
       - frontend
       - pong_back
       - api_back
-    config:
-      - source: nginx_config
-        target: /etc/nginx/nginx.conf
-        mode: ro
     # for prod -----------------------------------------------
     labels:
       - "traefik.enable=true"
@@ -70,7 +68,3 @@ networks:
     external: true
   internal:
     driver: bridge
-
-configs:
-  nginx_config:
-    file: ./nginx/nginx.conf
