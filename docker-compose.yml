@@ -8,8 +8,11 @@ services:
       - frontend
       - pong_back
       - api_back
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+
+    config:
+      - source: nginx.conf
+        target: /etc/nginx/nginx.conf
+        mode: 0444
     # for prod -----------------------------------------------
     labels:
       - "traefik.enable=true"
@@ -27,6 +30,9 @@ services:
 
     # networks:
     #   - internal
+
+    # volumes:
+    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,Z
     # --------------------------------------------------------
 
   frontend:
