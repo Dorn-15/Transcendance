@@ -21,9 +21,9 @@ services:
       # Router HTTPS (443)
       - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
       - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+      
       - "traefik.http.routers.nginx-secure.tls=true"
-      # (optionnel) si vous utilisez Let's Encrypt côté Traefik :
-      # - "traefik.http.routers.nginx-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
 
       # Router HTTP (80) -> redirection vers HTTPS
       - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
