@@ -8,8 +8,10 @@ services:
       - frontend
       - pong_back
       - api_back
-    volumes:
-      - /opt/transcendance/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    config:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf
+        mode: ro
     # for prod -----------------------------------------------
     labels:
       - "traefik.enable=true"
@@ -68,3 +70,7 @@ networks:
     external: true
   internal:
     driver: bridge
+
+configs:
+  nginx_config:
+    file: ./nginx/nginx.conf
