@@ -14,9 +14,26 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_proxy"
-      - "traefik.http.routers.nginx.rule=Host(`transcendance.adoireau.design`)"
-      - "traefik.http.routers.nginx.entrypoints=web"
+
+      # Service (port interne vers Nginx)
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
+
+      # Router HTTPS (443)
+      - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
+      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+      - "traefik.http.routers.nginx-secure.tls=true"
+      # (optionnel) si vous utilisez Let's Encrypt côté Traefik :
+      # - "traefik.http.routers.nginx-secure.tls.certresolver=letsencrypt"
+
+      # Router HTTP (80) -> redirection vers HTTPS
+      - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
+      - "traefik.http.routers.nginx-web.entrypoints=web"
+      - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
+
+      # Middleware de redirection
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      
     networks:
       - traefik_proxy
       - internal
