@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ma Scène 3D - Three.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: fixed; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>met un menu</h1>
+    </header>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xa0a0f5);
+        scene.fog = new THREE.Fog(0xa0a0a0, 10, 50);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const initialCameraPosition = { x: 0, y: 2, z: 5 };
+        camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- LUMIÈRES ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+        hemiLight.position.set(0, 20, 0);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+        dirLight.position.set(3, 10, 10);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // --- LE SOL ---
+        const mesh = new THREE.Mesh( 
+            new THREE.PlaneGeometry(100, 100), 
+            new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false }) 
+        );
+        mesh.rotation.x = - Math.PI / 2;
+        mesh.receiveShadow = true;
+        mesh.name = "leSol"; 
+        scene.add(mesh);
+
+        // --- CHARGEMENT DES MODÈLES ---
+        const loader = new GLTFLoader();
+        
+        function chargerModele(url, x, y, z, echelle = 1, rotationY = 0) {
+            loader.load(url, (gltf) => {
+                const model = gltf.scene;
+                
+                model.position.set(x, y, z);
+                model.scale.set(echelle, echelle, echelle);
+                model.rotation.y = rotationY; // Correction du Y minuscule
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        child.userData.parentGroup = model; 
+                    }
+                });
+
+                scene.add(model);
+                console.log(`Modèle chargé : ${url}`);
+            });
+        }
+
+        // Tes modèles (avec rotations)
+        chargerModele('glbFile/SpaceInvaders.glb', 0, 0, -1, 1.5, 0);
+        chargerModele('glbFile/Pong.glb', 2, 0, 5, 1.5, Math.PI / 4);
+        chargerModele('glbFile/Pong.glb', -2, 0, 5, 1.5, -Math.PI / 4);
+
+        // --- CONTRÔLES ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        const initialTarget = { x: 0, y: 1, z: 0 };
+        controls.target.set(initialTarget.x, initialTarget.y, initialTarget.z);
+
+        // --- GESTION DU CLIC ---
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+
+        // 1. CLIC GAUCHE (ZOOM)
+        window.addEventListener('click', (event) => {
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                const objetTouche = intersects[0].object;
+                if (objetTouche.name === "leSol") return;
+
+                const leModele = objetTouche.userData.parentGroup || objetTouche;
+
+                // Calcul du centre et de la boite
+                const box = new THREE.Box3().setFromObject(leModele);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+
+                // --- CALCUL DE LA DISTANCE (RESTAURATION DE TA LOGIQUE) ---
+                // Pour retrouver ton recul de 0.05 par rapport à la façade :
+                // On calcule la distance entre le centre et le bord de la boite
+                const demiProfondeur = box.max.z - center.z; 
+                const distanceRecul = 0.05; // Ton chiffre d'origine
+                const distanceTotale = demiProfondeur + distanceRecul;
+
+                // --- CALCUL DE LA DIRECTION (GÈRE LA ROTATION) ---
+                // Vecteur qui pointe "devant" (Z)
+                const direction = new THREE.Vector3(0, 0, 1);
+                // On tourne ce vecteur en fonction de la rotation de la borne
+                direction.applyQuaternion(leModele.quaternion);
+
+                // Position finale = Centre + (Direction * DistanceTotale)
+                const finalPos = center.clone().add(direction.multiplyScalar(distanceTotale));
+
+                // ANIMATION CAMÉRA
+                gsap.to(camera.position, {
+                    duration: 1.5,
+                    x: finalPos.x,
+                    y: center.y + 0.8, // Ton chiffre d'origine (+0.8)
+                    z: finalPos.z,
+                    ease: "power2.inOut"
+                });
+
+                // ANIMATION CIBLE (TARGET)
+                gsap.to(controls.target, {
+                    duration: 1.5,
+                    x: center.x,
+                    y: center.y + 0.8, // Ton chiffre d'origine (+0.8)
+                    z: center.z,
+                    ease: "power2.inOut",
+                    onUpdate: () => controls.update()
+                });
+            }
+        });
+
+        // 2. CLIC DROIT (RETOUR) - CORRIGÉ ET RÉINTÉGRÉ
+        window.addEventListener('contextmenu', (event) => {
+            event.preventDefault(); // Empêche le menu Windows/Mac de s'ouvrir
+
+            console.log("Retour position initiale");
+
+            // Retour caméra
+            gsap.to(camera.position, {
+                duration: 1.5,
+                x: initialCameraPosition.x,
+                y: initialCameraPosition.y,
+                z: initialCameraPosition.z,
+                ease: "power2.inOut"
+            });
+
+            // Retour cible
+            gsap.to(controls.target, {
+                duration: 1.5,
+                x: initialTarget.x,
+                y: initialTarget.y,
+                z: initialTarget.z,
+                ease: "power2.inOut",
+                onUpdate: () => controls.update()
+            });
+        });
+
+        // --- REDIMENSIONNEMENT & BOUCLE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
