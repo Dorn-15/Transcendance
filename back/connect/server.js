@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 
 const	fastify				= Fastify({ logger: true });
-const	serviceName			= 'pong-back';
+const	serviceName			= 'connect-back';
 
 const	buildHealthPayload = () => ({
 	status: 'ok',
@@ -11,7 +11,7 @@ const	buildHealthPayload = () => ({
 const	buildServicePayload = () => ({
 	status: 'ok',
 	service: serviceName,
-	description: 'API for pong',
+	description: 'API for users connections',
 	version: '1.0.0'
 });
 
@@ -39,12 +39,12 @@ const	registerFallbackHandler = () => {
 };
 
 const	start = async () => {
-	fastify.log.info('Starting pong-back server...');
+	fastify.log.info('Starting connect-back server...');
 	try {
-		await fastify.listen({ port: 4001, host: '0.0.0.0' });
-		fastify.log.info('Pong-back server started on port 4001');
+		await fastify.listen({ port: 4002, host: '0.0.0.0' });
+		fastify.log.info('Connect-back server started on port 4002');
 	} catch (err) {
-		fastify.log.error('Error starting pong-back server:', err);
+		fastify.log.error('Error starting connect-back server:', err);
 		fastify.log.error(err);
 		process.exit(1);
 	}

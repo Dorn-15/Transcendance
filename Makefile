@@ -15,6 +15,8 @@ logs:
 
 restart: down up
 
+rebuild: down build up
+
 clean:
 	$(COMPOSE) -f $(COMPOSE_FILE) down -v --remove-orphans
 
