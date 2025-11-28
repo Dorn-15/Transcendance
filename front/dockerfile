@@ -1,33 +1,27 @@
-# Étape 1 : install des deps
-FROM node:20-alpine AS deps
+# Stage 1 - dependencies and build
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
 
-# Étape 2 : build Next
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
 RUN npm run build
 
-# Étape 3 : image finale runtime
+# Stage 2 - runtime image
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=4000
 
-# On copie uniquement ce qui est nécessaire pour run
 COPY package*.json ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-
-# Installe uniquement les deps de prod
 RUN npm ci --omit=dev
 
-EXPOSE 3000
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
-CMD ["npm", "run", "start"]
+EXPOSE 4000
+
+CMD ["node", "dist/server.js"]
+
