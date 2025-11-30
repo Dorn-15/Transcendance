@@ -1,20 +1,35 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Transcendance • Node</title>
-	<link rel="stylesheet" href="/assets/app.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Lien vers ton nouveau fichier CSS externe -->
+    <link rel="stylesheet" href="style/canva.css">
+    
+    <title>Transcendence 3D</title>
+    
+    <!-- Scripts Babylon -->
+    <script src="/vendor/babylon.js"></script>
+    <script src="/vendor/loaders.js"></script>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
-	<div class="flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-16 text-center">
-		<header class="flex flex-col items-center gap-6">
-			<div class="rounded-full border border-white/10 px-4 py-1 text-xs uppercase tracking-[0.25rem] text-white/70">
-				Transcendance
-			</div>
-			<p class="text-sm text-white/60">Node.js + Tailwind CSS + TypeScript</p>
-		</header>
-	</div>
+<body>
+    <!-- Le Titre avec sa classe pour le style -->
+    <div class="title-overlay">
+        <div class="main-title">TRANSCENDANCE</div>
+
+        <nav class="main-menu">
+            <!-- onclick appelle les fonctions JS définies plus bas -->
+            <button onclick="openModal('modal-settings')">Paramètres</button>
+            <button onclick="openModal('modal-social')">Social</button>
+            <button onclick="openModal('modal-stats')">Stats</button>
+        </nav>
+    </div>
+    
+    <!-- Le Canvas 3D -->
+    <canvas id="renderCanvas"></canvas>
+    
+    <!-- Ton script JS principal -->
+    <script type="module" src="/main.js"></script>
 </body>
 </html>
-

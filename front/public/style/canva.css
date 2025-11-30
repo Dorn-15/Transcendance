@@ -1,0 +1,64 @@
+html, body {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    outline: none;
+    display: block;
+}
+
+.title-overlay {
+    position: absolute;
+    top: 0vh;
+    width: 100%;
+    height: 12.4vh;
+    text-align: center;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 3vh;
+    z-index: 10;
+    pointer-events: none; /* Important pour pouvoir cliquer "à travers" le texte */
+    /* --- AJOUTS POUR L'ANIMATION --- */
+    opacity: 1; /* État de départ : visible */
+    transition: opacity 1s ease-out;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-menu {
+    display: flex;
+    justify-content: center; /* <--- C'est ici que ça se joue */
+    align-items: center;     /* Centre verticalement les éléments si leurs tailles varient */
+    gap: 1.2vh;
+    margin-top: 1vh;        /* Ajoute un peu d'espace sous le titre */
+}
+
+.main-menu button {
+    pointer-events: auto; 
+    
+    background: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.7vh 1vh;
+    font-size: 1.2vh;
+    cursor: pointer;
+    border-radius: 2vh;
+    text-transform: uppercase;
+    letter-spacing: 0.1vh;
+}
+
+.main-menu button:hover {
+    background: rgba(255, 165, 0, 0.8);
+    border-color: orange;
+    transform: scale(1.05);
+}
