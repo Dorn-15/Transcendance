@@ -6,75 +6,176 @@ services:
     container_name: gateway_transcendance
     depends_on:
       - frontend
-      - pong_back
-      - connect_back
+      - auth_service
+      - social_service
+      - game_service
+      - realtime_gateway
+      # - room_service
+      #- matchmaking_service
     # for prod -----------------------------------------------
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_proxy"
-
-      # Service (port interne vers Nginx)
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
-
-      # Router HTTPS (443)
       - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
       - "traefik.http.routers.nginx-secure.entrypoints=websecure"
       - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
       - "traefik.http.routers.nginx-secure.tls=true"
-
-      # Router HTTP (80) -> redirection vers HTTPS
       - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
       - "traefik.http.routers.nginx-web.entrypoints=web"
       - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
-
-      # Middleware de redirection
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-
     networks:
       - traefik_proxy
       - internal
-    # --------------------------------------------------------
     # for dev ------------------------------------------------
     # ports:
     #   - "8080:80"
-
+    #   - "8443:443"
     # networks:
     #   - internal
-    # --------------------------------------------------------
 
   frontend:
     build:
-      context: ./front
+      context: ./services/front
       dockerfile: dockerfile
     container_name: front_transcendance
     expose:
-      - "4000"
+      - "3000"
     environment:
       - NODE_ENV=production
-      - PORT=4000
+      - PORT=3000
     networks:
       - internal
 
-  pong_back:
+  auth_service:
     build:
-      context: ./back/pong
+      context: ./services/auth
       dockerfile: dockerfile
-    container_name: back_pong_transcendance
-    command: ["node", "server.js"]
+    container_name: auth_service
+    depends_on:
+      - postgres
     expose:
       - "4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/auth
     networks:
       - internal
 
-  connect_back:
+  social_service:
     build:
-      context: ./back/connect
+      context: ./services/social
       dockerfile: dockerfile
-    container_name: back_connect_transcendance
-    command: ["node", "server.js"]
+    container_name: social_service
+    depends_on:
+      - postgres
+      - redis
     expose:
       - "4002"
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/social
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - internal
+
+  # room_service:
+  #   build:
+  #     context: ./services/room
+  #     dockerfile: dockerfile
+  #   container_name: room_service
+  #   depends_on:
+  #     - postgres
+  #   expose:
+  #     - "4003"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=4003
+  #     - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/room
+  #   networks:
+  #     - internal
+
+  # matchmaking_service:
+  #   build:
+  #     context: ./services/matchmaking
+  #     dockerfile: dockerfile
+  #   container_name: matchmaking_service
+  #   depends_on:
+  #     - redis
+  #     - room_service
+  #   expose:
+  #     - "4004"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=4004
+  #     - REDIS_URL=redis://redis:6379
+  #   networks:
+  #     - internal
+
+  game_service:
+    build:
+      context: ./services/games
+      dockerfile: dockerfile
+    container_name: game_service
+    depends_on:
+      - redis
+    expose:
+      - "4005"
+    environment:
+      - NODE_ENV=production
+      - PORT=4005
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - internal
+
+  realtime_gateway:
+    build:
+      context: ./services/realtime-gateway
+      dockerfile: dockerfile
+    container_name: realtime_gateway
+    depends_on:
+      - auth_service
+      - social_service
+      - game_service
+      - redis
+      # - room_service
+      # - matchmaking_service
+    expose:
+      - "4006"
+    environment:
+      - NODE_ENV=production
+      - PORT=4006
+      - REDIS_URL=redis://redis:6379
+      - AUTH_HOST=http://auth_service:4001
+      - SOCIAL_HOST=http://social_service:4002
+      - GAME_HOST=http://game_service:4005
+      # - ROOM_HOST=http://room_service:4003
+      # - MATCHMAKING_HOST=http://matchmaking_service:4004
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_transcendance
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=transcendance
+      - POSTGRES_PASSWORD=transcendance
+      - POSTGRES_DB=transcendance
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_transcendance
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
     networks:
       - internal
 
