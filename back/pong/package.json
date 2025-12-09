@@ -2,13 +2,21 @@
 	"name": "pong-back",
 	"version": "1.0.0",
 	"type": "module",
-	"main": "server.js",
+	"main": "dist/server.js",
 	"private": true,
 	"scripts": {
-		"start": "node server.js"
+		"build": "tsc",
+		"start": "npm run build && node dist/server.js"
 	},
 	"dependencies": {
-		"fastify": "^4.28.1"
+		"@fastify/cookie": "^9.4.0",
+		"@fastify/websocket": "^10.0.1",
+		"fastify": "^4.28.1",
+		"redis": "^5.10.0",
+		"uuid": "^13.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.30",
+		"typescript": "^5.4.5"
 	}
 }
-

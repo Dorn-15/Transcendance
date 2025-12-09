@@ -3,51 +3,52 @@ services:
     build:
       context: ./nginx
       dockerfile: dockerfile
-    container_name: gateway_transcendance
+    container_name: transcendance_gateway
     depends_on:
       - frontend
       - pong_back
-      - connect_back
+      - users_back
     # for prod -----------------------------------------------
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_proxy"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.docker.network=traefik_proxy"
 
-      # Service (port interne vers Nginx)
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    #   # Service (port interne vers Nginx)
+    #   - "traefik.http.services.nginx.loadbalancer.server.port=80"
 
-      # Router HTTPS (443)
-      - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
-      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
-      - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
-      - "traefik.http.routers.nginx-secure.tls=true"
+    #   # Router HTTPS (443)
+    #   - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
+    #   - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+    #   - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
+    #   - "traefik.http.routers.nginx-secure.tls=true"
 
-      # Router HTTP (80) -> redirection vers HTTPS
-      - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
-      - "traefik.http.routers.nginx-web.entrypoints=web"
-      - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
+    #   # Router HTTP (80) -> redirection vers HTTPS
+    #   - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
+    #   - "traefik.http.routers.nginx-web.entrypoints=web"
+    #   - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
 
-      # Middleware de redirection
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-
-    networks:
-      - traefik_proxy
-      - internal
-    # --------------------------------------------------------
-    # for dev ------------------------------------------------
-    # ports:
-    #   - "8080:80"
+    #   # Middleware de redirection
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
 
     # networks:
+    #   - traefik_proxy
     #   - internal
+    # --------------------------------------------------------
+    # for dev ------------------------------------------------
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+    networks:
+      - internal
     # --------------------------------------------------------
 
   frontend:
     build:
       context: ./front
       dockerfile: dockerfile
-    container_name: front_transcendance
+    container_name: transcendance_front
     expose:
       - "4000"
     environment:
@@ -60,21 +61,46 @@ services:
     build:
       context: ./back/pong
       dockerfile: dockerfile
-    container_name: back_pong_transcendance
-    command: ["node", "server.js"]
+    container_name: transcendance_back_pong
+    command: ["npm", "start"]
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
     expose:
       - "4001"
     networks:
       - internal
 
-  connect_back:
+  users_back:
     build:
-      context: ./back/connect
+      context: ./back/users
       dockerfile: dockerfile
-    container_name: back_connect_transcendance
+    container_name: transcendance_back_users
+    depends_on:
+      - redis
     command: ["node", "server.js"]
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - SQLITE_DB_PATH=/app/data/users.sqlite
+      - REDIS_URL=redis://redis:6379/0
+      - SESSION_TTL_SECONDS=86400
+      - SESSION_COOKIE_NAME=transcendance_session
+      - COOKIE_SECRET=please-change-me
     expose:
       - "4002"
+    volumes:
+      - users_sqlite_data:/app/data
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: transcendance_redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    expose:
+      - "6379"
     networks:
       - internal
 
@@ -83,3 +109,6 @@ networks:
     external: true
   internal:
     driver: bridge
+
+volumes:
+  users_sqlite_data:

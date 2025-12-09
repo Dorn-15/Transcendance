@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Transcendance • Login</title>
+	<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+	<div class="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-10 lg:py-16">
+		<header class="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
+			<div class="space-y-2">
+				<p class="text-xs uppercase tracking-[0.4rem] text-white/50">Transcendance</p>
+				<h1 class="text-3xl font-semibold text-white">Console d’authentification</h1>
+				<p class="text-sm text-white/70">Testez rapidement les routes `/api/users` pour enregistrer, connecter ou gérer les sessions.</p>
+			</div>
+			<div class="flex flex-wrap justify-center gap-3">
+				<a href="/" class="rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/50 hover:text-white">Accueil</a>
+				<a href="/users-test.html" class="rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400">Page de tests</a>
+			</div>
+		</header>
+		<main class="mt-10 grid flex-1 gap-8 lg:grid-cols-2">
+			<section class="flex flex-col gap-8">
+				<div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+					<h2 class="text-xl font-semibold text-white">Créer un compte</h2>
+					<p class="mt-1 text-sm text-white/60">POST `/register`</p>
+					<form id="register-form" class="mt-6 space-y-4">
+						<label class="block text-sm font-semibold text-white/80">
+							Email
+							<input name="register-email" type="email" required placeholder="user@example.com" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<label class="block text-sm font-semibold text-white/80">
+							Mot de passe
+							<input name="register-password" type="password" required placeholder="••••••••" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<label class="block text-sm font-semibold text-white/80">
+							Pseudonyme
+							<input name="register-display-name" type="text" required placeholder="Ada Lovelace" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<label class="block text-sm font-semibold text-white/80">
+							Avatar (optionnel)
+							<input name="register-avatar-url" type="url" placeholder="https://cdn.example/avatar.png" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<button type="submit" class="w-full rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">Créer et connecter</button>
+					</form>
+				</div>
+				<div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+					<h2 class="text-xl font-semibold text-white">Session invitée</h2>
+					<p class="mt-1 text-sm text-white/60">POST `/guest`</p>
+					<button id="guest-button" class="mt-6 w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300">Créer une session invitée</button>
+					<button id="logout-button" class="mt-3 w-full rounded-2xl border border-white/30 px-4 py-3 text-sm font-semibold text-white transition hover:border-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50">Déconnexion (POST `/logout`)</button>
+					<a href="/users-test.html" class="mt-4 block text-center text-sm font-semibold text-emerald-300 underline decoration-dotted underline-offset-4">Basculer vers la page de tests avancés</a>
+				</div>
+			</section>
+			<section class="flex flex-col gap-8">
+				<div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+					<h2 class="text-xl font-semibold text-white">Connexion</h2>
+					<p class="mt-1 text-sm text-white/60">POST `/login`</p>
+					<form id="login-form" class="mt-6 space-y-4">
+						<label class="block text-sm font-semibold text-white/80">
+							Email
+							<input name="login-email" type="email" required placeholder="user@example.com" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<label class="block text-sm font-semibold text-white/80">
+							Mot de passe
+							<input name="login-password" type="password" required placeholder="••••••••" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+						</label>
+						<button type="submit" class="w-full rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">Se connecter</button>
+					</form>
+					<p class="mt-4 text-xs text-white/60">La session est conservée via le cookie `transcendance_session` renvoyé par le service.</p>
+				</div>
+				<div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="text-xl font-semibold text-white">Console des réponses</h2>
+							<p class="text-sm text-white/60">Affiche la dernière réponse JSON renvoyée par l’API.</p>
+						</div>
+						<span data-response-status class="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.3rem] text-white/60">En attente</span>
+					</div>
+					<textarea data-response class="mt-6 h-72 w-full resize-y rounded-2xl border border-white/10 bg-black/40 p-4 font-mono text-xs text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300" readonly placeholder="Aucune requête envoyée pour le moment."></textarea>
+				</div>
+			</section>
+		</main>
+	</div>
+	<script type="module">
+	(() => {
+		const	apiBase	=
+			"/api/users";
+		const	responseField	=
+			document.querySelector("[data-response]");
+		const	statusBadge	=
+			document.querySelector("[data-response-status]");
+		const	registerForm	=
+			document.querySelector("#register-form");
+		const	loginForm	=
+			document.querySelector("#login-form");
+		const	guestButton	=
+			document.querySelector("#guest-button");
+		const	logoutButton	=
+			document.querySelector("#logout-button");
+		const	statusThemes	=
+			{
+				idle: ["border-white/10", "bg-white/5", "text-white/60"],
+				success: ["border-emerald-400/40", "bg-emerald-500/20", "text-emerald-200"],
+				error: ["border-rose-400/40", "bg-rose-500/20", "text-rose-200"],
+				info: ["border-indigo-400/40", "bg-indigo-500/20", "text-indigo-100"]
+			};
+		const	formatPayload	= (payload) => {
+			if (payload === null || payload === undefined) {
+				return "∅";
+			}
+			if (typeof payload === "string") {
+				return payload;
+			}
+			return JSON.stringify(payload, null, 4);
+		};
+		const	setStatusTheme	= (variant) => {
+			if (!statusBadge) {
+				return;
+			}
+			statusBadge.className	=
+				"rounded-full px-4 py-1 text-xs uppercase tracking-[0.3rem]";
+			(statusThemes[variant] ?? statusThemes.idle).forEach((className) => {
+				statusBadge.classList.add(className);
+			});
+		};
+		const	setResponse	= (label, payload, variant) => {
+			if (responseField) {
+				responseField.value	=
+					formatPayload(payload);
+			}
+			if (statusBadge) {
+				statusBadge.textContent	=
+					label;
+				setStatusTheme(variant);
+			}
+		};
+		const	callApi	= async ({ path, method, body }) => {
+			setResponse("Envoi...", "Requête en cours", "info");
+			try {
+				const	response	= await fetch(`${apiBase}${path}`, {
+					method,
+					credentials: "include",
+					headers: body ? { "Content-Type": "application/json" } : undefined,
+					body: body ? JSON.stringify(body) : undefined
+				});
+				const	text	= await response.text();
+				let	payload	=
+					text;
+				try {
+					payload	=
+						JSON.parse(text);
+				} catch {
+					payload	=
+						text;
+				}
+				const	label	=
+					`${response.ok ? "OK" : "Erreur"} • ${response.status}`;
+				setResponse(label, payload, response.ok ? "success" : "error");
+			} catch (error) {
+				setResponse("Erreur réseau", error instanceof Error ? error.message : "Unexpected error", "error");
+			}
+		};
+		const	handleFormSubmit	= (form, buildRequest) => {
+			if (!form) {
+				return;
+			}
+			form.addEventListener("submit", (event) => {
+				event.preventDefault();
+				const	formData	=
+					new FormData(form);
+				const	request	=
+					buildRequest(formData);
+				if (!request) {
+					return;
+				}
+				void callApi(request);
+			});
+		};
+		handleFormSubmit(registerForm, (formData) => {
+			const	email	=
+				String(formData.get("register-email") ?? "").trim();
+			const	password	=
+				String(formData.get("register-password") ?? "").trim();
+			const	displayName	=
+				String(formData.get("register-display-name") ?? "").trim();
+			const	avatarUrl	=
+				String(formData.get("register-avatar-url") ?? "").trim();
+			if (!email || !password || !displayName) {
+				setResponse("Champs requis", "Email, mot de passe et pseudonyme sont obligatoires", "error");
+				return null;
+			}
+			const	body	=
+				{
+					email,
+					password,
+					displayName,
+					avatarUrl: avatarUrl || undefined
+				};
+			return {
+				path: "/register",
+				method: "POST",
+				body
+			};
+		});
+		handleFormSubmit(loginForm, (formData) => {
+			const	email	=
+				String(formData.get("login-email") ?? "").trim();
+			const	password	=
+				String(formData.get("login-password") ?? "").trim();
+			if (!email || !password) {
+				setResponse("Champs requis", "Email et mot de passe sont obligatoires", "error");
+				return null;
+			}
+			return {
+				path: "/login",
+				method: "POST",
+				body: { email, password }
+			};
+		});
+		guestButton?.addEventListener("click", () => {
+			void callApi({ path: "/guest", method: "POST", body: {} });
+		});
+		logoutButton?.addEventListener("click", () => {
+			void callApi({ path: "/logout", method: "POST", body: {} });
+		});
+		setResponse("En attente", "Aucune requête envoyée pour le moment", "idle");
+	})();
+	</script>
+</body>
+</html>
+
+
+

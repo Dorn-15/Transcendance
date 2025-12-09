@@ -14,7 +14,102 @@
 			</div>
 			<p class="text-sm text-white/60">Node.js + Tailwind CSS + TypeScript</p>
 		</header>
+		<section class="w-full max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-8 text-left shadow-2xl shadow-indigo-950/40">
+			<div class="mb-6 space-y-2">
+				<h1 class="text-2xl font-semibold text-white">Gestion rapide des rooms Pong</h1>
+				<p class="text-sm text-white/70">Créez une nouvelle room via l’API, visualisez la réponse brute et ouvrez directement la ressource retournée.</p>
+			</div>
+			<div class="flex flex-wrap gap-4">
+				<button id="create-pong-room" class="flex-1 rounded-2xl bg-indigo-500 px-6 py-4 text-base font-semibold text-white transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+					Créer une room Pong
+				</button>
+				<button id="open-pong-room" class="flex-1 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900/40" disabled>
+					Ouvrir la room créée
+				</button>
+			</div>
+			<label for="room-response" class="mt-8 block text-sm font-semibold text-white/80">Réponse brute de l’API</label>
+			<textarea id="room-response" class="mt-2 h-64 w-full resize-y rounded-2xl border border-white/10 bg-black/40 p-4 font-mono text-sm text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300" readonly placeholder='Cliquez sur "Créer une room Pong" pour récupérer la réponse JSON'></textarea>
+		</section>
+		<section class="w-full max-w-3xl rounded-3xl border border-dashed border-white/15 bg-white/5 p-6 text-left">
+			<div class="flex flex-col gap-3">
+				<p class="text-xs uppercase tracking-[0.35rem] text-white/50">Nouveau</p>
+				<h2 class="text-2xl font-semibold text-white">Tester l’API des utilisateurs</h2>
+				<p class="text-sm text-white/70">Accédez à la console login ou au banc de tests complet pour piloter toutes les routes décrites dans `back/users/README.md`.</p>
+				<div class="mt-4 flex flex-wrap gap-4">
+					<a href="/login.html" class="flex-1 rounded-2xl bg-indigo-500 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">Page login</a>
+					<a href="/users-test.html" class="flex-1 rounded-2xl border border-white/20 px-4 py-3 text-center text-sm font-semibold text-white/80 transition hover:border-white/50 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40">Page de tests</a>
+				</div>
+			</div>
+		</section>
 	</div>
+	<script>
+		(() => {
+			const	createButton	= document.querySelector("#create-pong-room");
+			const	openButton	= document.querySelector("#open-pong-room");
+			const	responseField	= document.querySelector("#room-response");
+			const	apiEndpoint	= "/api/pong/rooms";
+			let	latestRoomId	= null;
+
+			const	serializePayload	= (payload) => {
+				if (payload === null || payload === undefined) {
+					return "";
+				}
+				if (typeof payload === "string") {
+					return payload;
+				}
+				return JSON.stringify(payload, null, 4);
+			};
+
+			const	setResponse	= (payload) => {
+				responseField.value	= serializePayload(payload);
+			};
+
+			const	setOpenState	= (roomId) => {
+				latestRoomId	= roomId ?? null;
+				openButton.disabled	= latestRoomId === null;
+			};
+
+			const	buildRoomUrl	= (roomId) => {
+				return `${apiEndpoint}/${encodeURIComponent(roomId)}`;
+			};
+
+			const	createRoom	= async () => {
+				setOpenState(null);
+				setResponse("Création en cours...");
+				try {
+					const	response	= await fetch(apiEndpoint, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify({})
+					});
+					const	payload	= await response.json();
+					setResponse(payload);
+					if (response.ok && payload?.id) {
+						setOpenState(payload.id);
+					} else {
+						setOpenState(null);
+					}
+				} catch (error) {
+					setResponse({ status: "error", message: error instanceof Error ? error.message : "Unexpected error" });
+					setOpenState(null);
+				}
+			};
+
+			const	redirectToRoom	= () => {
+				if (latestRoomId === null) {
+					return;
+				}
+				window.open(buildRoomUrl(latestRoomId), "_blank");
+			};
+
+			createButton?.addEventListener("click", () => {
+				void createRoom();
+			});
+			openButton?.addEventListener("click", redirectToRoom);
+		})();
+	</script>
 </body>
 </html>
 

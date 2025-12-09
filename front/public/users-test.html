@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Transcendance • Tests utilisateurs</title>
+	<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+	<div class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-10 lg:py-16">
+		<header class="rounded-3xl border border-white/10 bg-white/5 p-8">
+			<div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+				<div class="space-y-3">
+					<p class="text-xs uppercase tracking-[0.45rem] text-white/50">Transcendance</p>
+					<h1 class="text-3xl font-semibold text-white">Banc de tests API `/api/users`</h1>
+					<p class="text-sm text-white/70">Pilotez chaque route (authentification, profil, lecture publique) sans écrire une ligne de code côté client.</p>
+				</div>
+				<div class="flex flex-wrap gap-3">
+					<a href="/" class="rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/50 hover:text-white">Accueil</a>
+					<a href="/login.html" class="rounded-2xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400">Page login</a>
+				</div>
+			</div>
+			<p class="mt-6 text-xs text-white/50">Les requêtes sont envoyées vers `https://<host>/api/users/*` via le cookie `transcendance_session`. Connectez-vous d’abord depuis la page Login pour tester les routes protégées.</p>
+		</header>
+		<main class="mt-10 flex-1 space-y-10" data-actions-root></main>
+	</div>
+	<template id="action-template">
+		<form class="rounded-3xl border border-white/10 bg-white/5 p-6">
+			<div class="flex flex-wrap items-baseline justify-between gap-4">
+				<div>
+					<p class="text-xs uppercase tracking-[0.4rem] text-white/50">Action</p>
+					<h3 data-label class="text-lg font-semibold text-white"></h3>
+					<p data-description class="text-sm text-white/60"></p>
+				</div>
+				<span data-status class="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-[0.6rem] uppercase tracking-[0.3rem] text-white/60">Idle</span>
+			</div>
+			<div data-fields class="mt-6 flex flex-col gap-4"></div>
+			<div class="mt-6 flex flex-wrap gap-4">
+				<button type="submit" class="flex-1 rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">Appeler l’API</button>
+				<button type="button" data-clear class="flex-1 rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold text-white/80 transition hover:border-white/50 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40">Réinitialiser</button>
+			</div>
+			<label class="mt-6 block text-sm font-semibold text-white/80">
+				Réponse JSON
+				<textarea data-output class="mt-2 h-48 w-full resize-y rounded-2xl border border-white/10 bg-black/40 p-3 font-mono text-xs text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300" readonly></textarea>
+			</label>
+		</form>
+	</template>
+	<script type="module">
+	(() => {
+		const	apiBase	=
+			"/api/users";
+		const	actionsRoot	=
+			document.querySelector("[data-actions-root]");
+		const	template	=
+			document.querySelector("#action-template");
+		const	statusThemes	=
+			{
+				idle: ["border-white/10", "bg-white/5", "text-white/60"],
+				success: ["border-emerald-400/40", "bg-emerald-500/20", "text-emerald-200"],
+				error: ["border-rose-400/40", "bg-rose-500/20", "text-rose-200"],
+				info: ["border-indigo-400/40", "bg-indigo-500/20", "text-indigo-100"]
+			};
+		const	actionGroups	=
+			[
+				{
+					title: "Authentification",
+					description: "Création, connexion et gestion de session.",
+					actions: [
+						{
+							id: "login",
+							label: "POST /login",
+							method: "POST",
+							path: "/login",
+							description: "Connexion d’un utilisateur existant et récupération du profil public.",
+							fields: [
+								{ name: "email", label: "Email", type: "email" },
+								{ name: "password", label: "Mot de passe", type: "password" }
+							],
+							sendEmptyBody: false
+						},
+						{
+							id: "register",
+							label: "POST /register",
+							method: "POST",
+							path: "/register",
+							description: "Inscription puis connexion immédiate du compte nouvellement créé.",
+							fields: [
+								{ name: "email", label: "Email", type: "email" },
+								{ name: "password", label: "Mot de passe", type: "password" },
+								{ name: "displayName", label: "Pseudonyme" },
+								{ name: "avatarUrl", label: "Avatar (optionnel)", type: "url", optional: true }
+							],
+							sendEmptyBody: false
+						},
+						{
+							id: "guest",
+							label: "POST /guest",
+							method: "POST",
+							path: "/guest",
+							description: "Crée une session invitée anonyme.",
+							fields: [],
+							sendEmptyBody: true
+						},
+						{
+							id: "logout",
+							label: "POST /logout",
+							method: "POST",
+							path: "/logout",
+							description: "Révoque la session courante (succès silencieux si déjà déconnecté).",
+							fields: [],
+							sendEmptyBody: true
+						}
+					]
+				},
+				{
+					title: "Gestion du profil",
+					description: "Routes protégées pour mettre à jour les informations du compte courant.",
+					actions: [
+						{
+							id: "update-name",
+							label: "POST /update/name",
+							method: "POST",
+							path: "/update/name",
+							description: "Met à jour le `displayName` du compte.",
+							fields: [{ name: "displayName", label: "Nouveau displayName" }],
+							sendEmptyBody: false
+						},
+						{
+							id: "update-email",
+							label: "POST /update/email",
+							method: "POST",
+							path: "/update/email",
+							description: "Modifie l’adresse email (échec si déjà utilisée).",
+							fields: [{ name: "email", label: "Nouvel email", type: "email" }],
+							sendEmptyBody: false
+						},
+						{
+							id: "update-password",
+							label: "POST /update/password",
+							method: "POST",
+							path: "/update/password",
+							description: "Change le mot de passe après validation de l’ancien.",
+							fields: [
+								{ name: "currentPassword", label: "Mot de passe actuel", type: "password" },
+								{ name: "newPassword", label: "Nouveau mot de passe", type: "password" }
+							],
+							sendEmptyBody: false
+						},
+						{
+							id: "update-avatar",
+							label: "POST /update/avatar",
+							method: "POST",
+							path: "/update/avatar",
+							description: "Remplace l’URL d’avatar.",
+							fields: [{ name: "avatarUrl", label: "Nouvel avatar", type: "url" }],
+							sendEmptyBody: false
+						},
+						{
+							id: "delete-account",
+							label: "POST /delete",
+							method: "POST",
+							path: "/delete",
+							description: "Supprime définitivement l’utilisateur authentifié.",
+							fields: [],
+							sendEmptyBody: true
+						}
+					]
+				},
+				{
+					title: "Lecture protégée",
+					description: "Consultation des informations liées à la session active.",
+					actions: [
+						{ id: "me-user", label: "GET /user", method: "GET", path: "/user", description: "Renvoie l’utilisateur courant.", fields: [] },
+						{ id: "me-profile", label: "GET /user/profile", method: "GET", path: "/user/profile", description: "Renvoie le profil enrichi.", fields: [] },
+						{ id: "me-avatar", label: "GET /user/avatar", method: "GET", path: "/user/avatar", description: "Renvoie uniquement l’avatar.", fields: [] },
+						{ id: "me-name", label: "GET /user/name", method: "GET", path: "/user/name", description: "Renvoie uniquement le displayName.", fields: [] }
+					]
+				},
+				{
+					title: "Lecture publique",
+					description: "Points d’accès qui ne nécessitent pas de session.",
+					actions: [
+						{ id: "public-user", label: "GET /user/:userId", method: "GET", path: "/user/:userId", description: "Consulte un utilisateur public par identifiant.", fields: [{ name: "userId", label: "User ID", type: "number", pathParam: true }] },
+						{ id: "public-profile", label: "GET /user/profile/:userId", method: "GET", path: "/user/profile/:userId", description: "Consulte un profil complet.", fields: [{ name: "userId", label: "User ID", type: "number", pathParam: true }] },
+						{ id: "public-avatar", label: "GET /user/avatar/:userId", method: "GET", path: "/user/avatar/:userId", description: "Renvoie uniquement l’URL d’avatar.", fields: [{ name: "userId", label: "User ID", type: "number", pathParam: true }] },
+						{ id: "public-name", label: "GET /user/name/:userId", method: "GET", path: "/user/name/:userId", description: "Renvoie uniquement le displayName.", fields: [{ name: "userId", label: "User ID", type: "number", pathParam: true }] },
+						{ id: "service-banner", label: "GET /", method: "GET", path: "/", description: "Renvoie la bannière du service.", fields: [] },
+						{ id: "service-health", label: "GET /health", method: "GET", path: "/health", description: "Vérifie la disponibilité du service.", fields: [] }
+					]
+				}
+			];
+		const	formatPayload	= (payload) => {
+			if (payload === null || payload === undefined) {
+				return "∅";
+			}
+			if (typeof payload === "string") {
+				return payload;
+			}
+			return JSON.stringify(payload, null, 4);
+		};
+		const	setStatusTheme	= (badge, variant) => {
+			badge.className	=
+				"rounded-full px-4 py-1 text-[0.6rem] uppercase tracking-[0.3rem]";
+			(statusThemes[variant] ?? statusThemes.idle).forEach((className) => {
+				badge.classList.add(className);
+			});
+		};
+		const	collectValues	= (form) => {
+			const	formData	=
+				new FormData(form);
+			const	values	=
+				{};
+			formData.forEach((value, key) => {
+				values[key]	=
+					String(value ?? "").trim();
+			});
+			return values;
+		};
+		const	resolvePath	= (path, fieldDefs, values) => {
+			let	resolved	=
+				path;
+			for (const	field of fieldDefs) {
+				if (!field.pathParam) {
+					continue;
+				}
+				const	value	=
+					values[field.name];
+				if (!value) {
+					return { error: `Le champ ${field.label} est requis` };
+				}
+				resolved	=
+					resolved.replace(`:${field.name}`, encodeURIComponent(value));
+			}
+			return { path: resolved };
+		};
+		const	buildBody	= (fieldDefs, values) => {
+			const	body	=
+				{};
+			for (const	field of fieldDefs) {
+				if (field.pathParam) {
+					continue;
+				}
+				const	value	=
+					values[field.name];
+				if (!value && !field.optional) {
+					return { error: `Le champ ${field.label} est requis` };
+				}
+				if (value) {
+					body[field.name]	=
+						value;
+				}
+			}
+			return { body };
+		};
+		const	callAction	= async (action, values, badge, output) => {
+			setStatusTheme(badge, "info");
+			badge.textContent	=
+				"Envoi...";
+			const	pathResult	=
+				resolvePath(action.path, action.fields ?? [], values);
+			if ("error" in pathResult) {
+				setStatusTheme(badge, "error");
+				badge.textContent	=
+					"Champs";
+				output.value	=
+					pathResult.error;
+				return;
+			}
+			const	bodyResult	=
+				buildBody(action.fields ?? [], values);
+			if ("error" in bodyResult) {
+				setStatusTheme(badge, "error");
+				badge.textContent	=
+					"Champs";
+				output.value	=
+					bodyResult.error;
+				return;
+			}
+			const	shouldSendBody	=
+				action.method !== "GET" && (action.sendEmptyBody || Object.keys(bodyResult.body).length > 0);
+			try {
+				const	response	= await fetch(`${apiBase}${pathResult.path}`, {
+					method: action.method,
+					credentials: "include",
+					headers: shouldSendBody ? { "Content-Type": "application/json" } : undefined,
+					body: shouldSendBody ? JSON.stringify(action.sendEmptyBody ? bodyResult.body ?? {} : bodyResult.body) : undefined
+				});
+				const	text	= await response.text();
+				let	payload	=
+					text;
+				try {
+					payload	=
+						JSON.parse(text);
+				} catch {
+					payload	=
+						text;
+				}
+				setStatusTheme(badge, response.ok ? "success" : "error");
+				badge.textContent	=
+					`${response.ok ? "OK" : "Erreur"} • ${response.status}`;
+				output.value	=
+					formatPayload(payload);
+			} catch (error) {
+				setStatusTheme(badge, "error");
+				badge.textContent	=
+					"Réseau";
+				output.value	=
+					error instanceof Error ? error.message : "Unexpected error";
+			}
+		};
+		const	createFieldInput	= (field) => {
+			const	wrapper	=
+				document.createElement("label");
+			wrapper.className	=
+				"flex flex-col gap-2 text-sm font-semibold text-white/80";
+			const	title	=
+				document.createElement("span");
+			title.textContent	=
+				field.label + (field.optional ? " (optionnel)" : "");
+			const	input	=
+				document.createElement("input");
+			input.name	=
+				field.name;
+			input.type	=
+				field.type ?? "text";
+			input.placeholder	=
+				field.placeholder ?? "";
+			input.required	=
+				!field.optional;
+			input.className	=
+				"rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300";
+			wrapper.appendChild(title);
+			wrapper.appendChild(input);
+			return wrapper;
+		};
+		const	renderAction	= (action) => {
+			const	instance	=
+				template?.content.firstElementChild?.cloneNode(true);
+			if (!(instance instanceof HTMLFormElement)) {
+				return null;
+			}
+			const	labelEl	=
+				instance.querySelector("[data-label]");
+			const	descriptionEl	=
+				instance.querySelector("[data-description]");
+			const	fieldsRoot	=
+				instance.querySelector("[data-fields]");
+			const	statusBadge	=
+				instance.querySelector("[data-status]");
+			const	outputField	=
+				instance.querySelector("[data-output]");
+			if (
+				!(labelEl instanceof HTMLElement) ||
+				!(descriptionEl instanceof HTMLElement) ||
+				!(fieldsRoot instanceof HTMLElement) ||
+				!(statusBadge instanceof HTMLElement) ||
+				!(outputField instanceof HTMLTextAreaElement)
+			) {
+				return null;
+			}
+			labelEl.textContent	=
+				action.label;
+			descriptionEl.textContent	=
+				action.description;
+			if ((action.fields ?? []).length === 0) {
+				const	info	=
+					document.createElement("p");
+				info.className	=
+					"text-sm text-white/60";
+				info.textContent	=
+					"Aucun champ requis pour cette requête.";
+				fieldsRoot.appendChild(info);
+			} else {
+				(action.fields ?? []).forEach((field) => {
+					fieldsRoot.appendChild(createFieldInput(field));
+				});
+			}
+			instance.addEventListener("submit", (event) => {
+				event.preventDefault();
+				const	values	=
+					collectValues(instance);
+				void callAction(action, values, statusBadge, outputField);
+			});
+			instance.querySelector("[data-clear]")?.addEventListener("click", () => {
+				instance.reset();
+				outputField.value	=
+					"";
+				setStatusTheme(statusBadge, "idle");
+				statusBadge.textContent	=
+					"Idle";
+			});
+			return instance;
+		};
+		const	renderGroup	= (group) => {
+			const	section	=
+				document.createElement("section");
+			section.className	=
+				"space-y-6";
+			const	header	=
+				document.createElement("div");
+			header.className	=
+				"flex flex-col gap-2";
+			const	title	=
+				document.createElement("h2");
+			title.className	=
+				"text-2xl font-semibold text-white";
+			title.textContent	=
+				group.title;
+			const	description	=
+				document.createElement("p");
+			description.className	=
+				"text-sm text-white/60";
+			description.textContent	=
+				group.description;
+			header.appendChild(title);
+			header.appendChild(description);
+			const	grid	=
+				document.createElement("div");
+			grid.className	=
+				"grid gap-6 lg:grid-cols-2";
+			group.actions.forEach((action) => {
+				const	card	=
+					renderAction(action);
+				if (card) {
+					grid.appendChild(card);
+				}
+			});
+			section.appendChild(header);
+			section.appendChild(grid);
+			return section;
+		};
+		if (actionsRoot) {
+			actionGroups.forEach((group) => {
+				actionsRoot.appendChild(renderGroup(group));
+			});
+		}
+	})();
+	</script>
+</body>
+</html>
+
