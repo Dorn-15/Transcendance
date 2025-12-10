@@ -1,0 +1,59 @@
+/* SettingsView.css (ou .module.css si tu as adapté ton TSX) */
+
+.lang-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vh;
+    margin-bottom: 1vh;
+}
+
+.lang-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.5vh 1.5vh;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.lang-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* L'état actif sur la ligne entière */
+.lang-option.active {
+    background: rgba(255, 165, 0, 0.2);
+    border-color: rgba(255, 165, 0, 0.6);
+}
+
+.lang-flag {
+    font-size: 1.5vh;
+    margin-right: 1vh;
+}
+
+.lang-label {
+    flex-grow: 1;
+    font-size: 1.3vh;
+    text-align: left;
+    font-weight: 500;
+}
+
+.lang-check {
+    width: 1vh;
+    height: 1vh;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+}
+
+/* Le point orange à l'intérieur quand c'est actif */
+/* C'est ici que ça bloquait avant à cause des noms */
+.lang-option.active .lang-check {
+    background-color: #ffaa00;
+    border-color: #ffaa00;
+    box-shadow: 0 0 5px rgba(255, 170, 0, 0.8);
+}

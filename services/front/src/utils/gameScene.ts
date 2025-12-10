@@ -1,24 +1,26 @@
 import * as BABYLON from '@babylonjs/core';
-import '@babylonjs/loaders/glTF'; // Indispensable pour charger les .glb
+import '@babylonjs/loaders/glTF';
+import { ALL_LANGUAGES, LangKey } from './languageData';
 
-// On garde ton interface globale
 declare global {
     interface Window {
         INITIAL_GAME_ID: string;
     }
 }
 
-// --- TA CLASSE GAMESCENE (Inchangée, juste typée avec les imports) ---
 class GameScene {
     engine: BABYLON.Engine;
     scene: BABYLON.Scene;
     camera!: BABYLON.ArcRotateCamera;
     
+    currentLangId: LangKey;
+
     initialCameraState: any = null;
     isCameraAnimating: boolean = false;
 
-    constructor(canvasElement: HTMLCanvasElement) {
-        // Initialisation du moteur sur le canvas passé par React
+    constructor(canvasElement: HTMLCanvasElement, langId: LangKey = 1) {
+        this.currentLangId = langId;
+        
         this.engine = new BABYLON.Engine(canvasElement, true);
         this.scene = this.createScene();
 
@@ -26,7 +28,6 @@ class GameScene {
             this.scene.render();
         });
 
-        // Gestion du resize
         this.resizeHandler = this.resizeHandler.bind(this);
         window.addEventListener("resize", this.resizeHandler);
 
@@ -35,12 +36,14 @@ class GameScene {
         });
     }
 
-    // Fonction séparée pour pouvoir l'enlever proprement au destroy
+    setLanguage(newLangId: LangKey) {
+        this.currentLangId = newLangId;
+    }
+
     resizeHandler() {
         this.engine.resize();
     }
 
-    // Méthode pour nettoyer proprement la mémoire (Appelée par React)
     dispose() {
         window.removeEventListener("resize", this.resizeHandler);
         this.engine.dispose();
@@ -105,8 +108,7 @@ class GameScene {
             });
         };
 
-        // --- CHARGEMENT DES MODELES (Chemins adaptés pour Next.js public/) ---
-        // Note: '/assets/...' pointe bien vers public/assets
+        // --- LOAD MESHES ---
         BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "Breakout.glb", scene)
             .then((result: any) => {
                 const root = result.meshes[0];
@@ -161,7 +163,7 @@ class GameScene {
                 setupShadows(root, false, true);
             });
 
-        // --- GESTION DU CLIC ---
+        // --- POINTER EVENTS ---
         scene.onPointerObservable.add((pointerInfo: any) => {
             if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                 if (this.isCameraAnimating) return;
@@ -196,7 +198,6 @@ class GameScene {
         });
 
         const initialGameId = typeof window !== 'undefined' ? window.INITIAL_GAME_ID : null;
-
         if (initialGameId && initialGameId !== "") {
             setTimeout(() => {
                 this.showGameInterface(initialGameId);
@@ -232,12 +233,50 @@ class GameScene {
         
         const finalAlpha = currentAlpha + diff;
 
-        BABYLON.Animation.CreateAndStartAnimation("animTarget", this.camera, "target", frameRate, frameRate * duration, this.camera.target, this.initialCameraState.target, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
-        BABYLON.Animation.CreateAndStartAnimation("animAlpha", this.camera, "alpha", frameRate, frameRate * duration, this.camera.alpha, finalAlpha, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
-        BABYLON.Animation.CreateAndStartAnimation("animRadius", this.camera, "radius", frameRate, frameRate * duration, this.camera.radius, this.initialCameraState.radius, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animTarget",
+            this.camera, 
+            "target", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.target, 
+            this.initialCameraState.target, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animAlpha", 
+            this.camera, 
+            "alpha", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.alpha, 
+            finalAlpha, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
+        BABYLON.Animation.CreateAndStartAnimation("animRadius", 
+            this.camera, 
+            "radius", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.radius, 
+            this.initialCameraState.radius, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
         
-        BABYLON.Animation.CreateAndStartAnimation("animBeta", this.camera, "beta", frameRate, frameRate * duration, this.camera.beta, this.initialCameraState.beta, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease, () => {
-            this.isCameraAnimating = false;
+        BABYLON.Animation.CreateAndStartAnimation("animBeta", 
+            this.camera, 
+            "beta", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.beta, 
+            this.initialCameraState.beta, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease, 
+            () => {
+                this.isCameraAnimating = false;
         });
     }
 
@@ -278,21 +317,64 @@ class GameScene {
         else if (diff < -Math.PI) diff += twoPi;
         const finalAlpha = currentAlpha + diff;
 
-        BABYLON.Animation.CreateAndStartAnimation("animTarget", this.camera, "target", frameRate, frameRate * duration, this.camera.target, targetEnd, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
-        BABYLON.Animation.CreateAndStartAnimation("animAlpha", this.camera, "alpha", frameRate, frameRate * duration, this.camera.alpha, finalAlpha, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
-        BABYLON.Animation.CreateAndStartAnimation("animRadius", this.camera, "radius", frameRate, frameRate * duration, this.camera.radius, settings.radius, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animTarget", 
+            this.camera, 
+            "target", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.target, 
+            targetEnd, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animAlpha", 
+            this.camera, 
+            "alpha", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.alpha, 
+            finalAlpha, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animRadius", 
+            this.camera, 
+            "radius", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.radius, 
+            settings.radius, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease
+        );
         
-        BABYLON.Animation.CreateAndStartAnimation("animBeta", this.camera, "beta", frameRate, frameRate * duration, this.camera.beta, settings.beta, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease, () => {
-            const gameId = targetMesh.metadata.gameId;
-            if (gameId) {
-                this.showGameInterface(gameId);
-            } else {
-                this.isCameraAnimating = false;
+        BABYLON.Animation.CreateAndStartAnimation(
+            "animBeta", 
+            this.camera, 
+            "beta", 
+            frameRate, 
+            frameRate * duration, 
+            this.camera.beta, 
+            settings.beta, 
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            ease, 
+            () => {
+                const gameId = targetMesh.metadata.gameId;
+                if (gameId) {
+                    this.showGameInterface(gameId);
+                } else {
+                    this.isCameraAnimating = false;
+                }
             }
-        });
+        );
     }
 
     showGameInterface(gameId: string) {
+        const texts = ALL_LANGUAGES[this.currentLangId].defaultInfo;
+
         window.history.pushState({ gameId: gameId }, "", `/play/${gameId}`);
 
         const div = document.createElement("div");
@@ -304,18 +386,19 @@ class GameScene {
         });
 
         const iframe = document.createElement("iframe");
-        // Attention: Assure-toi que cette route existe ou que le fichier est dans public/games/
         iframe.src = `/games/${gameId}/index.html`; 
         Object.assign(iframe.style, {
             width: "80%", height: "80%", border: "4px solid #333",
-            borderRadius: "10px", backgroundColor: "black"
+            borderRadius: "10px", backgroundColor: "white"
         });
         
         iframe.onload = () => { iframe.contentWindow?.focus(); };
         div.appendChild(iframe);
 
         const closeBtn = document.createElement("button");
-        closeBtn.textContent = "QUITTER LA BORNE";
+        
+        closeBtn.textContent = texts.leave;
+        
         Object.assign(closeBtn.style, {
             marginTop: "15px", padding: "10px 20px", fontSize: "16px", cursor: "pointer",
             backgroundColor: "#ff4444", color: "white", border: "none", borderRadius: "5px"
@@ -325,13 +408,11 @@ class GameScene {
             div.remove();
             window.history.pushState({}, "", "/");
             this.resetCamera();
-            // Fallback au cas où resetCamera ne déverrouille pas
             setTimeout(() => { this.isCameraAnimating = false; }, 1100);
         };
 
         closeBtn.addEventListener("click", closeGame);
         
-        // Stocker l'event handler pour pouvoir le nettoyer si besoin
         const popState = () => {
             closeGame();
             window.removeEventListener('popstate', popState);
@@ -343,37 +424,31 @@ class GameScene {
     }
 }
 
-// ------------------------------------------------------------------
-// C'EST ICI QUE SE FAIT LA CONNEXION AVEC TON COMPOSANT REACT
-// ------------------------------------------------------------------
 
-// Cette fonction est celle importée par gameCanva.tsx
-// Elle doit prendre un élément HTML (le div ou le canvas) et renvoyer une fonction destroy
-export function initGame(container: HTMLDivElement | HTMLCanvasElement) {
-    // Si le conteneur est un DIV, on suppose qu'il faut créer un canvas dedans
-    // Si c'est déjà un CANVAS (cas de GameCanvas.tsx s'il utilise <canvas>), on l'utilise direct
+export function initGame(container: HTMLDivElement | HTMLCanvasElement, langId: LangKey = 1) {
     let canvas: HTMLCanvasElement;
     
     if (container instanceof HTMLDivElement) {
         canvas = document.createElement('canvas');
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        canvas.id = 'renderCanvas'; // Important pour Babylon
+        canvas.id = 'renderCanvas'; 
         container.appendChild(canvas);
     } else {
         canvas = container as HTMLCanvasElement;
     }
 
-    // Instanciation de ta classe
-    const gameInstance = new GameScene(canvas);
+    const gameInstance = new GameScene(canvas, langId);
 
-    // On retourne l'objet de nettoyage pour useEffect
     return {
         destroy: () => {
             gameInstance.dispose();
             if (container instanceof HTMLDivElement && container.contains(canvas)) {
                 container.removeChild(canvas);
             }
+        },
+        updateLanguage: (newLangId: LangKey) => {
+            gameInstance.setLanguage(newLangId);
         }
     };
 }

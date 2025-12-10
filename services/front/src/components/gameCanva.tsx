@@ -1,38 +1,42 @@
-// services/front/src/components/GameCanvas.tsx
-'use client'; // Obligatoire car on utilise useRef et useEffect
-
+'use client';
 import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { initGame } from '@/utils/gameScene';
+import { LangKey } from '@/utils/languageData';
 
-import { initGame } from '@/utils/gameScene'; 
+export default function GameCanva() {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const searchParams = useSearchParams();
 
-export default function GameCanvas() {
-  const containerRef = useRef<HTMLDivElement>(null);
+    const gameControlsRef = useRef<{ destroy: () => void; updateLanguage: (id: LangKey) => void } | null>(null);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && containerRef.current) {
-      // Initialise le jeu en lui passant la référence du div
-      const gameInstance = initGame(containerRef.current);
+    useEffect(() => {
+        if (!canvasRef.current) return;
 
-      // Fonction de nettoyage (très important en React/Next.js)
-      return () => {
-        // Ajoute une méthode destroy() dans ta gameScene pour nettoyer
-        // les event listeners, arrêter la boucle requestAnimationFrame, etc.
-        if (gameInstance && typeof gameInstance.destroy === 'function') {
-          gameInstance.destroy();
+        const params = new URLSearchParams(window.location.search);
+        const langParam = params.get('lang');
+        const initialLang = (langParam ? parseInt(langParam) : 1) as LangKey;
+
+        const controls = initGame(canvasRef.current, initialLang);
+        gameControlsRef.current = controls;
+
+        return () => {
+            if (gameControlsRef.current) {
+                gameControlsRef.current.destroy();
+                gameControlsRef.current = null;
+            }
+        };
+    }, []); 
+
+    useEffect(() => {
+        const langParam = searchParams.get('lang');
+
+        if (gameControlsRef.current && langParam) {
+            const newLang = parseInt(langParam) as LangKey;
+
+            gameControlsRef.current.updateLanguage(newLang);
         }
-        // Vider le conteneur si nécessaire
-        if (containerRef.current) {
-            containerRef.current.innerHTML = '';
-        }
-      };
-    }
-  }, []);
+    }, [searchParams]);
 
-  return (
-    <div 
-      ref={containerRef} 
-      id="game-container" 
-      className="w-full h-screen relative" // Classes Tailwind
-    />
-  );
+    return <canvas id="renderCanvas" ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
 }
