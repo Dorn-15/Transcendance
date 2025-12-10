@@ -13,28 +13,28 @@ services:
       # - room_service
       #- matchmaking_service
     # for prod -----------------------------------------------
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
-      - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
-      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
-      - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
-      - "traefik.http.routers.nginx-secure.tls=true"
-      - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
-      - "traefik.http.routers.nginx-web.entrypoints=web"
-      - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-    networks:
-      - traefik_proxy
-      - internal
-    # for dev ------------------------------------------------
-    # ports:
-    #   - "8080:80"
-    #   - "8443:443"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.docker.network=traefik_proxy"
+    #   - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    #   - "traefik.http.routers.nginx-secure.rule=Host(`transcendance.adoireau.design`)"
+    #   - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+    #   - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
+    #   - "traefik.http.routers.nginx-secure.tls=true"
+    #   - "traefik.http.routers.nginx-web.rule=Host(`transcendance.adoireau.design`)"
+    #   - "traefik.http.routers.nginx-web.entrypoints=web"
+    #   - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
     # networks:
+    #   - traefik_proxy
     #   - internal
+    # for dev ------------------------------------------------
+    ports:
+      - "8080:80"
+      - "8443:443"
+    networks:
+      - internal
 
   frontend:
     build:
