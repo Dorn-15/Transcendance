@@ -1,71 +1,38 @@
-import {
-	ConnectedSocket,
-	MessageBody,
-	OnGatewayConnection,
-	OnGatewayDisconnect,
-	OnGatewayInit,
-	SubscribeMessage,
-	WebSocketGateway,
-	WebSocketServer,
-} from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import type { PongState, PongDirection, MatchJoin } from './pong.types';
+import type { MatchJoin, PongDirection, PongState } from './pong.types';
 
 interface MatchTracker {
 	sockets: Set<string>;
 	interval?: NodeJS.Timeout;
 }
 
-@WebSocketGateway({
-	cors: {
-		origin: '*',
-	},
-	transports: ['websocket'],
-})
-export class PongGateway
-	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
-	@WebSocketServer()
-	private readonly	server: Server;
-	private readonly	logger = new Logger('PongGateway');
+@Injectable()
+export class PongExchangeService {
+	private readonly	logger = new Logger('PongExchangeService');
+	private			server: Server | null = null;
 	private readonly	matchTrackers = new Map<string, MatchTracker>();
-	private readonly	gamesBaseUrl = process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://game_service:4005';
+	private readonly	gamesBaseUrl =
+		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://game_service:4005';
 	private readonly	fetcher: any = (globalThis as any).fetch;
 
-	afterInit(): void {
-		this.logger.log('Gateway prêt');
+	setServer(server: Server): void {
+		this.server = server;
 	}
 
-	handleConnection(client: Socket): void {
-		this.logger.log(`Client ${client.id} connecté`);
-	}
-
-	handleDisconnect(client: Socket): void {
-		this.logger.log(`Client ${client.id} déconnecté`);
-		this.cleanupClient(client);
-	}
-
-	@SubscribeMessage('pong:create')
-	async createMatch(
-		@ConnectedSocket() client: Socket,
-		@MessageBody()
+	async handleCreateMatch(
+		client: Socket,
 		payload: { player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
 			const	body = { player: payload?.player ?? 'player' };
-			const	response = await this.postJson<MatchJoin>(
-				'/pong/matches',
-				body,
-			);
+			const	response = await this.postJson<MatchJoin>('/pong/matches', body);
 
 			await client.join(this.getRoom(response.matchId));
 			this.registerClient(response.matchId, client.id);
 			this.startPolling(response.matchId);
 
-			this.server
-				.to(this.getRoom(response.matchId))
-				.emit('pong:state', response.state);
+			this.emitState(response.matchId, response.state);
 
 			return response;
 		} catch (error) {
@@ -75,10 +42,8 @@ export class PongGateway
 		}
 	}
 
-	@SubscribeMessage('pong:join')
-	async joinMatch(
-		@ConnectedSocket() client: Socket,
-		@MessageBody()
+	async handleJoinMatch(
+		client: Socket,
 		payload: { matchId: string; player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
@@ -92,9 +57,7 @@ export class PongGateway
 			this.registerClient(response.matchId, client.id);
 			this.startPolling(response.matchId);
 
-			this.server
-				.to(this.getRoom(response.matchId))
-				.emit('pong:state', response.state);
+			this.emitState(response.matchId, response.state);
 
 			return response;
 		} catch (error) {
@@ -104,10 +67,8 @@ export class PongGateway
 		}
 	}
 
-	@SubscribeMessage('pong:move')
-	async move(
-		@ConnectedSocket() client: Socket,
-		@MessageBody()
+	async handleMove(
+		client: Socket,
 		payload: { matchId: string; player: string; direction: PongDirection },
 	): Promise<{ state?: PongState; error?: string }> {
 		if (!payload?.matchId) {
@@ -126,9 +87,7 @@ export class PongGateway
 			);
 
 			if (client.rooms.has(this.getRoom(payload.matchId))) {
-				this.server
-					.to(this.getRoom(payload.matchId))
-					.emit('pong:state', state);
+				this.emitState(payload.matchId, state);
 			}
 
 			return { state };
@@ -137,6 +96,26 @@ export class PongGateway
 			this.logger.error(message);
 			return { error: message };
 		}
+	}
+
+	cleanupClient(client: Socket): void {
+		for (const	room of client.rooms) {
+			if (!room.startsWith('match:')) {
+				continue;
+			}
+
+			const	matchId = room.replace('match:', '');
+			this.unregisterClient(matchId, client.id);
+		}
+	}
+
+	private emitState(matchId: string, state: PongState): void {
+		if (!this.server) {
+			this.logger.error('Socket server non initialisé pour PongExchangeService');
+			return;
+		}
+
+		this.server.to(this.getRoom(matchId)).emit('pong:state', state);
 	}
 
 	private getRoom(matchId: string): string {
@@ -170,17 +149,6 @@ export class PongGateway
 		}
 	}
 
-	private cleanupClient(client: Socket): void {
-		for (const	room of client.rooms) {
-			if (!room.startsWith('match:')) {
-				continue;
-			}
-
-			const	matchId = room.replace('match:', '');
-			this.unregisterClient(matchId, client.id);
-		}
-	}
-
 	private startPolling(matchId: string): void {
 		const	tracker =
 			this.matchTrackers.get(matchId) ??
@@ -196,7 +164,7 @@ export class PongGateway
 					`/pong/matches/${matchId}/state`,
 				);
 
-				this.server.to(this.getRoom(matchId)).emit('pong:state', state);
+				this.emitState(matchId, state);
 			} catch (error) {
 				this.logger.warn(
 					`Polling match ${matchId} échoué: ${(error as Error).message}`,
@@ -243,3 +211,5 @@ export class PongGateway
 		return (await response.json()) as T;
 	}
 }
+
+

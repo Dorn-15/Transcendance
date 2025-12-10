@@ -3,15 +3,30 @@ services:
     build:
       context: ./nginx
       dockerfile: dockerfile
-    container_name: gateway_transcendance
+    container_name: ${PROXY_NAME}
     depends_on:
-      - frontend
-      - auth_service
-      - social_service
-      - game_service
-      - realtime_gateway
-      # - room_service
-      #- matchmaking_service
+      - ${FRONTEND_NAME}
+      - ${AUTH_SERVICE_NAME}
+      - ${SOCIAL_SERVICE_NAME}
+      - ${GAME_SERVICE_NAME}
+      - ${REALTIME_GATEWAY_NAME}
+      # - ${ROOM_SERVICE_NAME}
+      #- ${MATCHMAKING_SERVICE_NAME}
+    environment:
+      - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
+      - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
+      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
+      - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
+      - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
+      - ROOM_HOST=${ROOM_SERVICE_NAME}:${ROOM_PORT}
+      - MATCHMAKING_HOST=${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
+      - FRONT_PATH=${FRONT_PATH}
+      - AUTH_PATH=${AUTH_PATH}
+      - SOCIAL_PATH=${SOCIAL_PATH}
+      - GAMES_PATH=${GAMES_PATH}
+      - ROOM_PATH=${ROOM_PATH}
+      - MATCHMAKING_PATH=${MATCHMAKING_PATH}
+      - WS_PATH=${WS_PATH}
     # for prod -----------------------------------------------
     # labels:
     #   - "traefik.enable=true"
@@ -40,12 +55,22 @@ services:
     build:
       context: ./services/front
       dockerfile: dockerfile
-    container_name: front_transcendance
+    container_name: ${FRONTEND_NAME}
     expose:
-      - "3000"
+      - "${FRONTEND_PORT}"
     environment:
-      - NODE_ENV=production
-      - PORT=3000
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${FRONTEND_PORT}
+      - DOMAIN=${DOMAIN}
+      - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
+      - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
+      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
+      - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
+      - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
+      - AUTH_PATH=${AUTH_PATH}
+      - SOCIAL_PATH=${SOCIAL_PATH}
+      - GAMES_PATH=${GAMES_PATH}
+      - WS_PATH=${WS_PATH}
     networks:
       - internal
 
@@ -53,15 +78,15 @@ services:
     build:
       context: ./services/auth
       dockerfile: dockerfile
-    container_name: auth_service
+    container_name: ${AUTH_SERVICE_NAME}
     depends_on:
-      - postgres
+      - ${POSTGRES_HOST}
     expose:
-      - "4001"
+      - "${AUTH_PORT}"
     environment:
-      - NODE_ENV=production
-      - PORT=4001
-      - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/auth
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${AUTH_PORT}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     networks:
       - internal
 
@@ -69,17 +94,17 @@ services:
     build:
       context: ./services/social
       dockerfile: dockerfile
-    container_name: social_service
+    container_name: ${SOCIAL_SERVICE_NAME}
     depends_on:
-      - postgres
-      - redis
+      - ${POSTGRES_HOST}
+      - ${REDIS_HOST}
     expose:
-      - "4002"
+      - "${SOCIAL_PORT}"
     environment:
-      - NODE_ENV=production
-      - PORT=4002
-      - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/social
-      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${SOCIAL_PORT}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
     networks:
       - internal
 
@@ -87,15 +112,15 @@ services:
   #   build:
   #     context: ./services/room
   #     dockerfile: dockerfile
-  #   container_name: room_service
+  #   container_name: ${ROOM_SERVICE_NAME}
   #   depends_on:
-  #     - postgres
+  #     - ${POSTGRES_HOST}
   #   expose:
-  #     - "4003"
+  #     - "${ROOM_SERVICE_PORT}"
   #   environment:
   #     - NODE_ENV=production
   #     - PORT=4003
-  #     - DATABASE_URL=postgresql://transcendance:transcendance@postgres:5432/room
+  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
   #   networks:
   #     - internal
 
@@ -103,16 +128,16 @@ services:
   #   build:
   #     context: ./services/matchmaking
   #     dockerfile: dockerfile
-  #   container_name: matchmaking_service
+  #   container_name: ${MATCHMAKING_SERVICE_NAME}
   #   depends_on:
-  #     - redis
-  #     - room_service
+  #     - ${REDIS_HOST}
+  #     - ${ROOM_SERVICE_NAME}
   #   expose:
-  #     - "4004"
+  #     - "${MATCHMAKING_SERVICE_PORT}"
   #   environment:
-  #     - NODE_ENV=production
-  #     - PORT=4004
-  #     - REDIS_URL=redis://redis:6379
+  #     - NODE_ENV=${NODE_ENV}
+  #     - PORT=${MATCHMAKING_SERVICE_PORT}
+  #     - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
   #   networks:
   #     - internal
 
@@ -120,15 +145,15 @@ services:
     build:
       context: ./services/games
       dockerfile: dockerfile
-    container_name: game_service
+    container_name: ${GAME_SERVICE_NAME}
     depends_on:
-      - redis
+      - ${REDIS_HOST}
     expose:
-      - "4005"
+      - "${GAME_PORT}"
     environment:
-      - NODE_ENV=production
-      - PORT=4005
-      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${GAME_PORT}
+      - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
     networks:
       - internal
 
@@ -136,42 +161,42 @@ services:
     build:
       context: ./services/realtime-gateway
       dockerfile: dockerfile
-    container_name: realtime_gateway
+    container_name: ${REALTIME_GATEWAY_NAME}
     depends_on:
-      - auth_service
-      - social_service
-      - game_service
-      - redis
-      # - room_service
-      # - matchmaking_service
+      - ${AUTH_SERVICE_NAME}
+      - ${SOCIAL_SERVICE_NAME}
+      - ${GAME_SERVICE_NAME}
+      - ${REDIS_HOST}
+      # - ${ROOM_SERVICE_NAME}
+      # - ${MATCHMAKING_SERVICE_NAME}
     expose:
-      - "4006"
+      - ${REALTIME_GATEWAY_PORT}
     environment:
-      - NODE_ENV=production
-      - PORT=4006
-      - REDIS_URL=redis://redis:6379
-      - AUTH_HOST=http://auth_service:4001
-      - SOCIAL_HOST=http://social_service:4002
-      - GAME_HOST=http://game_service:4005
-      # - ROOM_HOST=http://room_service:4003
-      # - MATCHMAKING_HOST=http://matchmaking_service:4004
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${REALTIME_GATEWAY_PORT}
+      - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
+      - AUTH_HOST=http://${AUTH_SERVICE_NAME}:${AUTH_PORT}
+      - SOCIAL_HOST=http://${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
+      - GAME_HOST=http://${GAME_SERVICE_NAME}:${GAME_PORT}
+      - ROOM_HOST=http://${ROOM_SERVICE_NAME}:${ROOM_PORT}
+      - MATCHMAKING_HOST=http://${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
     networks:
       - internal
 
   postgres:
     image: postgres:15-alpine
-    container_name: postgres_transcendance
+    container_name: ${POSTGRES_HOST}
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=transcendance
-      - POSTGRES_PASSWORD=transcendance
-      - POSTGRES_DB=transcendance
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - internal
 
   redis:
     image: redis:7-alpine
-    container_name: redis_transcendance
+    container_name: ${REDIS_HOST}
     command:
       - redis-server
       - --appendonly
