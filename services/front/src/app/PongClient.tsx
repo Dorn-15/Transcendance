@@ -248,21 +248,21 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 					x2={VIEWPORT_WIDTH / 2}
 					y2={VIEWPORT_HEIGHT}
 					stroke="#1d4ed8"
-					strokeDasharray="8 8"
-					strokeWidth="4"
+					strokeDasharray={8 * scaleX}
+					strokeWidth={4 * scaleX}
 				/>
 				<rect
-					x={16}
+					x={16 - (4 * scaleX)}
 					y={state.leftY * scaleY}
-					width={16}
+					width={4 * scaleX}
 					height={state.paddleHeight * scaleY}
 					fill="#22d3ee"
 					rx="4"
 				/>
 				<rect
-					x={VIEWPORT_WIDTH - 32}
+					x={VIEWPORT_WIDTH - 16}
 					y={state.rightY * scaleY}
-					width={16}
+					width={4 * scaleX}
 					height={state.paddleHeight * scaleY}
 					fill="#a855f7"
 					rx="4"
@@ -270,7 +270,7 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 				<circle
 					cx={state.ballX * scaleX}
 					cy={state.ballY * scaleY}
-					r={10}
+					r={10 * scaleX}
 					fill="#fbbf24"
 				/>
 			</svg>

@@ -17,6 +17,7 @@ export interface PongState {
 	ballY: number;
 	ballVX: number;
 	ballVY: number;
+	ballSpeed: number;
 	leftY: number;
 	rightY: number;
 	scoreLeft: number;
