@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -16,8 +16,14 @@ export class AppController {
 	@Get('status')
 	status() {
 		return {
-			authenticated: true,
+			authenticated: false,
 		};
 	}
+	@Post('register')
+  	register(@Body() body: { username: string }) {
+    	return {
+    		authenticated: true,
+			username: body.username,
+    	};
+	}
 }
-

@@ -1,4 +1,5 @@
 import PongClient from './PongClient';
+import LoginForm from './loginForm';
 import styles from './page.module.css';
 
 // Forcer un rendu dynamique pour lire l'environnement au runtime (Docker)
@@ -77,9 +78,7 @@ export default async function Page() {
 						<div className={styles.title}>Gateway + Games (Pong)</div>
 					</div>
 
-					<div>
-						<strong>Not logged in</strong>
-					</div>
+					<LoginForm />
 				</main>
 			</div>
 		);
