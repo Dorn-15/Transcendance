@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import type { MatchJoin, PongDirection, PongState } from './pong.types';
+import type {
+	MatchJoin,
+	PongDirection,
+	PongState,
+	DisconnectResult,
+} from './pong.types';
 
 interface MatchTracker {
 	sockets: Set<string>;
@@ -12,6 +17,10 @@ export class PongExchangeService {
 	private readonly	logger = new Logger('PongExchangeService');
 	private			server: Server | null = null;
 	private readonly	matchTrackers = new Map<string, MatchTracker>();
+	private readonly	clientSessions = new Map<
+		string,
+		Array<{ matchId: string; player: string }>
+	>();
 	private readonly	gamesBaseUrl =
 		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://game_service:4005';
 	private readonly	fetcher: any = (globalThis as any).fetch;
@@ -30,6 +39,7 @@ export class PongExchangeService {
 
 			await client.join(this.getRoom(response.matchId));
 			this.registerClient(response.matchId, client.id);
+			this.registerClientSession(client.id, response.matchId, body.player);
 			this.startPolling(response.matchId);
 
 			this.emitState(response.matchId, response.state);
@@ -44,17 +54,19 @@ export class PongExchangeService {
 
 	async handleJoinMatch(
 		client: Socket,
-		payload: { matchId: string; player: string },
+		payload: { matchId?: string; player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
 			const	body = {
 				player: payload?.player ?? 'player',
+				matchId: payload?.matchId,
 			};
-			const	path = `/pong/matches/${payload.matchId}/join`;
+			const	path = `/pong/matches/join`;
 			const	response = await this.postJson<MatchJoin>(path, body);
 
 			await client.join(this.getRoom(response.matchId));
 			this.registerClient(response.matchId, client.id);
+			this.registerClientSession(client.id, response.matchId, body.player);
 			this.startPolling(response.matchId);
 
 			this.emitState(response.matchId, response.state);
@@ -99,10 +111,21 @@ export class PongExchangeService {
 	}
 
 	cleanupClient(client: Socket): void {
+		const	sessions = this.clientSessions.get(client.id) ?? [];
+		this.clientSessions.delete(client.id);
+
+		for (const	session of sessions) {
+			this.unregisterClient(session.matchId, client.id);
+			this.notifyDisconnect(session).catch((error) => {
+				this.logger.warn(
+					`Erreur lors de la déconnexion du match ${session.matchId}: ${(error as Error).message}`,
+				);
+			});
+		}
+
 		for (const	room of client.rooms) {
-			if (!room.startsWith('match:')) {
+			if (!room.startsWith('match:'))
 				continue;
-			}
 
 			const	matchId = room.replace('match:', '');
 			this.unregisterClient(matchId, client.id);
@@ -149,6 +172,17 @@ export class PongExchangeService {
 		}
 	}
 
+	private registerClientSession(socketId: string, matchId: string, player: string): void {
+		const	sessions =
+			this.clientSessions.get(socketId) ??
+			([] as Array<{ matchId: string; player: string }>);
+
+		if (!sessions.find((session) => session.matchId === matchId && session.player === player))
+			sessions.push({ matchId, player });
+
+		this.clientSessions.set(socketId, sessions);
+	}
+
 	private startPolling(matchId: string): void {
 		const	tracker =
 			this.matchTrackers.get(matchId) ??
@@ -170,9 +204,16 @@ export class PongExchangeService {
 					`Polling match ${matchId} échoué: ${(error as Error).message}`,
 				);
 			}
-		}, 1000 / 60);
+		}, 1000 / 30);
 
 		this.matchTrackers.set(matchId, tracker);
+	}
+
+	private async notifyDisconnect(session: { matchId: string; player: string }): Promise<DisconnectResult> {
+		return this.postJson<DisconnectResult>(
+			`/pong/matches/${session.matchId}/disconnect`,
+			{ player: session.player },
+		);
 	}
 
 	private async postJson<T>(path: string, body: object): Promise<T> {

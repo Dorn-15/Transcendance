@@ -4,6 +4,7 @@ import {
 	PongMatch,
 	PongPlayer,
 	PongState,
+	DisconnectResult,
 } from './pong.types';
 
 interface MatchInputs {
@@ -69,6 +70,7 @@ export class PongService implements OnModuleDestroy {
 			{
 				id: playerId,
 				side: 'left',
+				connected: true,
 			},
 		];
 
@@ -83,23 +85,33 @@ export class PongService implements OnModuleDestroy {
 		return match;
 	}
 
-	joinMatch(matchId: string, playerId: string): PongMatch {
+	joinMatch(matchId: string | undefined, playerId: string): PongMatch {
+		let	existingMatch: PongMatch | undefined;
+		existingMatch = this.findMatchByPlayer(playerId);
+		if (existingMatch) {
+			this.markPlayerConnected(existingMatch, playerId);
+			return existingMatch;
+		}
+
+		if (!matchId)
+			throw new Error('Match introuvable');
+
 		const	match = this.matches.get(matchId);
 		if (!match)
 			throw new Error('Match introuvable');
 		else if (match.players.length >= 2)
 			throw new Error('Match complet');
-		else if (match.players.find((p) => p.id === playerId))
-			return match;
+		else if (match.state.status === 'ended')
+			throw new Error('Match terminé');
 
 		match.players.push({
 			id: playerId,
 			side: 'right',
+			connected: true,
 		});
 		if (!this.inputs.has(matchId))
 			this.inputs.set(matchId, { left: 'none', right: 'none' });
-		match.state.status = 'running';
-		match.state.lastUpdate = Date.now();
+		this.resumeIfReady(match);
 		return match;
 	}
 
@@ -118,6 +130,8 @@ export class PongService implements OnModuleDestroy {
 		const	player = match.players.find((p) => p.id === playerId);
 		if (!player)
 			throw new Error('Joueur non inscrit');
+		else if (match.state.status !== 'running')
+			return match.state;
 
 		let	matchInputs: MatchInputs | undefined;
 		matchInputs = this.inputs.get(matchId);
@@ -133,6 +147,37 @@ export class PongService implements OnModuleDestroy {
 		return match.state;
 	}
 
+	disconnectPlayer(matchId: string, playerId: string): DisconnectResult {
+		const	match = this.matches.get(matchId);
+		if (!match)
+			throw new Error('Match introuvable');
+
+		const	player = match.players.find((p) => p.id === playerId);
+		if (!player)
+			throw new Error('Joueur non inscrit');
+
+		player.connected = false;
+		if (match.state.status !== 'ended')
+			match.state.status = 'paused';
+
+		const	allDisconnected = match.players.every((p) => !p.connected);
+		if (allDisconnected) {
+			this.matches.delete(matchId);
+			this.inputs.delete(matchId);
+			return {
+				matchId,
+				removed: true,
+			};
+		}
+
+		return {
+			matchId,
+			removed: false,
+			state: match.state,
+			players: match.players,
+		};
+	}
+
 	onModuleDestroy(): void {
 		clearInterval(this.tickInterval);
 	}
@@ -140,13 +185,19 @@ export class PongService implements OnModuleDestroy {
 	private tick(): void {
 		const	now = Date.now();
 
-		this.matches.forEach((match) => {
+		for (const	[matchId, match] of this.matches.entries()) {
+			if (match.state.status === 'ended' && match.players.every((p) => !p.connected)) {
+				this.matches.delete(matchId);
+				this.inputs.delete(matchId);
+				continue;
+			}
+
 			if (match.state.status !== 'running')
-				return;
+				continue;
 			this.applyQueuedInputs(match);
 			this.updatePhysics(match, this.frameRateS);
 			match.state.lastUpdate = now;
-		});
+		}
 	}
 
 	private applyQueuedInputs(match: PongMatch): void {
@@ -253,6 +304,51 @@ export class PongService implements OnModuleDestroy {
 
 	private clamp(value: number, min: number, max: number): number {
 		return Math.max(min, Math.min(max, value));
+	}
+
+	private findMatchByPlayer(playerId: string): PongMatch | undefined {
+		for (const	match of this.matches.values()) {
+			if (match.state.status === 'ended')
+				continue;
+
+			const	player = match.players.find((p) => p.id === playerId);
+			if (player)
+				return match;
+		}
+
+		return undefined;
+	}
+
+	private markPlayerConnected(match: PongMatch, playerId: string): void {
+		const	player = match.players.find((p) => p.id === playerId);
+		if (!player)
+			return;
+
+		player.connected = true;
+		if (!this.inputs.has(match.id))
+			this.inputs.set(match.id, { left: 'none', right: 'none' });
+		this.resumeIfReady(match);
+	}
+
+	private resumeIfReady(match: PongMatch): void {
+		if (match.state.status === 'ended')
+			return;
+
+		const	hasTwoPlayers = match.players.length >= 2;
+		if (!hasTwoPlayers) {
+			match.state.status = 'waiting';
+			return;
+		}
+
+		const	allConnected = match.players.every((p) => p.connected);
+		if (allConnected) {
+			match.state.status = 'running';
+			match.state.lastUpdate = Date.now();
+		} else if (match.players.some((p) => p.connected)) {
+			match.state.status = 'paused';
+		} else {
+			match.state.status = 'waiting';
+		}
 	}
 
 	private handlePaddleBounce(state: PongState, paddleSide: 'left' | 'right'): void {

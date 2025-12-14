@@ -1,10 +1,11 @@
 export type PongDirection = 'up' | 'down' | 'none';
 
-export type PongStatus = 'waiting' | 'running' | 'ended';
+export type PongStatus = 'waiting' | 'running' | 'paused' | 'ended';
 
 export interface PongPlayer {
 	id: string;
 	side: 'left' | 'right';
+	connected: boolean;
 }
 
 export interface PongState {
@@ -33,5 +34,12 @@ export interface PongMatch {
 export interface MatchJoin {
 	matchId: string;
 	state: PongState;
-	players: Array<{ id: string; side: 'left' | 'right' }>;
+	players: Array<{ id: string; side: 'left' | 'right'; connected: boolean }>;
+}
+
+export interface DisconnectResult {
+	matchId: string;
+	removed: boolean;
+	state?: PongState;
+	players?: Array<{ id: string; side: 'left' | 'right'; connected: boolean }>;
 }

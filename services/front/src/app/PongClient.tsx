@@ -55,6 +55,7 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 	const	[joinInput, setJoinInput] = useState<string>('');
 	const	[pongState, setPongState] = useState<PongState | null>(null);
 	const	[lastError, setLastError] = useState<string | null>(null);
+	const	activeMatch = pongState && pongState.status !== 'ended';
 
 	const	requireSocket = useCallback((): Socket | null => {
 		const	socket = socketRef.current;
@@ -116,6 +117,11 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 			return;
 		}
 
+		if (activeMatch) {
+			setLastError('Une partie est déjà en cours, rejoignez-la ou attendez sa fin.');
+			return;
+		}
+
 		socket.emit(
 			'pong:create',
 			{ player: playerName || 'player' },
@@ -135,7 +141,7 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 				}
 			},
 		);
-	}, [playerName, requireSocket]);
+	}, [activeMatch, playerName, requireSocket]);
 
 	const	handleJoin = useCallback((): void => {
 		const	socket = requireSocket();
@@ -145,17 +151,17 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 		}
 
 		const	targetId = joinInput ? extractMatchId(joinInput) : matchId;
+		const	normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
 
-		if (!targetId) {
-			setLastError('Aucun match à rejoindre');
-			return;
-		}
-
-		setMatchId(targetId);
+		if (normalizedMatchId)
+			setMatchId(normalizedMatchId);
 
 		socket.emit(
 			'pong:join',
-			{ matchId: targetId, player: playerName || 'player' },
+			{
+				matchId: normalizedMatchId,
+				player: playerName || 'player',
+			},
 			(response: { matchId?: string; state?: PongState; error?: string }) => {
 				if (response?.error) {
 					setLastError(response.error);
@@ -347,7 +353,7 @@ export default function PongClient({ gatewayConfig }: PongClientProps) {
 				<button
 					className={styles.button}
 					onClick={handleCreate}
-					disabled={!connected}
+					disabled={!connected || Boolean(activeMatch)}
 				>
 					Créer match
 				</button>

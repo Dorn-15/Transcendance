@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PongService } from './pong.service';
-import type { PongState, MatchJoin } from './pong.types';
+import type { PongState, MatchJoin, DisconnectResult } from './pong.types';
 
 @Controller('pong')
 export class PongController {
@@ -11,6 +11,19 @@ export class PongController {
 		@Body() body: { player: string },
 	): MatchJoin {
 		const	match = this.pongService.createMatch(body?.player ?? 'player');
+
+		return {
+			matchId: match.id,
+			state: match.state,
+			players: match.players,
+		};
+	}
+
+	@Post('matches/join')
+	joinAny(
+		@Body() body: { player: string; matchId?: string },
+	): MatchJoin {
+		const	match = this.pongService.joinMatch(body?.matchId, body?.player ?? 'player');
 
 		return {
 			matchId: match.id,
@@ -43,6 +56,14 @@ export class PongController {
 			body?.player ?? 'player',
 			body?.direction ?? 'none',
 		);
+	}
+
+	@Post('matches/:matchId/disconnect')
+	disconnect(
+		@Param('matchId') matchId: string,
+		@Body() body: { player: string },
+	): DisconnectResult {
+		return this.pongService.disconnectPlayer(matchId, body?.player ?? 'player');
 	}
 
 	@Get('matches/:matchId/state')
