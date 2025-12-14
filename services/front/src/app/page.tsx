@@ -4,9 +4,15 @@ import styles from './page.module.css';
 // Forcer un rendu dynamique pour lire l'environnement au runtime (Docker)
 export const dynamic = 'force-dynamic';
 
+
+type AuthStatus = {
+	authenticated: boolean;
+};
+
 export type GatewayConfig = {
 	origin: string;
 	path: string;
+	basePath: string;
 };
 
 function	getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
@@ -25,18 +31,59 @@ function	getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
 		return {
 			origin,
 			path: `${basePath}/socket.io`,
+			basePath: `${basePath}`,
 		};
 	}
 
 	return {
 		origin: 'http://localhost:4006',
 		path: '/socket.io',
+		basePath: '',
 	};
 }
 
-export default function Page() {
-	const	env = process.env as NodeJS.ProcessEnv;
-	const	gatewayConfig = getGatewayConfig(env);
+async function getAuthStatus( gatewayConfig: GatewayConfig): Promise<AuthStatus> {
+	try {
+		const res = await fetch(
+			`${gatewayConfig.basePath}/api/auth/status`,
+			{
+				credentials: 'include',
+				cache: 'no-store',
+			}
+		);
+
+		if (!res.ok) {
+			return { authenticated: false };
+		}
+
+		return (await res.json()) as AuthStatus;
+	} catch {
+		return { authenticated: false };
+	}
+}
+
+
+
+export default async function Page() {
+	const env = process.env as NodeJS.ProcessEnv;
+	const gatewayConfig = getGatewayConfig(env);
+	const authStatus = await getAuthStatus(gatewayConfig);
+
+	if (!authStatus.authenticated) {
+		return (
+			<div className={styles.page}>
+				<main className={styles.main}>
+					<div className={styles.header}>
+						<div className={styles.title}>Gateway + Games (Pong)</div>
+					</div>
+
+					<div>
+						<strong>Not logged in</strong>
+					</div>
+				</main>
+			</div>
+		);
+	}
 
 	return (
 		<div className={styles.page}>
@@ -53,4 +100,3 @@ export default function Page() {
 		</div>
 	);
 }
-
