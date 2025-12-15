@@ -1,6 +1,6 @@
 import * as BABYLON from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
-import { ALL_LANGUAGES, LangKey } from './languageData';
+import { LangKey } from './languageData';
 
 declare global {
     interface Window {
@@ -12,7 +12,7 @@ class GameScene {
     engine: BABYLON.Engine;
     scene: BABYLON.Scene;
     camera!: BABYLON.ArcRotateCamera;
-    
+
     currentLangId: LangKey;
 
     initialCameraState: any = null;
@@ -20,7 +20,7 @@ class GameScene {
 
     constructor(canvasElement: HTMLCanvasElement, langId: LangKey = 1) {
         this.currentLangId = langId;
-        
+
         this.engine = new BABYLON.Engine(canvasElement, true);
         this.scene = this.createScene();
 
@@ -55,17 +55,17 @@ class GameScene {
         // --- CAMERA ---
         this.camera = new BABYLON.ArcRotateCamera(
             "camera1",
-            Math.PI / 2, 
-            Math.PI / 2.15, 
-            10, 
-            new BABYLON.Vector3(0, 1, 0), 
+            Math.PI / 2,
+            Math.PI / 2.15,
+            10,
+            new BABYLON.Vector3(0, 1, 0),
             scene
         );
         this.camera.checkCollisions = true;
-        this.camera.fov = 2 * Math.atan(24 / (2 * 50)); 
+        this.camera.fov = 2 * Math.atan(24 / (2 * 50));
         this.camera.minZ = 0.1;
         this.camera.attachControl(this.engine.getRenderingCanvas(), true);
-        this.camera.inputs.clear(); 
+        this.camera.inputs.clear();
 
         this.initialCameraState = {
             alpha: this.camera.alpha,
@@ -114,19 +114,19 @@ class GameScene {
                 const root = result.meshes[0];
                 root.position = new BABYLON.Vector3(-1.5, 0, 2.3);
                 root.rotate(BABYLON.Axis.Y, Math.PI / 4, BABYLON.Space.LOCAL);
-                root.metadata = { 
+                root.metadata = {
                     arcade: true,
                     gameId: "breakout",
                     zoomSettings: { height: 1.28, beta: Math.PI / 2.7, radius: 1.3 }
-                }; 
-                setupShadows(root, true, false); 
+                };
+                setupShadows(root, true, false);
             });
 
         BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "Pong.glb", scene)
             .then((result: any) => {
                 const root = result.meshes[0];
                 root.position = new BABYLON.Vector3(0, 0, 2);
-                root.metadata = { 
+                root.metadata = {
                     arcade: true,
                     gameId: "pong",
                     zoomSettings: { height: 1.5, beta: Math.PI / 2.5, radius: 0.8 }
@@ -139,7 +139,7 @@ class GameScene {
                 const root = result.meshes[0];
                 root.position = new BABYLON.Vector3(1.5, 0, 2.3);
                 root.rotate(BABYLON.Axis.Y, -Math.PI / 4, BABYLON.Space.LOCAL);
-                root.metadata = { 
+                root.metadata = {
                     arcade: true,
                     gameId: "space-invaders",
                     zoomSettings: { height: 1.48, beta: Math.PI / 2.3, radius: 1.1 }
@@ -185,14 +185,13 @@ class GameScene {
                         currentMesh = currentMesh.parent;
                     }
 
-                    if (parentRoot) {
-                        this.zoomToMesh(parentRoot);
-                        const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
-                        if (titleDiv) {
-                            titleDiv.style.opacity = "0";
-                            setTimeout(() => { titleDiv.style.display = "none"; }, 1000);
-                        }
-                    }
+					if (parentRoot) {
+						this.zoomToMesh(parentRoot);
+						const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
+						if (titleDiv) {
+							titleDiv.classList.add("undisplay");
+						}
+					}
                 }
             }
         });
@@ -213,8 +212,7 @@ class GameScene {
         this.isCameraAnimating = true;
         const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
         if (titleDiv) {
-            titleDiv.style.display = "";
-            setTimeout(() => { titleDiv.style.opacity = "1"; }, 50);
+			titleDiv.classList.remove("undisplay");
         }
 
         const frameRate = 60;
@@ -225,56 +223,56 @@ class GameScene {
         const targetAlpha = this.initialCameraState.alpha;
         const currentAlpha = this.camera.alpha;
         const twoPi = Math.PI * 2;
-        
+
         let diff = (targetAlpha - currentAlpha) % twoPi;
         if (diff !== diff % twoPi) diff = (diff + twoPi) % twoPi;
         if (diff > Math.PI) diff -= twoPi;
         else if (diff < -Math.PI) diff += twoPi;
-        
+
         const finalAlpha = currentAlpha + diff;
 
         BABYLON.Animation.CreateAndStartAnimation(
             "animTarget",
-            this.camera, 
-            "target", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.target, 
-            this.initialCameraState.target, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            this.camera,
+            "target",
+            frameRate,
+            frameRate * duration,
+            this.camera.target,
+            this.initialCameraState.target,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
         BABYLON.Animation.CreateAndStartAnimation(
-            "animAlpha", 
-            this.camera, 
-            "alpha", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.alpha, 
-            finalAlpha, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            "animAlpha",
+            this.camera,
+            "alpha",
+            frameRate,
+            frameRate * duration,
+            this.camera.alpha,
+            finalAlpha,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
-        BABYLON.Animation.CreateAndStartAnimation("animRadius", 
-            this.camera, 
-            "radius", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.radius, 
-            this.initialCameraState.radius, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+        BABYLON.Animation.CreateAndStartAnimation("animRadius",
+            this.camera,
+            "radius",
+            frameRate,
+            frameRate * duration,
+            this.camera.radius,
+            this.initialCameraState.radius,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
-        
-        BABYLON.Animation.CreateAndStartAnimation("animBeta", 
-            this.camera, 
-            "beta", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.beta, 
-            this.initialCameraState.beta, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
-            ease, 
+
+        BABYLON.Animation.CreateAndStartAnimation("animBeta",
+            this.camera,
+            "beta",
+            frameRate,
+            frameRate * duration,
+            this.camera.beta,
+            this.initialCameraState.beta,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
+            ease,
             () => {
                 this.isCameraAnimating = false;
         });
@@ -287,19 +285,19 @@ class GameScene {
         const ease = new BABYLON.CubicEase();
         ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
 
-        const settings = targetMesh.metadata.zoomSettings || { 
-            height: 1.53, 
-            beta: Math.PI / 2, 
-            radius: 0.8 
+        const settings = targetMesh.metadata.zoomSettings || {
+            height: 1.53,
+            beta: Math.PI / 2,
+            radius: 0.8
         };
 
         const boundingBox = targetMesh.getBoundingInfo().boundingBox;
         const targetEnd = boundingBox.centerWorld.clone();
-        targetEnd.y += settings.height; 
+        targetEnd.y += settings.height;
 
         const localForward = new BABYLON.Vector3(0, 0, 1);
         let worldForward = new BABYLON.Vector3(0,0,1);
-        
+
         if (targetMesh.absoluteRotationQuaternion) {
             worldForward = localForward.applyRotationQuaternion(targetMesh.absoluteRotationQuaternion);
         } else {
@@ -318,49 +316,49 @@ class GameScene {
         const finalAlpha = currentAlpha + diff;
 
         BABYLON.Animation.CreateAndStartAnimation(
-            "animTarget", 
-            this.camera, 
-            "target", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.target, 
-            targetEnd, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            "animTarget",
+            this.camera,
+            "target",
+            frameRate,
+            frameRate * duration,
+            this.camera.target,
+            targetEnd,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
         BABYLON.Animation.CreateAndStartAnimation(
-            "animAlpha", 
-            this.camera, 
-            "alpha", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.alpha, 
-            finalAlpha, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            "animAlpha",
+            this.camera,
+            "alpha",
+            frameRate,
+            frameRate * duration,
+            this.camera.alpha,
+            finalAlpha,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
         BABYLON.Animation.CreateAndStartAnimation(
-            "animRadius", 
-            this.camera, 
-            "radius", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.radius, 
-            settings.radius, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
+            "animRadius",
+            this.camera,
+            "radius",
+            frameRate,
+            frameRate * duration,
+            this.camera.radius,
+            settings.radius,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             ease
         );
-        
+
         BABYLON.Animation.CreateAndStartAnimation(
-            "animBeta", 
-            this.camera, 
-            "beta", 
-            frameRate, 
-            frameRate * duration, 
-            this.camera.beta, 
-            settings.beta, 
-            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, 
-            ease, 
+            "animBeta",
+            this.camera,
+            "beta",
+            frameRate,
+            frameRate * duration,
+            this.camera.beta,
+            settings.beta,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
+            ease,
             () => {
                 const gameId = targetMesh.metadata.gameId;
                 if (gameId) {
@@ -372,67 +370,26 @@ class GameScene {
         );
     }
 
-    showGameInterface(gameId: string) {
-        const texts = ALL_LANGUAGES[this.currentLangId].defaultInfo;
+	showGameInterface(gameId: string) {
+		const	targetLang = this.currentLangId;
+		const	targetUrl = `/play/${gameId}?lang=${targetLang}`;
 
-        window.history.pushState({ gameId: gameId }, "", `/play/${gameId}`);
-
-        const div = document.createElement("div");
-        div.id = "game-overlay";
-        Object.assign(div.style, {
-            position: "absolute", top: "0", left: "0", width: "100%", height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.9)", zIndex: "10", display: "flex",
-            flexDirection: "column", alignItems: "center", justifyContent: "center"
-        });
-
-        const iframe = document.createElement("iframe");
-        iframe.src = `/games/${gameId}/index.html`; 
-        Object.assign(iframe.style, {
-            width: "80%", height: "80%", border: "4px solid #333",
-            borderRadius: "10px", backgroundColor: "white"
-        });
-        
-        iframe.onload = () => { iframe.contentWindow?.focus(); };
-        div.appendChild(iframe);
-
-        const closeBtn = document.createElement("button");
-        
-        closeBtn.textContent = texts.leave;
-        
-        Object.assign(closeBtn.style, {
-            marginTop: "15px", padding: "10px 20px", fontSize: "16px", cursor: "pointer",
-            backgroundColor: "#ff4444", color: "white", border: "none", borderRadius: "5px"
-        });
-
-        const closeGame = () => {
-            div.remove();
-            window.history.pushState({}, "", "/");
-            this.resetCamera();
-            setTimeout(() => { this.isCameraAnimating = false; }, 1100);
-        };
-
-        closeBtn.addEventListener("click", closeGame);
-        
-        const popState = () => {
-            closeGame();
-            window.removeEventListener('popstate', popState);
-        };
-        window.addEventListener('popstate', popState);
-
-        div.appendChild(closeBtn);
-        document.body.appendChild(div);
-    }
+		if (typeof window !== 'undefined') {
+			window.location.assign(targetUrl);
+		}
+		this.isCameraAnimating = false;
+	}
 }
 
 
 export function initGame(container: HTMLDivElement | HTMLCanvasElement, langId: LangKey = 1) {
     let canvas: HTMLCanvasElement;
-    
+
     if (container instanceof HTMLDivElement) {
         canvas = document.createElement('canvas');
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        canvas.id = 'renderCanvas'; 
+        canvas.id = 'renderCanvas';
         container.appendChild(canvas);
     } else {
         canvas = container as HTMLCanvasElement;

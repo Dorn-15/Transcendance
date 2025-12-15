@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
-import SettingsView from './views/SettingsView';
-import SocialView from './views/SocialView';
-import StatsView from './views/StatsView';
-import './GameUi.css';
+import SettingsView from '../views/SettingsView';
+import SocialView from '../views/SocialView';
+import StatsView from '../views/StatsView';
+import './Navbar.css';
 
-export default function GameUI() {
+export default function Navbar() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [currentLang, setCurrentLang] = useState<LangKey>(1);
@@ -34,39 +34,39 @@ export default function GameUI() {
     const backToMenu = () => setCurrentView('menu');
 
     return (
-        <div className="ui-layer">
-            <div className="title-overlay">
-                <div className="main-title">{texts.trans}</div>
+        <>
+            <header>
+                <div className="title-overlay">
+                    <div className="main-title">{texts.trans}</div>
 
-                <nav className="main-menu">
-                    <button onClick={() => setCurrentView('settings')}>{texts.param}</button>
-                    <button onClick={() => setCurrentView('social')}>{texts.social}</button>
-                    <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
-                </nav>
-            </div>
-
+                    <nav className="main-menu">
+                        <button onClick={() => setCurrentView('settings')}>{texts.param}</button>
+                        <button onClick={() => setCurrentView('social')}>{texts.social}</button>
+                        <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
+                    </nav>
+                </div>
+            </header>
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (
-
-                        <SettingsView 
-                            onClose={backToMenu} 
-                            currentLang={currentLang}
-                            onLanguageChange={changeLanguage}
+                        <SettingsView
+                        onClose={backToMenu}
+                        currentLang={currentLang}
+                        onLanguageChange={changeLanguage}
                         />
                     )}
                     {currentView === 'social' && (
-                        <SocialView 
-                            onClose={backToMenu}
-                            currentLang={currentLang} />
+                        <SocialView
+                        onClose={backToMenu}
+                        currentLang={currentLang} />
                     )}
                     {currentView === 'stats' && (
-                        <StatsView 
-                            onClose={backToMenu}
-                            currentLang={currentLang} />
+                        <StatsView
+                        onClose={backToMenu}
+                        currentLang={currentLang} />
                     )}
                 </div>
             )}
-        </div>
+        </>
     );
 }

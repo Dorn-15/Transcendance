@@ -1,19 +1,18 @@
-// src/app/page.tsx
 import GameCanva from '@/components/gameCanva';
-import GameUI from '@/components/GameUI';
+import Navbar from '@/components/header/Navbar';
 import { Suspense } from 'react';
+
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
     <main className="game-container">
-      
+
+      <Navbar />
       <div className="canvas-wrapper">
         <GameCanva />
       </div>
 
-      <Suspense fallback={null}>
-        <GameUI />
-      </Suspense>
 
     </main>
   );

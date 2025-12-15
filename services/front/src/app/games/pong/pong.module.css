@@ -1,0 +1,144 @@
+.page {
+	display: flex;
+	min-height: 100vh;
+	background: #0b1021;
+	color: #eef0f5;
+	justify-content: center;
+	padding: 40px 16px;
+	font-family: var(--font-geist-sans);
+}
+
+.title {
+	font-size: 32px;
+	font-weight: 700;
+}
+
+.tagline {
+	color: #94a3b8;
+}
+
+.card {
+	width: 80%;
+	height: 80%;
+	background: #11172e;
+	border: 1px solid #1f2a44;
+	border-radius: 12px;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.cardHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.label {
+	font-weight: 600;
+}
+
+.status {
+	font-size: 12px;
+	padding: 4px 8px;
+	border-radius: 999px;
+	border: 1px solid #24304c;
+	background: #0f1629;
+}
+
+.inputs {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.row {
+	display: flex;
+	gap: 8px;
+}
+
+.inputGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	flex: 1;
+}
+
+.fieldLabel {
+	font-size: 12px;
+	color: #9ca3af;
+}
+
+.input {
+	padding: 8px 10px;
+	border-radius: 8px;
+	border: 1px solid #1f2a44;
+	background: #0b1120;
+	color: #e5e7eb;
+	font-size: 14px;
+	outline: none;
+}
+
+.input::placeholder {
+	color: #6b7280;
+}
+
+.button {
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: #2563eb;
+	color: #fff;
+	border: none;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.button.secondary {
+	background: #1f2937;
+}
+
+.button.danger {
+	background: #b91c1c;
+}
+
+.canvas {
+	border: 1px solid #1f2a44;
+	border-radius: 12px;
+	background: #0f1629;
+	width: 100%;
+	max-width: 900px;
+	aspect-ratio: 4 / 3;
+	height: auto;
+}
+
+.board {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: center;
+}
+
+.stateLine {
+	display: flex;
+	justify-content: space-between;
+	font-size: 14px;
+	color: #cbd5e1;
+}
+
+.log {
+	background: #0f1629;
+	border: 1px solid #1f2a44;
+	border-radius: 12px;
+	padding: 12px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+	font-size: 13px;
+	color: #cbd5e1;
+	max-height: 180px;
+}
+
+.error {
+	color: #f87171;
+	font-size: 13px;
+}
