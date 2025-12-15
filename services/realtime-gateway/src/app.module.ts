@@ -3,9 +3,10 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { GatewayService } from './gateway';
 import { PongExchangeService } from './pong';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
-	imports: [],
+	imports: [MetricsModule],
 	controllers: [AppController],
 	providers: [AppService, GatewayService, PongExchangeService],
 })
