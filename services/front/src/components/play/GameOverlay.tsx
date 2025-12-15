@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import './GameOverlay.css';
-import {PongClient} from '@/app/games/pong/pong';
+import {Pong} from '@/app/games/pong/pong';
 import { GatewayConfig } from '@/app/play/[gameId]/page';
 type	GameOverlayProps = {
 	gameId: string;
@@ -46,7 +46,7 @@ export default function GameOverlay({ gameId, closeLabel, onClose, gatewayConfig
 	return (
 		<main className="game-overlay-page">
 			<div className="game-overlay">
-				<PongClient gatewayConfig={gatewayConfig} />
+				<Pong gatewayConfig={gatewayConfig} />
 				<button className="game-overlay__close" onClick={onClose}>
 					{closeLabel}
 				</button>

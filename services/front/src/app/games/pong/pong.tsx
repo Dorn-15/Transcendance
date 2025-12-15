@@ -20,7 +20,7 @@ type PongState = {
 	lastUpdate: number;
 };
 
-type PongClientProps = {
+type PongProps = {
 	gatewayConfig: GatewayConfig;
 };
 
@@ -45,7 +45,7 @@ function	extractMatchId(raw: string): string {
 	return trimmed;
 }
 
-export function PongClient({ gatewayConfig }: PongClientProps) {
+export function Pong({ gatewayConfig }: PongProps) {
 	const	socketRef = useRef<Socket | null>(null);
 	const	pressedRef = useRef<'up' | 'down' | 'none'>('none');
 
