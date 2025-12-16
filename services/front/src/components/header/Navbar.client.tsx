@@ -8,7 +8,15 @@ import SocialView from '../views/SocialView';
 import StatsView from '../views/StatsView';
 import './Navbar.css';
 
-export default function Navbar() {
+type AuthStatus =
+    | { authenticated: false }
+    | { authenticated: true; username: string };
+
+interface NavbarClientProps {
+    authStatus: AuthStatus;
+}
+
+export default function NavbarClient({authStatus}: NavbarClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [currentLang, setCurrentLang] = useState<LangKey>(1);
@@ -44,9 +52,13 @@ export default function Navbar() {
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
                     </nav>
-                    <nav className="auth-status">
-                        not logged in
-                    </nav>
+                    <div className="logstatus">
+                        {authStatus.authenticated ? (
+                            <p>Logged as: {authStatus.username}</p>
+                        ) : (
+                            <p>Not connected</p>
+                        )}
+                    </div>
                 </div>
             </header>
             {currentView !== 'menu' && (
