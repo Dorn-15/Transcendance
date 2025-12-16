@@ -1,0 +1,24 @@
+
+
+auth service
+	-add a user				POST	 /auth/register
+	-log in to account		GET		 /auth/status
+	-log out of account		POST	 /auth/logout
+	-list users				GET		 /auth/user_list
+	-add friend				POST	 /auth/friends
+	-delete a friend		DELETE	 /auth/friends
+	-block a user			POST	 /auth/blocked_users
+	-delete a user			DELETE	 /auth/user
+
+chat service
+	-on open : send the chat history (message maybe the history in json format maybe)
+	-receive a client's messages : update the db and send the message to every client
+
+db service
+	-add a message			POST	/db/chats
+	-grab the chat history	GET		/db/chats
+	-delete a message		DELETE  /db/chats
+	
+	-add a user				POST	/db/users
+	-grab user list			GET		/db/users
+	-delete a user			DELETE	/db/users

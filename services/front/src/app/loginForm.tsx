@@ -1,17 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import styles from './page.module.css';
+
+//const AUTH_URL = 'http://localhost:4001';
+const AUTH_URL = 'http://transcendance-social_service:4001';
 
 export default function LoginForm() {
 	const [username, setUsername] = useState('');
-	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState('');
 
 	async function submit() {
-		if (!username.trim()) return;
+		if (!username.trim()) {
+			setError('Username required');
+			return;
+		}
 
-		setLoading(true);
-
-		await fetch('http://localhost:4001/auth/register', {
+		const res = await fetch(`${AUTH_URL}/auth/login`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -20,31 +25,38 @@ export default function LoginForm() {
 			body: JSON.stringify({ username }),
 		});
 
-		setLoading(false);
+		if (!res.ok) {
+			setError('Login failed');
+			return;
+		}
+
 		window.location.reload();
 	}
 
-	function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-		if (e.key === 'Enter') {
-			submit();
-		}
-	}
-
 	return (
-		<div>
-			<div>
-				<input
-					type="text"
-					placeholder="Username"
-					value={username}
-					onChange={(e) => setUsername(e.target.value)}
-					onKeyDown={onKeyDown}
-				/>
+		<div className={styles.card}>
+			<div className={styles.cardHeader}>
+				<div className={styles.label}>Log in / Create user</div>
 			</div>
 
-			<button onClick={submit} disabled={loading}>
-				{loading ? 'Connecting…' : 'Connect'}
-			</button>
+			<div className={styles.inputs}>
+				<div className={styles.inputGroup}>
+					<label className={styles.fieldLabel}>Username</label>
+					<input
+						className={styles.input}
+						placeholder="alice"
+						value={username}
+						onChange={(e) => setUsername(e.target.value)}
+						onKeyDown={(e) => e.key === 'Enter' && submit()}
+					/>
+				</div>
+
+				<button className={styles.button} onClick={submit}>
+					Connect
+				</button>
+
+				{error && <div className={styles.error}>{error}</div>}
+			</div>
 		</div>
 	);
 }
