@@ -2,25 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { GatewayConfig } from './page';
-import styles from './page.module.css';
+import type { GatewayConfig } from '@/app/play/[gameId]/page';
+import type { PongState } from '@transcendance/pong';
+import styles from './pong.module.css';
 
-type PongState = {
-	matchId: string;
-	status: 'waiting' | 'running' | 'ended';
-	width: number;
-	height: number;
-	paddleHeight: number;
-	ballX: number;
-	ballY: number;
-	leftY: number;
-	rightY: number;
-	scoreLeft: number;
-	scoreRight: number;
-	lastUpdate: number;
-};
-
-type PongClientProps = {
+type PongProps = {
 	gatewayConfig: GatewayConfig;
 };
 
@@ -45,7 +31,7 @@ function	extractMatchId(raw: string): string {
 	return trimmed;
 }
 
-export default function PongClient({ gatewayConfig }: PongClientProps) {
+export function Pong({ gatewayConfig }: PongProps) {
 	const	socketRef = useRef<Socket | null>(null);
 	const	pressedRef = useRef<'up' | 'down' | 'none'>('none');
 

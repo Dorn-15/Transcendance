@@ -11,7 +11,11 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import type { IncomingMessage } from 'http';
-import type { PongDirection, PongState, MatchJoin } from './pong.types';
+import type {
+	PongDirection,
+	PongState,
+	MatchJoin,
+} from '@transcendance/pong';
 import { PongExchangeService } from './pong';
 import { MetricsService } from './metrics/metrics.service';
 

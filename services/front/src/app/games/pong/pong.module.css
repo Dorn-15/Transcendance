@@ -8,21 +8,6 @@
 	font-family: var(--font-geist-sans);
 }
 
-.main {
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-	width: 100%;
-	max-width: 1200px;
-}
-
-.header {
-	display: flex;
-	justify-content: space-between;
-	align-items: baseline;
-	gap: 12px;
-}
-
 .title {
 	font-size: 32px;
 	font-weight: 700;
@@ -33,6 +18,8 @@
 }
 
 .card {
+	width: 80%;
+	height: 80%;
 	background: #11172e;
 	border: 1px solid #1f2a44;
 	border-radius: 12px;

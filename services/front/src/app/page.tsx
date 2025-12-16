@@ -1,56 +1,19 @@
-import PongClient from './PongClient';
-import styles from './page.module.css';
+import GameCanva from '@/components/gameCanva';
+import Navbar from '@/components/header/Navbar';
+import { Suspense } from 'react';
 
-// Forcer un rendu dynamique pour lire l'environnement au runtime (Docker)
 export const dynamic = 'force-dynamic';
 
-export type GatewayConfig = {
-	origin: string;
-	path: string;
-};
+export default function Home() {
+  return (
+    <main className="game-container">
 
-function	getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
-	const	rawDomain = env.DOMAIN ?? '';
-	const	wsBasePath = env.WS_PATH ?? '/ws';
+      <Navbar />
+      <div className="canvas-wrapper">
+        <GameCanva />
+      </div>
 
-	if (rawDomain !== '') {
-		const	trimmedDomain = rawDomain.replace(/\/+$/, '').replace(/\/ws$/, '');
 
-		const	origin = trimmedDomain.startsWith('http://') || trimmedDomain.startsWith('https://')
-			? trimmedDomain
-			: `https://${trimmedDomain}`;
-
-		const	basePath = wsBasePath.replace(/\/+$/, '');
-
-		return {
-			origin,
-			path: `${basePath}/socket.io`,
-		};
-	}
-
-	return {
-		origin: 'http://localhost:4006',
-		path: '/socket.io',
-	};
+    </main>
+  );
 }
-
-export default function Page() {
-	const	env = process.env as NodeJS.ProcessEnv;
-	const	gatewayConfig = getGatewayConfig(env);
-
-	return (
-		<div className={styles.page}>
-			<main className={styles.main}>
-				<div className={styles.header}>
-					<div className={styles.title}>Gateway + Games (Pong)</div>
-					<div className={styles.tagline}>
-						Contrôle du jeu via WebSocket (flèches ↑ / ↓).
-					</div>
-				</div>
-
-				<PongClient gatewayConfig={gatewayConfig} />
-			</main>
-		</div>
-	);
-}
-

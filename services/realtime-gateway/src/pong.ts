@@ -5,7 +5,7 @@ import type {
 	PongDirection,
 	PongState,
 	DisconnectResult,
-} from './pong.types';
+} from '@transcendance/pong';
 
 interface MatchTracker {
 	sockets: Set<string>;

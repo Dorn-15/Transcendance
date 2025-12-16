@@ -109,8 +109,10 @@ export class MetricsService {
     this.websocketMessageDuration.observe({ event }, duration);
   }
 
-  getActiveWebSocketConnections(): number {
-    return this.websocketConnectionsActive.hashMap.get('')?.value || 0;
+  async getActiveWebSocketConnections(): Promise<number> {
+    const metric = await this.websocketConnectionsActive.get();
+    const value = metric.values[0]?.value;
+    return typeof value === 'number' ? value : 0;
   }
 }
 
