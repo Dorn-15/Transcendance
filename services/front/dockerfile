@@ -1,32 +1,31 @@
 FROM node:20-alpine AS deps
 
-WORKDIR /app
-
+WORKDIR /app/front
 RUN apk add --no-cache libc6-compat
-
-COPY package*.json ./
+COPY front/package*.json ./
 RUN npm ci
 
+#======================================================
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/front
+COPY --from=deps /app/front/node_modules ./node_modules
+COPY front ./
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+WORKDIR /app
+COPY shared ./shared
+
+WORKDIR /app/front
 RUN npm run build
 
+#======================================================
 FROM node:20-alpine AS runner
 
-WORKDIR /app
-
-COPY --from=deps /app/package*.json ./
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
+WORKDIR /app/front
+COPY --from=deps /app/front/package*.json ./
+COPY --from=deps /app/front/node_modules ./node_modules
+COPY --from=builder /app/front/.next ./.next
+COPY --from=builder /app/front/public ./public
 
 USER node
-
-EXPOSE ${PORT}
-
 CMD ["npm", "run", "start"]
-

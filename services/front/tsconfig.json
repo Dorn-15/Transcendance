@@ -27,8 +27,15 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@transcendance/pong": [
+        "../shared/pong.d.ts"
       ]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "../shared"
+    ]
   },
   "include": [
     "next-env.d.ts",

@@ -1,6 +1,10 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PongService } from './pong.service';
-import type { PongState, MatchJoin, DisconnectResult } from './pong.types';
+import type {
+	PongState,
+	MatchJoin,
+	DisconnectResult,
+} from '@transcendance/pong';
 
 @Controller('pong')
 export class PongController {

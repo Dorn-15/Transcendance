@@ -1,30 +1,22 @@
 FROM node:20-alpine AS builder
 
 WORKDIR /app
-
 RUN apk add --no-cache python3 make g++
+COPY shared ./shared
 
-COPY package*.json ./
+WORKDIR /app/realtime-gateway
+COPY realtime-gateway/package*.json ./
 RUN npm ci
-
-COPY . .
+COPY realtime-gateway ./
 RUN npm run build
 
+#======================================================
 FROM node:20-alpine AS runner
 
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=4006
-
-COPY package*.json ./
+WORKDIR /app/realtime-gateway
+COPY realtime-gateway/package*.json ./
 RUN npm ci --omit=dev
-
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/realtime-gateway/dist ./dist
 
 USER node
-
-EXPOSE 4006
-
 CMD ["node", "dist/main.js"]
-

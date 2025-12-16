@@ -53,8 +53,8 @@ services:
 
   frontend:
     build:
-      context: ./services/front
-      dockerfile: dockerfile
+      context: ./services
+      dockerfile: front/dockerfile
     container_name: ${FRONTEND_NAME}
     expose:
       - "${FRONTEND_PORT}"
@@ -143,8 +143,8 @@ services:
 
   game_service:
     build:
-      context: ./services/games
-      dockerfile: dockerfile
+      context: ./services
+      dockerfile: games/dockerfile
     container_name: ${GAME_SERVICE_NAME}
     depends_on:
       - ${REDIS_HOST}
@@ -159,8 +159,8 @@ services:
 
   realtime_gateway:
     build:
-      context: ./services/realtime-gateway
-      dockerfile: dockerfile
+      context: ./services
+      dockerfile: realtime-gateway/dockerfile
     container_name: ${REALTIME_GATEWAY_NAME}
     depends_on:
       - ${AUTH_SERVICE_NAME}

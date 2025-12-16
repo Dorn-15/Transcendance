@@ -1,11 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import {
+import type {
 	PongDirection,
 	PongMatch,
 	PongPlayer,
 	PongState,
 	DisconnectResult,
-} from './pong.types';
+} from '@transcendance/pong';
 
 interface MatchInputs {
 	left: PongDirection;
