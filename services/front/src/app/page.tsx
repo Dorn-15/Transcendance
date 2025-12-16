@@ -1,5 +1,5 @@
 import GameCanva from '@/components/gameCanva';
-import Navbar from '@/components/header/Navbar';
+import Navbar from '@/components/header/Navbar.server';
 import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
