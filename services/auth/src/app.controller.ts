@@ -15,10 +15,8 @@ export class AuthController {
 				username,
 			};
 		}
-
-		return {
-			authenticated: false,
-		};
+		console.log("\e[31m user not logged in ! \e[0m");
+		return {authenticated: false};
 	}
 
 	@Post('login')

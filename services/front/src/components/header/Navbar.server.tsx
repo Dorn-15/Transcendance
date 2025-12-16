@@ -7,7 +7,7 @@ type AuthStatus =
     | { authenticated: false }
     | { authenticated: true; username: string };
 
-const AUTH_URL = "http://transcendance-auth_service:4001"
+const AUTH_URL = "http://auth_service:4001"
 
 async function getAuthStatus(): Promise<AuthStatus> {
     const cookieStore = cookies();
