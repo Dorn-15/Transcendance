@@ -44,6 +44,9 @@ export default function Navbar() {
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
                     </nav>
+                    <nav className="auth-status">
+                        not logged in
+                    </nav>
                 </div>
             </header>
             {currentView !== 'menu' && (
