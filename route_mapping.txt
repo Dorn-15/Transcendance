@@ -2,7 +2,7 @@
 
 auth service
 	-add a user				POST	 /auth/register
-	-log in to account		GET		 /auth/status
+	-log in to account		POST	 /auth/status
 	-log out of account		POST	 /auth/logout
 	-list users				GET		 /auth/user_list
 	-add friend				POST	 /auth/friends
