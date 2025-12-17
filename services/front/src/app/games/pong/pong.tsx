@@ -244,7 +244,7 @@ export function Pong({ gatewayConfig }: PongProps) {
 					strokeWidth={4 * scaleX}
 				/>
 				<rect
-					x={16 - (4 * scaleX)}
+					x={(state.paddleThickness - 4 * scaleX) * scaleX}
 					y={state.leftY * scaleY}
 					width={4 * scaleX}
 					height={state.paddleHeight * scaleY}
@@ -252,7 +252,7 @@ export function Pong({ gatewayConfig }: PongProps) {
 					rx="4"
 				/>
 				<rect
-					x={VIEWPORT_WIDTH - 16}
+					x={VIEWPORT_WIDTH - state.paddleThickness * scaleX}
 					y={state.rightY * scaleY}
 					width={4 * scaleX}
 					height={state.paddleHeight * scaleY}
@@ -262,7 +262,7 @@ export function Pong({ gatewayConfig }: PongProps) {
 				<circle
 					cx={state.ballX * scaleX}
 					cy={state.ballY * scaleY}
-					r={10 * scaleX}
+					r={state.ballRadius * 2 * scaleX}
 					fill="#fbbf24"
 				/>
 			</svg>

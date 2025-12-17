@@ -15,6 +15,8 @@ declare module '@transcendance/pong' {
 		width: number;
 		height: number;
 		paddleHeight: number;
+		paddleThickness: number;
+		ballRadius: number;
 		ballX: number;
 		ballY: number;
 		ballVX: number;

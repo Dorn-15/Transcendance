@@ -1,4 +1,10 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Injectable,
+	NotFoundException,
+	OnModuleDestroy,
+} from '@nestjs/common';
 import type {
 	PongDirection,
 	PongMatch,
@@ -19,281 +25,44 @@ export class PongService implements OnModuleDestroy {
 	private readonly	frameRateMs: number;
 	private readonly	frameRateS: number;
 	private readonly	tickInterval: NodeJS.Timeout;
-	private readonly	paddleThickness: number;
 	private readonly	speedIncrement: number;
 	private readonly	maxBallSpeed: number;
 	private readonly	maxBounceAngle: number;
 
 	constructor() {
-		let	frameRateMs: number;
-		frameRateMs = 1000 / 60;
-
-		let	frameRateS: number;
-		frameRateS = frameRateMs / 1000;
-
-		let	paddleThickness: number;
-		paddleThickness = 16;
-
-		let	speedIncrement: number;
-		speedIncrement = 28;
-
-		let	maxBallSpeed: number;
-		maxBallSpeed = 520;
-
-		let	maxBounceAngle: number;
-		maxBounceAngle = Math.PI / 3;
-
-		this.frameRateMs = frameRateMs;
-		this.frameRateS = frameRateS;
-		this.paddleThickness = paddleThickness;
-		this.speedIncrement = speedIncrement;
-		this.maxBallSpeed = maxBallSpeed;
-		this.maxBounceAngle = maxBounceAngle;
-		this.tickInterval = setInterval(() => {
-			this.tick();
-		}, frameRateMs);
-	}
-
-	createMatch(playerId: string): PongMatch {
-		let	matchId: string;
-		do {
-			matchId = 'P' + Array.from({ length: 5 }, () =>
-				String.fromCharCode(65 + Math.floor(Math.random() * 26)),
-			).join('');
-		} while (this.matches.has(matchId));
-
-		let	state: PongState;
-		state = this.createInitialState(matchId);
-
-		let	players: PongPlayer[];
-		players = [
-			{
-				id: playerId,
-				side: 'left',
-				connected: true,
-			},
-		];
-
-		let	match: PongMatch;
-		match = {
-			id: matchId,
-			players,
-			state,
-		};
-		this.matches.set(matchId, match);
-		this.inputs.set(matchId, { left: 'none', right: 'none' });
-		return match;
-	}
-
-	joinMatch(matchId: string | undefined, playerId: string): PongMatch {
-		let	existingMatch: PongMatch | undefined;
-		existingMatch = this.findMatchByPlayer(playerId);
-		if (existingMatch) {
-			this.markPlayerConnected(existingMatch, playerId);
-			return existingMatch;
-		}
-
-		if (!matchId)
-			throw new Error('Match introuvable');
-
-		const	match = this.matches.get(matchId);
-		if (!match)
-			throw new Error('Match introuvable');
-		else if (match.players.length >= 2)
-			throw new Error('Match complet');
-		else if (match.state.status === 'ended')
-			throw new Error('Match terminé');
-
-		match.players.push({
-			id: playerId,
-			side: 'right',
-			connected: true,
-		});
-		if (!this.inputs.has(matchId))
-			this.inputs.set(matchId, { left: 'none', right: 'none' });
-		this.resumeIfReady(match);
-		return match;
-	}
-
-	getState(matchId: string): PongState {
-		const	match = this.matches.get(matchId);
-		if (!match)
-			throw new Error('Match introuvable');
-
-		return match.state;
-	}
-
-	applyInput(matchId: string, playerId: string, direction: PongDirection): PongState {
-		const	match = this.matches.get(matchId);
-		if (!match)
-			throw new Error('Match introuvable');
-		const	player = match.players.find((p) => p.id === playerId);
-		if (!player)
-			throw new Error('Joueur non inscrit');
-		else if (match.state.status !== 'running')
-			return match.state;
-
-		let	matchInputs: MatchInputs | undefined;
-		matchInputs = this.inputs.get(matchId);
-		if (!matchInputs) {
-			matchInputs = { left: 'none', right: 'none' };
-			this.inputs.set(matchId, matchInputs);
-		}
-
-		if (player.side === 'left')
-			matchInputs.left = direction;
-		else
-			matchInputs.right = direction;
-		return match.state;
-	}
-
-	disconnectPlayer(matchId: string, playerId: string): DisconnectResult {
-		const	match = this.matches.get(matchId);
-		if (!match)
-			throw new Error('Match introuvable');
-
-		const	player = match.players.find((p) => p.id === playerId);
-		if (!player)
-			throw new Error('Joueur non inscrit');
-
-		player.connected = false;
-		if (match.state.status !== 'ended')
-			match.state.status = 'paused';
-
-		const	allDisconnected = match.players.every((p) => !p.connected);
-		if (allDisconnected) {
-			this.matches.delete(matchId);
-			this.inputs.delete(matchId);
-			return {
-				matchId,
-				removed: true,
-			};
-		}
-
-		return {
-			matchId,
-			removed: false,
-			state: match.state,
-			players: match.players,
-		};
+		this.frameRateMs = 1000 / 60;
+		this.frameRateS = this.frameRateMs / 1000;
+		this.speedIncrement = 28;
+		this.maxBallSpeed = 800;
+		this.maxBounceAngle = Math.PI / 3;
+		this.tickInterval = setInterval(() => this.tick(), this.frameRateMs);
 	}
 
 	onModuleDestroy(): void {
 		clearInterval(this.tickInterval);
 	}
 
-	private tick(): void {
-		const	now = Date.now();
-
-		for (const	[matchId, match] of this.matches.entries()) {
-			if (match.state.status === 'ended' && match.players.every((p) => !p.connected)) {
-				this.matches.delete(matchId);
-				this.inputs.delete(matchId);
-				continue;
-			}
-
-			if (match.state.status !== 'running')
-				continue;
-			this.applyQueuedInputs(match);
-			this.updatePhysics(match, this.frameRateS);
-			match.state.lastUpdate = now;
-		}
-	}
-
-	private applyQueuedInputs(match: PongMatch): void {
-		let	inputs: MatchInputs | undefined;
-		inputs = this.inputs.get(match.id);
-		if (!inputs)
-			return;
-
-		let	shift: number;
-		shift = this.computePaddleShift(inputs.left);
-		match.state.leftY = this.clamp(
-			match.state.leftY + shift,
-			0,
-			match.state.height - match.state.paddleHeight,
-		);
-
-		shift = this.computePaddleShift(inputs.right);
-		match.state.rightY = this.clamp(
-			match.state.rightY + shift,
-			0,
-			match.state.height - match.state.paddleHeight,
-		);
-	}
-
-	private computePaddleShift(direction: PongDirection): number {
-		let	speed: number;
-		speed = 420;
-
-		let	shift: number;
-		if (direction === 'up')
-			shift = -speed * this.frameRateS;
-		else if (direction === 'down')
-			shift = speed * this.frameRateS;
-		else
-			shift = 0;
-		return shift;
-	}
-
-	private updatePhysics(match: PongMatch, delta: number): void {
-		const	state = match.state;
-
-		state.ballX += state.ballVX * state.ballSpeed * delta;
-		state.ballY += state.ballVY * state.ballSpeed * delta;
-
-		// Rebond haut / bas
-		if (state.ballY <= 0 || state.ballY >= state.height) {
-			state.ballVY = -state.ballVY;
-			if (state.ballY <= 0)
-				state.ballY = - state.ballY;
-			else
-				state.ballY = state.height - (state.ballY - state.height);
-		}
-
-		this.handlePaddleBounce(state, 'left');
-		this.handlePaddleBounce(state, 'right');
-
-		// Point marqué
-		if (state.ballX < 0) {
-			state.scoreRight += 1;
-			this.resetBall(state, -1);
-		} else if (state.ballX > state.width) {
-			state.scoreLeft += 1;
-			this.resetBall(state, 1);
-		}
-
-		if (state.scoreLeft >= 5 || state.scoreRight >= 5) {
-			state.status = 'ended';
-		}
-	}
-
-	private resetBall(state: PongState, direction: -1 | 1): void {
-		state.ballX = state.width / 2;
-		state.ballY = state.height / 2;
-		state.ballVX = 1 * direction;
-		state.ballVY = 0;
-		state.ballSpeed = 160;
-		state.leftY = state.height / 2 - state.paddleHeight / 2;
-		state.rightY = state.height / 2 - state.paddleHeight / 2;
-		state.lastUpdate = Date.now();
-	}
-
+// Game Management =======================================================
 	private createInitialState(matchId: string): PongState {
 		const	width = 800;
 		const	height = 600;
 		const	paddleHeight = 100;
+		const	paddleThickness = 16;
+		const	ballSpeed = 200;
+
 		return {
 			matchId,
 			status: 'waiting',
 			width,
 			height,
 			paddleHeight,
+			paddleThickness,
+			ballRadius: 5,
 			ballX: width / 2,
 			ballY: height / 2,
 			ballVX: 1,
 			ballVY: 0,
-			ballSpeed: 160,
+			ballSpeed,
 			leftY: height / 2 - paddleHeight / 2,
 			rightY: height / 2 - paddleHeight / 2,
 			scoreLeft: 0,
@@ -302,8 +71,31 @@ export class PongService implements OnModuleDestroy {
 		};
 	}
 
-	private clamp(value: number, min: number, max: number): number {
-		return Math.max(min, Math.min(max, value));
+	private checkMatchId(matchId: string): PongMatch {
+		if (!matchId)
+			throw new BadRequestException('matchId missing');
+
+		const	match = this.matches.get(matchId);
+		if (!match)
+			throw new NotFoundException('Match not found');
+
+		return match;
+	}
+
+	private checkPlayerId(playerId: string): string {
+		const	trimmedPlayerId = playerId?.trim();
+		if (!trimmedPlayerId)
+			throw new BadRequestException('player missing');
+
+		return trimmedPlayerId;
+	}
+
+	private checkPlayer(match: PongMatch, playerId: string): PongPlayer {
+		const	player = match.players.find((p) => p.id === playerId);
+		if (!player)
+			throw new NotFoundException('Player not registered');
+
+		return player;
 	}
 
 	private findMatchByPlayer(playerId: string): PongMatch | undefined {
@@ -351,51 +143,265 @@ export class PongService implements OnModuleDestroy {
 		}
 	}
 
-	private handlePaddleBounce(state: PongState, paddleSide: 'left' | 'right'): void {
-		let	paddleX: number;
-		if (paddleSide === 'left')
-			paddleX = this.paddleThickness;
-		else
-			paddleX = state.width - this.paddleThickness;
+	createMatch(playerId: string): PongMatch {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	existingMatch = this.findMatchByPlayer(trimmedPlayerId);
+		if (existingMatch) {
+			this.markPlayerConnected(existingMatch, trimmedPlayerId);
+			return existingMatch;
+		}
 
-		let	paddleTop: number;
-		if (paddleSide === 'left')
-			paddleTop = state.leftY;
-		else
-			paddleTop = state.rightY;
+		let	matchId: string;
+		do {
+			matchId = 'P' + Array.from({ length: 5 }, () =>
+				String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+			).join('');
+		} while (this.matches.has(matchId));
 
-		if (
-			(paddleSide === 'left' && state.ballX > paddleX) ||
-			(paddleSide === 'right' && state.ballX < paddleX)
-		)
+		let	state: PongState;
+		state = this.createInitialState(matchId);
+
+		let	players: PongPlayer[];
+		players = [
+			{
+				id: trimmedPlayerId,
+				side: 'left',
+				connected: true,
+			},
+		];
+
+		let	match: PongMatch;
+		match = {
+			id: matchId,
+			players,
+			state,
+		};
+		this.matches.set(matchId, match);
+		this.inputs.set(matchId, { left: 'none', right: 'none' });
+		return match;
+	}
+
+	joinMatch(matchId: string, playerId: string): PongMatch {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	existingMatch = this.findMatchByPlayer(trimmedPlayerId);
+		if (existingMatch) {
+			this.markPlayerConnected(existingMatch, trimmedPlayerId);
+			return existingMatch;
+		}
+
+		const	match = this.checkMatchId(matchId);
+		if (match.players.length >= 2)
+			throw new ConflictException('Match full');
+		else if (match.state.status === 'ended')
+			throw new ConflictException('Match ended');
+
+		match.players.push({
+			id: trimmedPlayerId,
+			side: 'right',
+			connected: true,
+		});
+		if (!this.inputs.has(matchId))
+			this.inputs.set(matchId, { left: 'none', right: 'none' });
+		this.resumeIfReady(match);
+		return match;
+	}
+
+	getState(matchId: string): PongState {
+		const match = this.checkMatchId(matchId);
+		return match.state;
+	}
+
+	applyInput(matchId: string, playerId: string, direction: PongDirection): PongState {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	match = this.checkMatchId(matchId);
+		if (direction !== 'up' && direction !== 'down' && direction !== 'none')
+			throw new BadRequestException('invalid direction');
+
+		const	player = this.checkPlayer(match, trimmedPlayerId);
+		if (match.state.status !== 'running')
+			return match.state;
+
+		let	matchInputs = this.inputs.get(matchId);
+		if (!matchInputs) {
+			matchInputs = { left: 'none', right: 'none' };
+			this.inputs.set(matchId, matchInputs);
+		}
+
+		if (player.side === 'left')
+			matchInputs.left = direction;
+		else
+			matchInputs.right = direction;
+		return match.state;
+	}
+
+	disconnectPlayer(matchId: string, playerId: string): DisconnectResult {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	match = this.checkMatchId(matchId);
+		const	player = this.checkPlayer(match, trimmedPlayerId);
+
+		player.connected = false;
+		if (match.state.status !== 'ended')
+			match.state.status = 'paused';
+
+		const	allDisconnected = match.players.every((p) => !p.connected);
+		if (allDisconnected) {
+			this.matches.delete(matchId);
+			this.inputs.delete(matchId);
+			return {
+				matchId,
+				removed: true,
+			};
+		}
+
+		return {
+			matchId,
+			removed: false,
+			state: match.state,
+			players: match.players,
+		};
+	}
+
+// Game Logic ============================================================
+	private clamp(value: number, min: number, max: number): number {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	private computePaddleShift(direction: PongDirection): number {
+		let	speed: number;
+		speed = 420;
+
+		let	shift: number;
+		if (direction === 'up')
+			shift = -speed * this.frameRateS;
+		else if (direction === 'down')
+			shift = speed * this.frameRateS;
+		else
+			shift = 0;
+		return shift;
+	}
+
+	private applyQueuedInputs(match: PongMatch): void {
+		let	inputs: MatchInputs | undefined;
+		inputs = this.inputs.get(match.id);
+		if (!inputs)
 			return;
 
-		if (state.ballY < paddleTop || state.ballY > paddleTop + state.paddleHeight)
+		let	shift: number;
+		shift = this.computePaddleShift(inputs.left);
+		match.state.leftY = this.clamp(
+			match.state.leftY + shift,
+			0,
+			match.state.height - match.state.paddleHeight,
+		);
+
+		shift = this.computePaddleShift(inputs.right);
+		match.state.rightY = this.clamp(
+			match.state.rightY + shift,
+			0,
+			match.state.height - match.state.paddleHeight,
+		);
+	}
+
+	private handlePaddleBounce(state: PongState, paddleX: number, paddleY: number): void {
+		const	ballRadius = state.ballRadius;
+
+		if (state.ballVX < 0) {
+			if (state.ballX - ballRadius > paddleX)
+				return;
+		} else if (state.ballVX > 0) {
+			if (state.ballX + ballRadius < paddleX)
+				return;
+		} else {
+			return;
+		}
+
+		if (state.ballY + ballRadius < paddleY || state.ballY - ballRadius > paddleY + state.paddleHeight)
 			return;
 
-		if (paddleSide === 'left')
-			state.ballX = paddleX - (state.ballX - paddleX);
-		else
-			state.ballX = paddleX + (state.ballX - paddleX);
+		let	penetration: number;
+		if (state.ballVX < 0) {
+			penetration = paddleX - (state.ballX - ballRadius);
+			if (penetration > 0)
+				state.ballX += penetration * 2;
+		} else {
+			penetration = (state.ballX + ballRadius) - paddleX;
+			if (penetration > 0)
+				state.ballX -= penetration * 2;
+		}
 
 		let	relativeIntersectY: number;
-		relativeIntersectY = (state.ballY - (paddleTop + state.paddleHeight / 2)) / (state.paddleHeight / 2);
+		relativeIntersectY = (state.ballY - (paddleY + state.paddleHeight / 2)) / (state.paddleHeight / 2);
 		relativeIntersectY = this.clamp(relativeIntersectY, -1, 1);
 
-		let	bounceAngle: number;
-		bounceAngle = relativeIntersectY * this.maxBounceAngle;
+		const	bounceAngle = relativeIntersectY * this.maxBounceAngle;
+		const	direction = state.ballVX < 0 ? 1 : -1;
 
-		let	direction: number;
-		if (paddleSide === 'left')
-			direction = 1;
-		else
-			direction = -1;
-
-		let	newSpeed: number;
-		newSpeed = Math.min(this.maxBallSpeed, state.ballSpeed + this.speedIncrement);
-
-		state.ballSpeed = newSpeed;
+		if (state.ballSpeed < this.maxBallSpeed)
+			state.ballSpeed += this.speedIncrement;
 		state.ballVX = Math.cos(bounceAngle) * direction;
 		state.ballVY = Math.sin(bounceAngle);
+	}
+
+	private resetBall(state: PongState, direction: -1 | 1): void {
+		const	ballSpeed = 200;
+
+		state.ballX = state.width / 2;
+		state.ballY = state.height / 2;
+		state.ballVX = 1 * direction;
+		state.ballVY = 0;
+		state.ballSpeed = ballSpeed;
+		state.leftY = state.height / 2 - state.paddleHeight / 2;
+		state.rightY = state.height / 2 - state.paddleHeight / 2;
+		state.lastUpdate = Date.now();
+	}
+
+	private updatePhysics(match: PongMatch, delta: number): void {
+		const	state = match.state;
+
+		state.ballX += state.ballVX * state.ballSpeed * delta;
+		state.ballY += state.ballVY * state.ballSpeed * delta;
+		if (state.ballY <= state.ballRadius || state.ballY >= state.height - state.ballRadius) {
+			state.ballVY = -state.ballVY;
+			if (state.ballY <= state.ballRadius)
+				state.ballY = state.ballRadius + (state.ballRadius - state.ballY);
+			else
+				state.ballY = state.height - state.ballRadius - (state.ballY - (state.height - state.ballRadius));
+		}
+
+		if (state.ballVX < 0) {
+			this.handlePaddleBounce(state, state.paddleThickness, state.leftY);
+		} else {
+			this.handlePaddleBounce(state, (state.width - state.paddleThickness), state.rightY);
+		}
+
+		if (state.ballX < 0) {
+			state.scoreRight += 1;
+			this.resetBall(state, -1);
+		} else if (state.ballX > state.width) {
+			state.scoreLeft += 1;
+			this.resetBall(state, 1);
+		}
+
+		if (state.scoreLeft >= 5 || state.scoreRight >= 5) {
+			state.status = 'ended';
+		}
+	}
+
+	private tick(): void {
+		const	now = Date.now();
+
+		for (const	[matchId, match] of this.matches.entries()) {
+			if (match.state.status === 'ended' && match.players.every((p) => !p.connected)) {
+				this.matches.delete(matchId);
+				this.inputs.delete(matchId);
+				continue;
+			}
+
+			if (match.state.status !== 'running')
+				continue;
+			this.applyQueuedInputs(match);
+			this.updatePhysics(match, this.frameRateS);
+			match.state.lastUpdate = now;
+		}
 	}
 }
