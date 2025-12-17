@@ -99,15 +99,6 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
                     )}
                 </div>
             )}
-
-            {/* Login Modal - Render conditionally and pass props */}
-            {isLoginModalOpen && (
-                <Login 
-                    onClose={() => setLoginModalOpen(false)} 
-                    currentLang={currentLang} 
-                    onLanguageChange={changeLanguage} 
-                />
-            )}
         </>
     );
 }

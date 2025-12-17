@@ -1,25 +1,16 @@
-import { ALL_LANGUAGES, LangKey } from '@/utils/languageData'; 
+'use client'; // 1. Indispensable pour les hooks (useState, useRouter)
+
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import './LogIn.css'
+import './LogIn.css';
 
-interface LoginProps {
-    onClose: () => void;
-    currentLang: LangKey;
-    onLanguageChange: (lang: LangKey) => void;
-}
-
-export default function LogIn({ onClose, currentLang, onLanguageChange }: LoginProps) {
-    // 1. Safety check: Ensure language exists, fallback to 1 (English) if undefined
-    const safeLang = currentLang || 1;
-    const texts = ALL_LANGUAGES[safeLang]?.defaultInfo || {};
-    
+// Plus besoin d'interface de props car page.tsx n'envoie rien.
+export default function LogIn() {
     const router = useRouter();
 
-    // 2. Removed internal "isLoginModalOpen" state. 
-    // If this component is rendered by the parent, it is open.
     const [usernameInput, setUsernameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Tu peux gérer la langue ici en interne si besoin avec un useState
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
@@ -36,26 +27,25 @@ export default function LogIn({ onClose, currentLang, onLanguageChange }: LoginP
 
             if (res.ok) {
                 setUsernameInput('');
-                // 3. Call the parent's onClose function
-                onClose(); 
                 
-                setTimeout(() => {
-                    router.refresh();
-                }, 100); 
+                // 2. Rafraîchit la route actuelle. 
+                // Cela va relancer la fonction `Home()` dans page.tsx sur le serveur,
+                // vérifier le cookie, et afficher le jeu.
+                router.refresh(); 
             } else {
                 alert("Login failed");
+                setIsSubmitting(false); // Réactive le bouton si échec
             }
         } catch (error) {
             console.error(error);
-        } finally {
             setIsSubmitting(false);
         }
     };
 
-  return (
+    return (
         <div className="login-overlay">
             <div className="login-box">
-                <h3 style={{cursor: 'pointer'}}>Welcome Back</h3> 
+                <h3>Welcome Back</h3> 
                 
                 <form onSubmit={handleLogin}>
                     <input 
@@ -67,15 +57,13 @@ export default function LogIn({ onClose, currentLang, onLanguageChange }: LoginP
                         autoFocus
                     />
                     <div className="login-actions">
-                        <button type="button" onClick={onClose} disabled={isSubmitting}>
-                            Cancel
-                        </button>
+                        {/* Suppression du bouton Cancel car on ne peut pas fermer la page de login si on n'est pas connecté */}
                         <button type="submit" className="confirm-btn" disabled={isSubmitting}>
-                            {isSubmitting ? '...' : 'Enter'}
+                            {isSubmitting ? 'Loading...' : 'Enter'}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-  );
+    );
 }

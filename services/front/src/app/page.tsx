@@ -1,10 +1,18 @@
 import GameCanva from '@/components/gameCanva';
 import Navbar from '@/components/header/Navbar.server';
+import { getAuthStatus } from './api/getAuthStatus';
 import { Suspense } from 'react';
+
+import LogIn from '../components/views/LogIn';
 
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+
+export default async function Home() {
+  const authStatus = await getAuthStatus();
+
+  if (authStatus.authenticated == false)
+    return (<LogIn />)
   return (
     <main className="game-container">
 
@@ -12,8 +20,6 @@ export default function Home() {
       <div className="canvas-wrapper">
         <GameCanva />
       </div>
-
-
     </main>
   );
 }
