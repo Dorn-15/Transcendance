@@ -129,7 +129,7 @@ class GameScene {
                 root.metadata = {
                     arcade: true,
                     gameId: "pong",
-                    zoomSettings: { height: 1.5, beta: Math.PI / 2.5, radius: 0.8 }
+                    zoomSettings: { height: 1.5, beta: Math.PI / 2.6, radius: 0.52 }
                 };
                 setupShadows(root, true, false);
             });
@@ -199,7 +199,7 @@ class GameScene {
         const initialGameId = typeof window !== 'undefined' ? window.INITIAL_GAME_ID : null;
         if (initialGameId && initialGameId !== "") {
             setTimeout(() => {
-                this.showGameInterface(initialGameId);
+                //this.showGameInterface(initialGameId);
             }, 100);
         }
 
@@ -362,7 +362,7 @@ class GameScene {
             () => {
                 const gameId = targetMesh.metadata.gameId;
                 if (gameId) {
-                    this.showGameInterface(gameId);
+                    //this.showGameInterface(gameId);
                 } else {
                     this.isCameraAnimating = false;
                 }
