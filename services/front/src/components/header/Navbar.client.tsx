@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react'; // Removed FormEvent
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
+import Login from '../views/LogIn'
 import SettingsView from '../views/SettingsView';
 import SocialView from '../views/SocialView';
 import StatsView from '../views/StatsView';
@@ -20,14 +21,13 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    //navigation state
+    // Navigation state
     const [currentLang, setCurrentLang] = useState<LangKey>(1);
     const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'stats'>('menu');
 
     // Auth UI State
+    // We only need the visibility boolean here. The form logic is now inside <Login />
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-    const [usernameInput, setUsernameInput] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const langParam = searchParams.get('lang');
@@ -39,40 +39,9 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
         }
     }, [searchParams]);
 
-
     const changeLanguage = (langId: LangKey) => {
         setCurrentLang(langId);
         router.push(`/?lang=${langId}`, { scroll: false });
-    };
-
-    const handleLogin = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!usernameInput.trim()) return;
-
-        setIsSubmitting(true);
-
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: usernameInput })
-            });
-
-            if (res.ok) {
-                setLoginModalOpen(false);
-                setUsernameInput('');
-                // Refresh the current route to re-run Server Components (fetching fresh auth status)
-                setTimeout(() => {
-                    router.refresh();
-                }, 100); 
-            } else {
-                alert("Login failed");
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsSubmitting(false);
-        }
     };
 
     const texts = ALL_LANGUAGES[currentLang].defaultInfo;
@@ -89,7 +58,7 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
                     </nav>
-                    {/* --- User Cluster --- */}
+                    
                     <div className="user-cluster">
                         {authStatus.authenticated ? (
                             <div className="user-info">
@@ -107,6 +76,8 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
                     </div>
                 </div>
             </header>
+
+            {/* View Modals */}
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (
@@ -128,31 +99,14 @@ export default function NavbarClient({authStatus}: NavbarClientProps) {
                     )}
                 </div>
             )}
-            {/* --- Login Modal Overlay --- */}
+
+            {/* Login Modal - Render conditionally and pass props */}
             {isLoginModalOpen && (
-                <div className="login-overlay">
-                    <div className="login-box">
-                        <h3>Welcome Back</h3>
-                        <form onSubmit={handleLogin}>
-                            <input 
-                                type="text" 
-                                placeholder="Username" 
-                                value={usernameInput}
-                                onChange={(e) => setUsernameInput(e.target.value)}
-                                disabled={isSubmitting}
-                                autoFocus
-                            />
-                            <div className="login-actions">
-                                <button type="button" onClick={() => setLoginModalOpen(false)} disabled={isSubmitting}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="confirm-btn" disabled={isSubmitting}>
-                                    {isSubmitting ? '...' : 'Enter'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <Login 
+                    onClose={() => setLoginModalOpen(false)} 
+                    currentLang={currentLang} 
+                    onLanguageChange={changeLanguage} 
+                />
             )}
         </>
     );
