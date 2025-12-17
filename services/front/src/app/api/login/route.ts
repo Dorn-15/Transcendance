@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-// const AUTH_SERVICE_URL = "http://auth_service:4001";
-const AUTH_SERVICE_URL = "http://localhost:4001";
+const AUTH_SERVICE_URL = "http://auth_service:4001";
+//const AUTH_SERVICE_URL = "http://localhost:4001";
 
 
 export async function POST(request: Request) {

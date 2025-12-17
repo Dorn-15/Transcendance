@@ -6,8 +6,8 @@ export type AuthStatus =
     | { authenticated: false }
     | { authenticated: true; username: string };
 
-const AUTH_URL = "http://localhost:4001"
-// const AUTH_URL = "http://auth_service:4001"
+//const AUTH_URL = "http://localhost:4001"
+const AUTH_URL = "http://auth_service:4001"
 
 export async function getAuthStatus(): Promise<AuthStatus> {
     // Await cookies() to be safe across Next.js versions

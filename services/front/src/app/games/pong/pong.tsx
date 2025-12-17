@@ -188,9 +188,9 @@ export function Pong({ gatewayConfig }: PongProps) {
 
 				{/* Raquette Gauche (Carré blanc) */}
 				<rect
-					x={(state.paddleThickness - 4 * scaleX) * scaleX}
+					x={(state.paddleThickness - 10 * scaleX) * scaleX}
 					y={state.leftY * scaleY}
-					width={15 * scaleX} // Un peu plus large pour le style rétro
+					width={10 * scaleX} // Un peu plus large pour le style rétro
 					height={state.paddleHeight * scaleY}
 					fill="white"
 				/>
@@ -199,7 +199,7 @@ export function Pong({ gatewayConfig }: PongProps) {
 				<rect
 					x={VIEWPORT_WIDTH - state.paddleThickness * scaleX}
 					y={state.rightY * scaleY}
-					width={15 * scaleX}
+					width={10 * scaleX}
 					height={state.paddleHeight * scaleY}
 					fill="white"
 				/>
