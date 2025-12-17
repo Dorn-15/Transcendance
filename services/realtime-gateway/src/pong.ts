@@ -22,7 +22,7 @@ export class PongExchangeService {
 		Array<{ matchId: string; player: string }>
 	>();
 	private readonly	gamesBaseUrl =
-		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://game_service:4005';
+		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://localhost:4005';
 	private readonly	fetcher: any = (globalThis as any).fetch;
 
 	setServer(server: Server): void {
