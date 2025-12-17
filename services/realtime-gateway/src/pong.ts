@@ -61,7 +61,7 @@ export class PongExchangeService {
 				player: payload?.player ?? 'player',
 				matchId: payload?.matchId,
 			};
-			const	path = `/pong/matches/join`;
+			const	path = `/pong/matches/${payload?.matchId}/join`;
 			const	response = await this.postJson<MatchJoin>(path, body);
 
 			await client.join(this.getRoom(response.matchId));
@@ -204,7 +204,7 @@ export class PongExchangeService {
 					`Polling match ${matchId} échoué: ${(error as Error).message}`,
 				);
 			}
-		}, 1000 / 30);
+		}, 1000 / 60);
 
 		this.matchTrackers.set(matchId, tracker);
 	}

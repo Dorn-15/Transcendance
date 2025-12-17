@@ -142,9 +142,6 @@ export function Pong({ gatewayConfig }: PongProps) {
 		const VIEWPORT_HEIGHT = 600;
 		const scaleX = VIEWPORT_WIDTH / state.width;
 		const scaleY = VIEWPORT_HEIGHT / state.height;
-		
-		// Taille de la balle (carré)
-		const ballSize = 15 * scaleX; 
 
 		return (
 			<svg
@@ -191,7 +188,7 @@ export function Pong({ gatewayConfig }: PongProps) {
 
 				{/* Raquette Gauche (Carré blanc) */}
 				<rect
-					x={20 - (4 * scaleX)}
+					x={(state.paddleThickness - 4 * scaleX) * scaleX}
 					y={state.leftY * scaleY}
 					width={15 * scaleX} // Un peu plus large pour le style rétro
 					height={state.paddleHeight * scaleY}
@@ -200,19 +197,18 @@ export function Pong({ gatewayConfig }: PongProps) {
 
 				{/* Raquette Droite (Carré blanc) */}
 				<rect
-					x={VIEWPORT_WIDTH - 20 - (11 * scaleX)}
+					x={VIEWPORT_WIDTH - state.paddleThickness * scaleX}
 					y={state.rightY * scaleY}
 					width={15 * scaleX}
 					height={state.paddleHeight * scaleY}
 					fill="white"
 				/>
-
 				{/* Balle (Carré blanc) */}
 				<rect
-					x={(state.ballX * scaleX) - (ballSize / 2)}
-					y={(state.ballY * scaleY) - (ballSize / 2)}
-					width={ballSize}
-					height={ballSize}
+					x={(state.ballX * scaleX) - (state.ballRadius)}
+					y={(state.ballY * scaleY) - (state.ballRadius)}
+					width={state.ballRadius * 2}
+					height={state.ballRadius * 2}
 					fill="white"
 				/>
 			</svg>
