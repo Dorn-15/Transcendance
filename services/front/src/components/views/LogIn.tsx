@@ -4,13 +4,11 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import './LogIn.css';
 
-// Plus besoin d'interface de props car page.tsx n'envoie rien.
 export default function LogIn() {
     const router = useRouter();
 
     const [usernameInput, setUsernameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // Tu peux gérer la langue ici en interne si besoin avec un useState
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
@@ -28,13 +26,13 @@ export default function LogIn() {
             if (res.ok) {
                 setUsernameInput('');
                 
-                // 2. Rafraîchit la route actuelle. 
-                // Cela va relancer la fonction `Home()` dans page.tsx sur le serveur,
-                // vérifier le cookie, et afficher le jeu.
                 router.refresh(); 
+
+
+                router.push('/'); 
             } else {
                 alert("Login failed");
-                setIsSubmitting(false); // Réactive le bouton si échec
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error(error);
@@ -57,7 +55,6 @@ export default function LogIn() {
                         autoFocus
                     />
                     <div className="login-actions">
-                        {/* Suppression du bouton Cancel car on ne peut pas fermer la page de login si on n'est pas connecté */}
                         <button type="submit" className="confirm-btn" disabled={isSubmitting}>
                             {isSubmitting ? 'Loading...' : 'Enter'}
                         </button>

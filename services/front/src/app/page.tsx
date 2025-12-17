@@ -9,10 +9,6 @@ export const dynamic = 'force-dynamic';
 
 
 export default async function Home() {
-  const authStatus = await getAuthStatus();
-
-  if (authStatus.authenticated == false)
-    return (<LogIn />)
   return (
     <main className="game-container">
 
