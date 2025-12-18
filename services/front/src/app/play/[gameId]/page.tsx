@@ -20,9 +20,13 @@ function	getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
 	if (rawDomain === '' && typeof window !== 'undefined') {
 		const	basePath = wsBasePath.replace(/\/+$/, '');
 
+		// return {
+		// 	origin: window.location.origin,
+		// 	path: `${basePath}/socket.io`,
+		// };
 		return {
-			origin: window.location.origin,
-			path: `${basePath}/socket.io`,
+		origin: 'http://localhost:4006',
+		path: '/socket.io',
 		};
 	}
 	if (rawDomain !== '') {
@@ -34,9 +38,13 @@ function	getGatewayConfig(env: NodeJS.ProcessEnv): GatewayConfig {
 
 		const	basePath = wsBasePath.replace(/\/+$/, '');
 
+		// return {
+		// 	origin,
+		// 	path: `${basePath}/socket.io`,
+		// };
 		return {
-			origin,
-			path: `${basePath}/socket.io`,
+		origin: 'http://localhost:4006',
+		path: '/socket.io',
 		};
 	}
 
