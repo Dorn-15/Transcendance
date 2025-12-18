@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react'; // useEffect n'est plus nécessaire pour la langue
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
 
-// Assurez-vous que le chemin d'import est correct selon votre structure
 import { LogOut } from '../../app/logout/logout';
 
-// Import des vues (modals)
 import SettingsView from '../views/SettingsView';
 import SocialView from '../views/SocialView';
 import StatsView from '../views/StatsView';
@@ -18,44 +16,30 @@ export default function NavbarClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Navigation state
-    const [currentLang, setCurrentLang] = useState<LangKey>(1);
+    // 1. On calcule la langue directement depuis l'URL à chaque rendu
+    const langParam = searchParams.get('lang');
+    const paramValue = Number(langParam);
+    
+    // Si le paramètre est valide (existe dans ALL_LANGUAGES), on l'utilise, sinon par défaut 1
+    const currentLang: LangKey = (langParam && ALL_LANGUAGES[paramValue]) 
+        ? (paramValue as LangKey) 
+        : 1;
+
+    // Seule la vue a besoin d'un useState local
     const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'stats'>('menu');
 
-    // Synchronisation de la langue via l'URL
-    useEffect(() => {
-        const langParam = searchParams.get('lang');
-        if (langParam) {
-            const parsed = parseInt(langParam);
-            if (parsed >= 1 && parsed <= 3) {
-                setCurrentLang(parsed as LangKey);
-            }
-        }
-    }, [searchParams]);
-
-    // Changement de langue
+    // 2. La fonction pour changer de langue met simplement à jour l'URL
     const changeLanguage = (langId: LangKey) => {
-        setCurrentLang(langId);
+        // Next.js détectera le changement d'URL et re-rendra le composant avec le nouveau currentLang
         router.push(`/?lang=${langId}`, { scroll: false });
     };
 
-    // Gestion de la déconnexion
     const handleLogout = async () => {
         try {
-            // 1. Appel de la Server Action pour supprimer le cookie
             await LogOut();
-            
-            // 2. Rafraîchir le routeur pour vider le cache des données protégées
             router.refresh();
-            
-            // 3. Redirection explicite vers l'accueil (si la server action ne le fait pas déjà)
-            // Cela évite aussi les erreurs visuelles si la redirection serveur échoue
             router.push(`/?lang=${currentLang}`); 
-            
         } catch (error) {
-            // Si LogOut contient un redirect() serveur, Next.js lance une erreur "NEXT_REDIRECT"
-            // C'est un comportement normal, on peut l'ignorer ou le logger.
-            // Si c'est une autre erreur, on l'affiche.
             if ((error as Error).message !== 'NEXT_REDIRECT') {
                 console.error("Logout failed:", error);
             }
@@ -79,11 +63,10 @@ export default function NavbarClient() {
                     
                     <div className="user-cluster">
                             <div className="user-info">
-                                <span className="user-label">Signed in as</span>
+                                <span className="user-label">{texts.connectedAs}</span>
                                 <span className="user-name">someone</span>
                             </div>
                             
-                            {/* CORRECTION ICI : Appel via handleLogout */}
                             <button className="sign-out-btn" onClick={handleLogout}>
                                 Sign out
                             </button>
@@ -91,7 +74,6 @@ export default function NavbarClient() {
                 </div>
             </header>
 
-            {/* View Modals */}
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (

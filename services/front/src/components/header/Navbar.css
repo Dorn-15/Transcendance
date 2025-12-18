@@ -83,33 +83,18 @@ header {
     width: 100%;
 }
 
-/* --- User Cluster (Right Side) --- */
+/* --- SECTION USER-CLUSTER MODIFIÉE UNIQUEMENT --- */
 .user-cluster {
     position: absolute;
     right: 3vw;
     top: 50%;
     transform: translateY(-50%);
-    pointer-events: auto; /* Enable clicking */
+    pointer-events: auto;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-}
-
-.sign-in-btn {
-    background-color: transparent;
-    border: 1px solid #1b0a00;
-    color: #1b0a00;
-    padding: 0.8vh 2vh;
-    font-family: 'TT';
-    font-size: 1.5vh;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-}
-
-.sign-in-btn:hover {
-    background-color: #1b0a00;
-    color: #998168;
+    gap: 1.2vw;
+    /* On utilise une police système sans-serif pour une lisibilité maximale */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .user-info {
@@ -117,35 +102,61 @@ header {
     flex-direction: column;
     align-items: flex-end;
     color: #1b0a00;
-    font-family: sans-serif; /* Or use TT if preferred */
 }
 
 .user-label {
-    font-size: 1vh;
-    opacity: 0.7;
+    font-size: 0.9vh;
+    opacity: 0.6;
     text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .user-name {
-    font-weight: bold;
-    font-size: 1.5vh;
+    font-weight: 700;
+    font-size: 1.6vh;
+    letter-spacing: 0.2px;
 }
 
+.sign-out-btn {
+    background-color: #1b0a00;
+    color: #998168;
+    border: none;
+    padding: 0.8vh 1.4vh;
+    font-size: 1.1vh;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    border-radius: 2px;
+    /* Petit effet 3D discret */
+    box-shadow: 0 3px 0px rgba(0,0,0,0.3);
+}
+
+.sign-out-btn:hover {
+    background-color: #1b0a00;
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0px rgba(0,0,0,0.3);
+}
+
+.sign-out-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0px rgba(0,0,0,0.3);
+}
+
+/* --- Reste du style original --- */
 .blur-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-
     background-color: rgba(0, 0, 0, 0.4);
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     z-index: 50;
-
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     animation: fadeInOverlay 0.3s ease-out;

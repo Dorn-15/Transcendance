@@ -1,4 +1,9 @@
 /* --- Login Modal --- */
+body {
+    background-image: url('../../../public/assets/backGroundLogin.png');
+    background-position: center ;
+}
+
 .login-overlay {
     position: fixed;
     top: 0;

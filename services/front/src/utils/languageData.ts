@@ -14,6 +14,11 @@ export interface GameInfo {
     trans: string;
     noFriends: string;
     leave: string;
+    connectedAs: string;
+    welcome: string;
+    username: string;
+    enter: string;
+    loading: string;
 }
 
 export interface LanguageData {
@@ -36,7 +41,12 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             back: "Retour",
             trans: "Transcendance",
             noFriends: "Aucun ami ajoute",
-            leave: "Quitter la borne"
+            leave: "Quitter la borne",
+            connectedAs: "Connecte en tant que",
+            welcome: "Bienvenue",
+            username: "Pseudo",
+            enter: "Entrer",
+            loading: "Chargement des modeles"
         }
     },
     // 2 = ANGLAIS
@@ -54,7 +64,12 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             back: "Back",
             trans: "Transcendence",
             noFriends: "No friends add",
-            leave: "Exit the arcade"
+            leave: "Exit the arcade",
+            connectedAs: "Connected as",
+            welcome: "Welcome",
+            username: "Username",
+            enter: "Enter",
+            loading: "Loading models"
         }
     },
     // 3 = ESPAGNOL
@@ -72,7 +87,12 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             back: "Atrás",
             trans: "Trascendencia",
             noFriends: "No se agregan amigos",
-            leave: "Salir de la máquina arcade"
+            leave: "Salir de la máquina arcade",
+            connectedAs: "Conéctate como",
+            welcome: "Bienvenido",
+            username: "nombre de usuario",
+            enter: "ingresar",
+            loading: "Cargando modelos"
         }
     },
     // 4 = ALLEMAND
@@ -91,9 +111,12 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             back: "Zurück",
             trans: "Transzendenz",
             noFriends: "Keine Freunde hinzugefügt",
-            leave: "Verlasse den Spielautomaten"
-
-  
+            leave: "Verlasse den Spielautomaten",
+            connectedAs: "Verbinden als",
+            welcome: "Willkommen",
+            username: "Benutzername",
+            enter: "eingeben",
+            loading: "Laden von Modellen"
         }
     }
 };
