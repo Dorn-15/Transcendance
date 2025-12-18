@@ -1,47 +1,244 @@
 global:
   resolve_timeout: 5m
-  slack_api_url: ''
+  # SMTP configuration
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'uberintwins@gmail.com'
+  smtp_auth_username: 'uberintwins@gmail.com'
+  smtp_auth_password: 'qyszofbhafroebcm'
+  smtp_require_tls: true
 
 route:
-  receiver: 'default'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: 'default-email'
+  group_by: ['alertname', 'cluster', 'service', 'component']
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 12h
   routes:
+    # Critical alerts - highest priority
     - match:
         severity: critical
-      receiver: 'critical-alerts'
+      receiver: 'critical-email'
+      group_wait: 5s
+      group_interval: 5s
+      repeat_interval: 1h
       continue: true
+    # Service availability alerts
+    - match:
+        component: availability
+      receiver: 'service-email'
+      continue: true
+    # Database alerts
     - match:
         component: database
-      receiver: 'database-alerts'
+      receiver: 'database-email'
+      continue: true
+    # Cache/Redis alerts
+    - match:
+        component: cache
+      receiver: 'cache-email'
+      continue: true
+    # System resource alerts
     - match:
         component: system
-      receiver: 'system-alerts'
+      receiver: 'system-email'
+      continue: true
+    # Performance alerts
+    - match:
+        component: performance
+      receiver: 'performance-email'
+      continue: true
+    # Error rate alerts
+    - match:
+        component: errors
+      receiver: 'errors-email'
+      continue: true
+    # WebSocket alerts
+    - match:
+        component: websocket
+      receiver: 'websocket-email'
+      continue: true
+    # Web server alerts
+    - match:
+        component: web-server
+      receiver: 'service-email'
+      continue: true
 
 receivers:
-  - name: 'default'
-    webhook_configs:
-      - url: 'http://localhost:5001/webhook'
+  - name: 'default-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
         send_resolved: true
-  - name: 'critical-alerts'
-    webhook_configs:
-      - url: 'http://localhost:5001/webhook/critical'
+        headers:
+          Subject: '[Transcendance] Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Alert Details</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <p><strong>Component:</strong> {{ .GroupLabels.component }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          <p><strong>Started:</strong> {{ .StartsAt }}</p>
+          {{ end }}
+
+  - name: 'critical-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
         send_resolved: true
-  - name: 'database-alerts'
-    webhook_configs:
-      - url: 'http://localhost:5001/webhook/database'
+        headers:
+          Subject: '🚨 CRITICAL: Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2 style="color: red;">🚨 CRITICAL ALERT</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <p><strong>Component:</strong> {{ .GroupLabels.component }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          <p><strong>Started:</strong> {{ .StartsAt }}</p>
+          {{ if .Labels.job }}<p><strong>Job:</strong> {{ .Labels.job }}</p>{{ end }}
+          {{ end }}
+
+  - name: 'service-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
         send_resolved: true
-  - name: 'system-alerts'
-    webhook_configs:
-      - url: 'http://localhost:5001/webhook/system'
+        headers:
+          Subject: '[Service] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Service Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'database-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
         send_resolved: true
+        headers:
+          Subject: '[Database] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Database Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'cache-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
+        send_resolved: true
+        headers:
+          Subject: '[Cache/Redis] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Cache/Redis Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'system-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
+        send_resolved: true
+        headers:
+          Subject: '[System] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>System Resource Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'performance-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
+        send_resolved: true
+        headers:
+          Subject: '[Performance] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Performance Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'errors-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
+        send_resolved: true
+        headers:
+          Subject: '[Errors] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Error Rate Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
+
+  - name: 'websocket-email'
+    email_configs:
+      - to: 'uberintwins@gmail.com'
+        send_resolved: true
+        headers:
+          Subject: '[WebSocket] Transcendance - {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>WebSocket Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <hr>
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          {{ end }}
 
 inhibit_rules:
+  # Suppress warning alerts when critical alerts are firing for the same service
   - source_match:
       severity: 'critical'
     target_match:
       severity: 'warning'
     equal: ['alertname', 'cluster', 'service']
-
+  
+  # Suppress individual service alerts when system-wide issues are detected
+  - source_match:
+      alertname: 'HighCPUUsage'
+    target_match_re:
+      alertname: 'HighResponseTime|HighErrorRate'
+    equal: ['service']
+  
+  # Suppress performance alerts when service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: 'HighResponseTime|HighErrorRate'
+    equal: ['service']

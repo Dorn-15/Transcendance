@@ -3,14 +3,14 @@ groups:
     interval: 30s
     rules:
       - alert: ServiceDown
-        expr: up{job=~"auth-service|social-service|game-service|realtime-gateway"} == 0
+        expr: up == 0
         for: 1m
         labels:
           severity: critical
           component: availability
         annotations:
           summary: "Service {{ $labels.job }} is down"
-          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
 
       - alert: HighErrorRate
         expr: |
@@ -168,4 +168,30 @@ groups:
         annotations:
           summary: "WebSocket connection limit approaching"
           description: "Active WebSocket connections: {{ $value }} (threshold: 5000)"
+
+  - name: nginx_alerts
+    interval: 30s
+    rules:
+      - alert: NginxHighConnections
+        expr: nginx_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: web-server
+        annotations:
+          summary: "High number of active Nginx connections"
+          description: "Nginx has {{ $value }} active connections (threshold: 1000)"
+
+      - alert: NginxHighErrorRate
+        expr: |
+          sum(rate(nginx_http_requests_total{status=~"5.."}[5m])) 
+          / 
+          sum(rate(nginx_http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: web-server
+        annotations:
+          summary: "Nginx high error rate"
+          description: "Nginx is returning 5xx errors for {{ $value }}% of requests"
 

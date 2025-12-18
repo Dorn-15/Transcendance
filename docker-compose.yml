@@ -20,6 +20,9 @@ services:
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
       - ROOM_HOST=${ROOM_SERVICE_NAME}:${ROOM_PORT}
       - MATCHMAKING_HOST=${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
+      - PROMETHEUS_HOST=${PROMETHEUS_NAME}:${PROMETHEUS_PORT}
+      - GRAFANA_HOST=${GRAFANA_NAME}:${GRAFANA_PORT}
+      - ALERTMANAGER_HOST=${ALERTMANAGER_NAME}:${ALERTMANAGER_PORT}
       - FRONT_PATH=${FRONT_PATH}
       - AUTH_PATH=${AUTH_PATH}
       - SOCIAL_PATH=${SOCIAL_PATH}
@@ -27,29 +30,46 @@ services:
       - ROOM_PATH=${ROOM_PATH}
       - MATCHMAKING_PATH=${MATCHMAKING_PATH}
       - WS_PATH=${WS_PATH}
+      - PROMETHEUS_PATH=${PROMETHEUS_PATH:-/prometheus}
+      - GRAFANA_PATH=${GRAFANA_PATH:-/grafana}
+      - ALERTMANAGER_PATH=${ALERTMANAGER_PATH:-/alertmanager}
+      - DOMAIN=${DOMAIN}
+      - MONITORING_USER=${MONITORING_USER:-admin}
+      - MONITORING_PASSWORD=${MONITORING_PASSWORD:-admin}
     # for prod -----------------------------------------------
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
-      - "traefik.http.routers.nginx-secure.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
-      - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
-      - "traefik.http.routers.nginx-secure.tls=true"
-      - "traefik.http.routers.nginx-web.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.nginx-web.entrypoints=web"
-      - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-    networks:
-      - traefik_proxy
-      - internal
-    # for dev ------------------------------------------------
-    # ports:
-    #   - "8080:80"
-    #   - "8443:443"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.docker.network=traefik_proxy"
+    #   - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    #   - "traefik.http.routers.nginx-secure.rule=Host(`${DOMAIN}`)"
+    #   - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+    #   - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
+    #   - "traefik.http.routers.nginx-secure.tls=true"
+    #   - "traefik.http.routers.nginx-web.rule=Host(`${DOMAIN}`)"
+    #   - "traefik.http.routers.nginx-web.entrypoints=web"
+    #   - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
     # networks:
+    #   - traefik_proxy
     #   - internal
+    # for dev ------------------------------------------------
+    ports:
+      - "8080:80"
+      - "8443:443"
+    networks:
+      - internal
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    restart: unless-stopped
+    command:
+      - '-nginx.scrape-uri=http://nginx:80/stub_status'
+    networks:
+      - internal
+    depends_on:
+      - nginx
 
   frontend:
     build:
@@ -205,7 +225,7 @@ services:
       - internal
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: ${PROMETHEUS_NAME}
     restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -214,12 +234,14 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
+      - '--web.external-url=https://${DOMAIN}${PROMETHEUS_PATH:-/prometheus}'
+      - '--web.route-prefix=${PROMETHEUS_PATH:-/prometheus}'
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts:/etc/prometheus/alerts:ro
       - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
+    # ports:
+    #   - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
     networks:
       - internal
     depends_on:
@@ -229,22 +251,23 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: ${GRAFANA_NAME}
     restart: unless-stopped
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_SECURITY_SECRET_KEY=${GRAFANA_SECRET_KEY:-changeme}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3001
-      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=https://${DOMAIN}${GRAFANA_PATH:-/grafana/}
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SERVER_DOMAIN=${DOMAIN}
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_SECURITY_DISABLE_GRAVATAR=true
       - GF_INSTALL_PLUGINS=
     volumes:
       - grafana_data:/var/lib/grafana
-    ports:
-      - "3001:3000"
+    # ports:
+    #   - "3001:${GRAFANA_PORT}"
     networks:
       - internal
     depends_on:
@@ -294,16 +317,18 @@ services:
 
   alertmanager:
     image: prom/alertmanager:latest
-    container_name: alertmanager
+    container_name: ${ALERTMANAGER_NAME}
     restart: unless-stopped
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+      - '--web.external-url=https://${DOMAIN}${ALERTMANAGER_PATH:-/alertmanager/}'
+      - '--web.route-prefix=${ALERTMANAGER_PATH:-/alertmanager/}'
     volumes:
       - ./monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
       - alertmanager_data:/alertmanager
-    ports:
-      - "9093:9093"
+    # ports:
+    #   - "${ALERTMANAGER_PORT}:${ALERTMANAGER_PORT}"
     networks:
       - internal
     depends_on:
@@ -316,6 +341,6 @@ volumes:
 
 networks:
   traefik_proxy:
-    external: true
+    driver: bridge
   internal:
     driver: bridge
