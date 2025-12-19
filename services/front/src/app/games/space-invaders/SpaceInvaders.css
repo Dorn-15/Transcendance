@@ -4,14 +4,13 @@
     width: 95vw;
     max-width: 800px;
     margin: 0 auto;
-    
+
     aspect-ratio: 4/5;
-    max-height: 65vh; 
-    
+    max-height: 65vh;
+
     background-color: #000;
-    color: #0f0; 
-    /* Bordure supprimée ici */
-    
+    color: #0f0;
+
     font-family: 'Press Start 2P', cursive;
     display: flex;
     flex-direction: column;

@@ -66,19 +66,14 @@ function	readSocketToken(client: Socket): string | null {
 
 @WebSocketGateway({
 	cors: {
-		origin: '*',
+		origin: (origin, callback): void => {
+			callback(null, origin ?? true);
+		},
 		credentials: true,
 	},
 	transports: ['websocket'],
 	allowRequest: (req, callback): void => {
 		const	token = ensureRequestToken(req);
-		const	existing = activeTokens.get(token);
-
-		if (existing) {
-			callback('TOO_MANY_CONNECTIONS', false);
-			return;
-		}
-
 		activeTokens.set(token, 'pending');
 		setTimeout(() => {
 			if (activeTokens.get(token) === 'pending')
@@ -111,8 +106,15 @@ export class GatewayService
 	handleConnection(client: Socket): void {
 		this.logger.log(`Client ${client.id} connecté`);
 		const	token = readSocketToken(client);
-		if (token)
+		if (token) {
+			const	previousClientId = activeTokens.get(token);
+			if (previousClientId && previousClientId !== client.id) {
+				const	previousClient = this.server.sockets.sockets.get(previousClientId);
+				if (previousClient)
+					previousClient.disconnect(true);
+			}
 			activeTokens.set(token, client.id);
+		}
 	}
 
 	handleDisconnect(client: Socket): void {
@@ -120,6 +122,7 @@ export class GatewayService
 		const	token = readSocketToken(client);
 		if (token && activeTokens.get(token) === client.id)
 			activeTokens.delete(token);
+		console.log('handleDisconnect', client.id);
 		this.pongExchange.cleanupClient(client);
 	}
 
@@ -141,7 +144,6 @@ export class GatewayService
 		return this.pongExchange.handleJoinMatch(client, payload);
 	}
 
-	// --- AJOUT 1 : Pour mettre en pause quand on quitte l'écran ---
 	@SubscribeMessage('pong:leave')
 	async leaveMatch(
 		@ConnectedSocket() client: Socket,
@@ -150,7 +152,6 @@ export class GatewayService
 		return this.pongExchange.handleLeaveMatch(client, payload);
 	}
 
-	// --- AJOUT 2 : Pour détruire complètement la partie ---
 	@SubscribeMessage('pong:stop')
 	async stopMatch(
 		@ConnectedSocket() client: Socket,
@@ -166,5 +167,14 @@ export class GatewayService
 		payload: { matchId: string; player: string; direction: PongDirection },
 	): Promise<{ state?: PongState; error?: string }> {
 		return this.pongExchange.handleMove(client, payload);
+	}
+
+	@SubscribeMessage('pong:restart')
+	async restart(
+		@ConnectedSocket() client: Socket,
+		@MessageBody()
+		payload: { matchId: string; player: string },
+	): Promise<{ state?: PongState; error?: string }> {
+		return this.pongExchange.handleRestartMatch(client, payload);
 	}
 }

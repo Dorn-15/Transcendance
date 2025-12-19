@@ -78,6 +78,25 @@ export class PongController {
 		return this.pongService.disconnectPlayer(matchId, player);
 	}
 
+	@Post('matches/:matchId/restart')
+	restart(
+		@Param('matchId') matchId: string,
+		@Body() body: { player: string },
+	): PongState {
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		return this.pongService.restartMatch(matchId, player);
+	}
+
+	@Post('matches/:matchId/close')
+	close(
+		@Param('matchId') matchId: string,
+	): { matchId: string; removed: boolean } {
+		return this.pongService.closeMatch(matchId);
+	}
+
 	@Get('matches/:matchId/state')
 	getState(@Param('matchId') matchId: string): PongState {
 		return this.pongService.getState(matchId);

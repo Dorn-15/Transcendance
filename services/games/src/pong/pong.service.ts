@@ -22,6 +22,7 @@ interface MatchInputs {
 export class PongService implements OnModuleDestroy {
 	private readonly	matches = new Map<string, PongMatch>();
 	private readonly	inputs = new Map<string, MatchInputs>();
+	private readonly	restartVotes = new Map<string, Set<string>>();
 	private readonly	frameRateMs: number;
 	private readonly	frameRateS: number;
 	private readonly	tickInterval: NodeJS.Timeout;
@@ -190,10 +191,15 @@ export class PongService implements OnModuleDestroy {
 		}
 
 		const	match = this.checkMatchId(matchId);
+		const	alreadyInMatch = match.players.find((p) => p.id === trimmedPlayerId);
+		if (alreadyInMatch) {
+			this.markPlayerConnected(match, trimmedPlayerId);
+			return match;
+		}
+		if (match.state.status === 'ended')
+			throw new ConflictException('Match ended');
 		if (match.players.length >= 2)
 			throw new ConflictException('Match full');
-		else if (match.state.status === 'ended')
-			throw new ConflictException('Match ended');
 
 		match.players.push({
 			id: trimmedPlayerId,
@@ -240,6 +246,7 @@ export class PongService implements OnModuleDestroy {
 		const	player = this.checkPlayer(match, trimmedPlayerId);
 
 		player.connected = false;
+		this.restartVotes.delete(matchId);
 		if (match.state.status !== 'ended')
 			match.state.status = 'paused';
 
@@ -247,6 +254,7 @@ export class PongService implements OnModuleDestroy {
 		if (allDisconnected) {
 			this.matches.delete(matchId);
 			this.inputs.delete(matchId);
+			this.restartVotes.delete(matchId);
 			return {
 				matchId,
 				removed: true,
@@ -259,6 +267,42 @@ export class PongService implements OnModuleDestroy {
 			state: match.state,
 			players: match.players,
 		};
+	}
+
+	restartMatch(matchId: string, playerId: string): PongState {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	match = this.checkMatchId(matchId);
+		this.checkPlayer(match, trimmedPlayerId);
+		if (match.state.status !== 'ended')
+			throw new ConflictException('Match not ended');
+
+		let	votes: Set<string> | undefined;
+		votes = this.restartVotes.get(matchId);
+		if (!votes) {
+			votes = new Set<string>();
+			this.restartVotes.set(matchId, votes);
+		}
+		votes.add(trimmedPlayerId);
+
+		if (votes.size < 2)
+			return match.state;
+
+		match.state = this.createInitialState(matchId);
+		this.inputs.set(matchId, { left: 'none', right: 'none' });
+		this.restartVotes.delete(matchId);
+		this.resumeIfReady(match);
+		return match.state;
+	}
+
+	closeMatch(matchId: string): { matchId: string; removed: boolean } {
+		const	exists = this.matches.has(matchId);
+		if (!exists)
+			return { matchId, removed: false };
+
+		this.matches.delete(matchId);
+		this.inputs.delete(matchId);
+		this.restartVotes.delete(matchId);
+		return { matchId, removed: true };
 	}
 
 // Game Logic ============================================================

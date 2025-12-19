@@ -1,17 +1,15 @@
 import { cookies } from 'next/headers';
-
-//improt {getAuthStatus} from 'getAuthStatus';
+import { AUTH_SERVICE_URL } from './login/route';
 
 export type AuthStatus =
     | { authenticated: false }
     | { authenticated: true; username: string };
 
-const AUTH_URL = "http://localhost:4001"
-// const AUTH_URL = "http://auth_service:4001"
+const AUTH_URL = AUTH_SERVICE_URL;
 
 export async function getAuthStatus(): Promise<AuthStatus> {
     // Await cookies() to be safe across Next.js versions
-    const cookieStore = await cookies(); 
+    const cookieStore = await cookies();
 
     try {
         const res = await fetch(`${AUTH_URL}/auth/status`, {

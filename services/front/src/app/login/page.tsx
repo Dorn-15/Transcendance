@@ -1,10 +1,13 @@
 // app/login/page.tsx
-import LogIn from '../../components/views/LogIn'; // Update path to where your component is
+import { Suspense } from 'react';
+import LogIn from '../../components/views/LogIn';
 
 export default function LoginPage() {
-  return (
-    <main>
-      <LogIn />
-    </main>
-  );
+	return (
+		<main>
+			<Suspense fallback={null}>
+				<LogIn />
+			</Suspense>
+		</main>
+	);
 }

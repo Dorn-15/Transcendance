@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 
-// const AUTH_SERVICE_URL = "http://auth_service:4001";
-const AUTH_SERVICE_URL = "http://localhost:4001";
+function getAuthServiceUrl(): string {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === null) {
+        return "http://localhost:4001";
+    }
+    return `http://${process.env.AUTH_HOST}`;
+}
 
+export const AUTH_SERVICE_URL = getAuthServiceUrl();
 
 export async function POST(request: Request) {
     try {
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
         // 2. CRITICAL: Capture Set-Cookie header safely
         // Node's fetch sometimes hides 'set-cookie' inside a distinct list
         const setCookieHeader = res.headers.get('set-cookie');
-        
+
         if (setCookieHeader) {
             response.headers.set('Set-Cookie', setCookieHeader);
         } else {

@@ -34,6 +34,7 @@ export class PongExchangeService {
 		payload: { player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
+			console.log('handleCreateMatch', payload);
 			const	body = { player: payload?.player ?? 'player' };
 			const	response = await this.postJson<MatchJoin>('/pong/matches', body);
 
@@ -57,8 +58,9 @@ export class PongExchangeService {
 		payload: { matchId?: string; player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
+			console.log('handleJoinMatch', payload);
 			const	body = {
-				player: payload?.player ?? 'player',
+				player: payload?.player,
 				matchId: payload?.matchId,
 			};
 			const	path = `/pong/matches/${payload?.matchId}/join`;
@@ -79,54 +81,59 @@ export class PongExchangeService {
 		}
 	}
 
-	// --- AJOUT : Gestion du départ volontaire (Mise en pause) ---
 	async handleLeaveMatch(
 		client: Socket,
 		payload: { matchId?: string }
 	): Promise<void> {
+		console.log('handleLeaveMatch', payload);
 		const sessions = this.clientSessions.get(client.id);
 		if (!sessions) return;
 
-		// Si un matchId est fourni, on ne quitte que celui-là. Sinon tous.
 		const sessionsToLeave = payload?.matchId
 			? sessions.filter((s) => s.matchId === payload.matchId)
 			: sessions;
 
 		for (const session of sessionsToLeave) {
-			try {
-				// 1. On prévient le moteur de jeu que le joueur est "parti"
-				// Cela doit déclencher le statut 'paused' côté moteur
-				await this.notifyDisconnect(session);
-				
-				// 2. On retire le joueur de la room socket
-				client.leave(this.getRoom(session.matchId));
-				
-				// 3. On arrête de suivre ce client pour ce match dans le service
-				this.unregisterClient(session.matchId, client.id);
-
-				// 4. On nettoie la session locale
-				const remaining = (this.clientSessions.get(client.id) ?? [])
-					.filter(s => s.matchId !== session.matchId);
-				this.clientSessions.set(client.id, remaining);
-
-				this.logger.log(`Client ${client.id} left match ${session.matchId} (Paused)`);
-			} catch (error) {
-				this.logger.warn(`Error handling leave for match ${session.matchId}: ${(error as Error).message}`);
-			}
+			await this.closeMatchForAll(session.matchId, 'leave');
 		}
 	}
 
-	// --- AJOUT : Gestion de l'arrêt total (Destruction) ---
 	async handleStopMatch(
-		client: Socket, 
+		client: Socket,
 		payload: { matchId?: string }
 	): Promise<void> {
-		// Logique similaire à leave, mais on pourrait appeler un endpoint DELETE
-		// Pour l'instant, on fait un leave propre pour s'assurer que c'est nettoyé
-		await this.handleLeaveMatch(client, payload);
-		
-		// TODO: Si tu as un endpoint DELETE sur ton moteur de jeu, appelle-le ici :
-		// await this.fetcher(`${this.gamesBaseUrl}/pong/matches/${payload.matchId}`, { method: 'DELETE' });
+		console.log('handleStopMatch', payload);
+		const sessions = this.clientSessions.get(client.id);
+		if (!sessions) return;
+
+		const sessionsToStop = payload?.matchId
+			? sessions.filter((s) => s.matchId === payload.matchId)
+			: sessions;
+
+		for (const session of sessionsToStop) {
+			await this.closeMatchForAll(session.matchId, 'stop');
+		}
+	}
+
+	async handleRestartMatch(
+		client: Socket,
+		payload: { matchId: string; player: string },
+	): Promise<{ state?: PongState; error?: string }> {
+		console.log('handleRestartMatch', payload);
+		if (!payload?.matchId)
+			return { error: 'matchId manquant' };
+		try {
+			const	state = await this.postJson<PongState>(
+				`/pong/matches/${payload.matchId}/restart`,
+				{ player: payload?.player ?? 'player' },
+			);
+			this.emitState(payload.matchId, state);
+			return { state };
+		} catch (error) {
+			const	message = (error as Error).message;
+			this.logger.error(message);
+			return { error: message };
+		}
 	}
 
 	async handleMove(
@@ -162,6 +169,7 @@ export class PongExchangeService {
 
 	cleanupClient(client: Socket): void {
 		const	sessions = this.clientSessions.get(client.id) ?? [];
+		console.log('cleanupClient', sessions);
 		this.clientSessions.delete(client.id);
 
 		for (const	session of sessions) {
@@ -233,16 +241,55 @@ export class PongExchangeService {
 		this.clientSessions.set(socketId, sessions);
 	}
 
+	private cleanupSessionsForMatch(matchId: string): void {
+		for (const [socketId, sessions] of this.clientSessions.entries()) {
+			const	remaining = sessions.filter((s) => s.matchId !== matchId);
+			if (remaining.length === 0)
+				this.clientSessions.delete(socketId);
+			else
+				this.clientSessions.set(socketId, remaining);
+		}
+	}
+
+	private stopPolling(matchId: string): void {
+		const	tracker = this.matchTrackers.get(matchId);
+		if (!tracker)
+			return;
+		if (tracker.interval)
+			clearInterval(tracker.interval);
+		this.matchTrackers.delete(matchId);
+	}
+
+	private async closeMatchForAll(matchId: string, reason: 'leave' | 'stop' | 'disconnect'): Promise<void> {
+		if (!matchId)
+			return;
+
+		try {
+			await this.postJson<{ matchId: string; removed: boolean }>(
+				`/pong/matches/${matchId}/close`,
+				{},
+			);
+		} catch (error) {
+			this.logger.warn(`Close match ${matchId} échoué: ${(error as Error).message}`);
+		}
+
+		if (this.server) {
+			const	room = this.getRoom(matchId);
+			this.server.to(room).emit('pong:closed', { matchId, reason });
+			(this.server as any).in(room).socketsLeave(room);
+		}
+
+		this.cleanupSessionsForMatch(matchId);
+		this.stopPolling(matchId);
+	}
+
 	private startPolling(matchId: string): void {
 		const	tracker =
 			this.matchTrackers.get(matchId) ??
 			({ sockets: new Set() } as MatchTracker);
 
-		if (tracker.interval) {
+		if (tracker.interval)
 			return;
-		}
-
-		// Polling à 60fps pour récupérer l'état du moteur de jeu
 		tracker.interval = setInterval(async () => {
 			try {
 				const	state = await this.getJson<PongState>(
@@ -251,7 +298,6 @@ export class PongExchangeService {
 
 				this.emitState(matchId, state);
 			} catch (error) {
-				// Si le match n'existe plus côté moteur, on arrête le polling
 				this.logger.warn(`Polling match ${matchId} échoué: ${(error as Error).message}`);
 				const t = this.matchTrackers.get(matchId);
 				if (t && t.interval) clearInterval(t.interval);

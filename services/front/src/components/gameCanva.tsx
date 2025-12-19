@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { initGame } from '@/utils/gameScene';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
-import './gameCanva.css'; 
+import './gameCanva.css';
 
 interface GameCanvaProps {
     userName: string;
@@ -15,7 +15,7 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const searchParams = useSearchParams();
     const router = useRouter();
-    
+
     const [isLoading, setIsLoading] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
@@ -34,24 +34,24 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
 
     // 2. DÉFINITION DYNAMIQUE DES JEUX (ICI, on a accès à "texts")
     const gamesList = useMemo(() => [
-        { 
-            id: 'pong', 
-            label: 'PONG', 
+        {
+            id: 'pong',
+            label: 'PONG',
             icon: '🏓',
             // Assurez-vous que pongDesc existe dans languageData.ts
-            desc: texts.descPong || 'Classic Retro Tennis' 
+            desc: texts.descPong || 'Classic Retro Tennis'
         },
-        { 
-            id: 'breakout', 
-            label: 'BREAKOUT', 
+        {
+            id: 'breakout',
+            label: 'BREAKOUT',
             icon: '🧱',
-            desc: texts.descBreakout || 'Destroy the Bricks' 
+            desc: texts.descBreakout || 'Destroy the Bricks'
         },
-        { 
-            id: 'space-invaders', 
-            label: 'SPACE INVADERS', 
+        {
+            id: 'space-invaders',
+            label: 'SPACE INVADERS',
             icon: '👾',
-            desc: texts.descSpaceInvaders || 'Defend Earth' 
+            desc: texts.descSpaceInvaders || 'Defend Earth'
         },
     ], [texts]); // Se met à jour quand texts change
 
@@ -78,7 +78,7 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
         const controls = initGame(canvasRef.current, effectiveLang, () => {
             setIsLoading(false);
         });
-        
+
         gameControlsRef.current = controls;
 
         return () => {
@@ -120,9 +120,9 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
                 <div className="game-list">
                     {/* On utilise gamesList ici au lieu de GAMES */}
                     {gamesList.map((game) => (
-                        <div 
-                            key={game.id} 
-                            className="game-card" 
+                        <div
+                            key={game.id}
+                            className="game-card"
                             onClick={() => handleGameClick(game.id)}
                         >
                             <div className="game-icon">{game.icon}</div>
