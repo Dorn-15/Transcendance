@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { useSocket } from '@/app/context/socketProvider';
 import type { GatewayConfig } from '@/app/play/[gameId]/GameOverlayClient';
 import type { PongState } from '@transcendance/pong';
 import type { GameInfo } from '@/utils/languageData';
@@ -26,13 +26,14 @@ function extractMatchId(raw: string): string {
 	return trimmed;
 }
 
-export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
-	const socketRef = useRef<Socket | null>(null);
-	
-    // État pour savoir si on est sur mobile (pour afficher les contrôles tactiles)
+export function Pong({ userName = 'GUEST', texts }: PongProps) {
+    const { socket, isConnected } = useSocket();
     const [isMobile, setIsMobile] = useState(false);
 
-	const [connected, setConnected] = useState(false);
+    // --- REF pour stocker l'ID actuel sans re-déclencher le useEffect ---
+    const matchIdRef = useRef<string>('');
+    const isGameIntentional = useRef(false);
+
 	const [matchId, setMatchId] = useState<string>('');
 	const [joinInput, setJoinInput] = useState<string>('');
 	const [pongState, setPongState] = useState<PongState | null>(null);
@@ -40,7 +41,11 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 	
 	const activeMatch = pongState && pongState.status !== 'ended';
 
-    // Détection basique du mobile au montage
+    // Synchronisation State -> Ref
+    useEffect(() => {
+        matchIdRef.current = matchId;
+    }, [matchId]);
+
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
@@ -48,74 +53,85 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-	const requireSocket = useCallback((): Socket | null => {
-		const socket = socketRef.current;
-		if (!socket) {
-			setLastError('Not connected');
-			return null;
-		}
-		return socket;
-	}, []);
+    useEffect(() => {
+        if (!socket) return;
 
-	// --- SOCKET LOGIC ---
-	const handleConnect = useCallback((): void => {
-		if (socketRef.current?.connected) return;
-		
-		const socket = io(gatewayConfig.origin, {
-			path: gatewayConfig.path,
-			transports: ['websocket'],
-		});
-		socketRef.current = socket;
+        console.log("🎮 Pong: MOUNT");
 
-		socket.on('connect', () => { 
-			setConnected(true); 
-			setLastError(null); 
-		});
-		socket.on('disconnect', () => { setConnected(false); });
-		socket.on('connect_error', (err) => { setLastError("Error: " + err.message); });
-		socket.on('pong:state', (state: PongState) => { setPongState(state); setMatchId(state.matchId); });
-		socket.on('pong:error', (msg: string) => { setLastError(msg); });
-	}, [gatewayConfig.origin, gatewayConfig.path]);
+        // 1. Reset initial
+        isGameIntentional.current = false;
+        setPongState(null);
+        setMatchId('');
+        matchIdRef.current = '';
+        
+        // Sécurité : on s'assure qu'on n'est pas considéré comme actif ailleurs
+        socket.emit('pong:leave');
 
-	useEffect(() => {
-		handleConnect();
-		return () => {
-			if (socketRef.current) socketRef.current.disconnect();
-		};
-	}, [handleConnect]);
+        const onPongState = (state: PongState) => {
+            if (!isGameIntentional.current) return;
+            setPongState(state);
+            setMatchId(state.matchId); // La Ref sera mise à jour via l'autre useEffect
+        };
+
+        const onPongError = (msg: string) => {
+            if (!isGameIntentional.current) return;
+            setLastError(msg);
+        };
+
+        socket.on('pong:state', onPongState);
+        socket.on('pong:error', onPongError);
+
+        // --- C'EST ICI QUE ÇA SE JOUE (UNMOUNT) ---
+        return () => {
+            console.log("🎮 Pong: UNMOUNT - Triggering PAUSE");
+            
+            // On récupère le vrai ID de la partie en cours grâce à la REF
+            const currentMatchId = matchIdRef.current;
+
+            // On envoie un événement explicite au serveur pour dire "Je sors de l'écran"
+            // Le serveur DOIT traiter cet événement comme une mise en PAUSE.
+            socket.emit('pong:leave', { matchId: currentMatchId }); 
+            
+            isGameIntentional.current = false;
+            socket.off('pong:state', onPongState);
+            socket.off('pong:error', onPongError);
+        };
+    }, [socket]); // Dépendance uniquement au socket
+
 
 	const handleCreate = useCallback((): void => {
-		const socket = requireSocket();
-		if (!socket) return;
-		if (activeMatch) return;
+		if (!socket || !isConnected) return;
+        isGameIntentional.current = true;
+        setLastError(null);
 
 		socket.emit('pong:create', { player: userName }, (res: any) => {
-			if (res?.error) setLastError(res.error);
+			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
 			if (res?.matchId) { setMatchId(res.matchId); setJoinInput(res.matchId); }
 			if (res?.state) setPongState(res.state);
 		});
-	}, [activeMatch, userName, requireSocket]);
+	}, [userName, socket, isConnected]);
 
 	const handleJoin = useCallback((): void => {
-		const socket = requireSocket();
-		if (!socket) return;
+		if (!socket || !isConnected) return;
+        isGameIntentional.current = true;
+        setLastError(null);
+
 		const targetId = joinInput ? extractMatchId(joinInput) : matchId;
 		const normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
 
 		socket.emit('pong:join', { matchId: normalizedMatchId, player: userName }, (res: any) => {
-			if (res?.error) setLastError(res.error);
+			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
 			if (res?.matchId) setMatchId(res.matchId);
 			if (res?.state) setPongState(res.state);
 		});
-	}, [joinInput, matchId, userName, requireSocket]);
+	}, [joinInput, matchId, userName, socket, isConnected]);
 
 	const handleMove = useCallback((direction: 'up' | 'down' | 'none'): void => {
-		const socket = requireSocket();
-		if (!socket || !matchId) return;
+		if (!socket || !matchId || !isConnected) return;
 		socket.emit('pong:move', { matchId, player: userName, direction });
-	}, [matchId, userName, requireSocket]);
+	}, [matchId, userName, socket, isConnected]);
 
-	// --- KEYBOARD ---
+	// --- KEYBOARD & TOUCH (Inchangé) ---
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.repeat) return;
@@ -133,16 +149,8 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 		};
 	}, [handleMove]);
 
-	// --- TOUCH CONTROLS ---
-	const handleTouchStart = (dir: 'up' | 'down') => (e: React.PointerEvent) => {
-		e.preventDefault(); 
-		handleMove(dir);
-	};
-	
-	const handleTouchEnd = (e: React.PointerEvent) => {
-		e.preventDefault();
-		handleMove('none');
-	};
+	const handleTouchStart = (dir: 'up' | 'down') => (e: React.PointerEvent) => { e.preventDefault(); handleMove(dir); };
+	const handleTouchEnd = (e: React.PointerEvent) => { e.preventDefault(); handleMove('none'); };
 
 	const renderCanvas = (state: PongState | null): React.ReactNode => {
 		if (!state) {
@@ -153,7 +161,6 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 				</div>
 			);
 		}
-
 		const VIEWPORT_WIDTH = 800;
 		const VIEWPORT_HEIGHT = 600;
 		const scaleX = VIEWPORT_WIDTH / state.width;
@@ -173,67 +180,36 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 
 	return (
 		<div className={styles.card}>
-			{/* HEADER (Pseudo + Status) */}
 			<div className={styles.cardHeader}>
 				<div className={styles.label}>
 					{texts.welcome}: <span className={styles.highlight}>{userName}</span>
 				</div>
-				<div className={`${styles.status} ${connected ? styles.online : styles.offline}`}>
-					{connected ? 'ONLINE' : '...'}
+				<div className={`${styles.status} ${isConnected ? styles.online : styles.offline}`}>
+					{isConnected ? 'ONLINE' : 'OFFLINE'}
 				</div>
 			</div>
 
-			{/* ACTIONS (Input + Buttons) */}
 			<div className={styles.controlsRow}>
-				<input
-					className={styles.input}
-					type="text"
-					value={joinInput}
-					onChange={(e) => setJoinInput(e.target.value)}
-					placeholder="MATCH ID"
-					disabled={!connected}
-				/>
+				<input className={styles.input} type="text" value={joinInput} onChange={(e) => setJoinInput(e.target.value)} placeholder="MATCH ID" disabled={!isConnected} />
 				<div className={styles.buttonGroup}>
-					<button className={styles.button} onClick={handleCreate} disabled={!connected || Boolean(activeMatch)}>
-						{texts.create}
-					</button>
-					<button className={`${styles.button} ${styles.secondary}`} onClick={handleJoin} disabled={!connected}>
-						{texts.join}
-					</button>
+					<button className={styles.button} onClick={handleCreate} disabled={!isConnected || Boolean(activeMatch)}>{texts.create}</button>
+					<button className={`${styles.button} ${styles.secondary}`} onClick={handleJoin} disabled={!isConnected}>{texts.join}</button>
 				</div>
 			</div>
 
 			{lastError && <div className={styles.error}>{texts.error} {lastError}</div>}
 
-			{/* ZONE DE JEU + CONTROLES TACTILES */}
 			<div className={styles.gameArea}>
 				<div className={styles.boardWrapper}>
 					{renderCanvas(pongState)}
 				</div>
-				
-				{/* Contrôles tactiles (seulement si match actif ou sur mobile) */}
 				{(activeMatch || isMobile) && (
 					<div className={styles.mobileControls}>
-						<button 
-							className={styles.controlBtn} 
-							onPointerDown={handleTouchStart('up')} 
-							onPointerUp={handleTouchEnd}
-							onPointerLeave={handleTouchEnd}
-						>
-							▲
-						</button>
+						<button className={styles.controlBtn} onPointerDown={handleTouchStart('up')} onPointerUp={handleTouchEnd} onPointerLeave={handleTouchEnd}>▲</button>
 						<div className={styles.spacer}></div>
-						<button 
-							className={styles.controlBtn} 
-							onPointerDown={handleTouchStart('down')} 
-							onPointerUp={handleTouchEnd}
-							onPointerLeave={handleTouchEnd}
-						>
-							▼
-						</button>
+						<button className={styles.controlBtn} onPointerDown={handleTouchStart('down')} onPointerUp={handleTouchEnd} onPointerLeave={handleTouchEnd}>▼</button>
 					</div>
 				)}
-				
 				<div className={styles.infos}>
 					<span>ID: {matchId || '---'}</span>
 					<span>{texts.state} {pongState?.status || texts.waiting}</span>

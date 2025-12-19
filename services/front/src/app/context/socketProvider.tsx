@@ -1,10 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import ConnectionErrorView from '@/components/views/ConnectionErrorView';
 
-// ✅ Configuration extraite de votre GameOverlayClient
 const GATEWAY_URL = 'http://localhost:4006';
 const GATEWAY_PATH = '/socket.io';
 
@@ -22,39 +21,78 @@ export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
+    
+    // État technique (Vrai état du socket)
     const [isConnected, setIsConnected] = useState(true);
+    
+    // État visuel (Ce qu'on montre à l'utilisateur)
+    const [showErrorScreen, setShowErrorScreen] = useState(false);
 
+    // Timer pour gérer le délai d'affichage
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // -----------------------------------------------------------
+    // 1. LOGIQUE ANTI-CLIGNOTEMENT (GRACE PERIOD)
+    // -----------------------------------------------------------
+    useEffect(() => {
+        if (isConnected) {
+            // Si connecté, on annule tout timer d'erreur et on cache l'écran
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            setShowErrorScreen(false);
+        } else {
+            // Si déconnecté, on attend 1 seconde avant d'afficher l'erreur.
+            // Cela permet au F5 de se terminer sans flasher l'écran rouge.
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            
+            debounceTimer.current = setTimeout(() => {
+                setShowErrorScreen(true);
+            }, 1000); // 1000ms = 1 seconde de tolérance
+        }
+
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, [isConnected]);
+
+
+    // -----------------------------------------------------------
+    // 2. LOGIQUE SOCKET (IDENTIQUE À AVANT)
+    // -----------------------------------------------------------
     useEffect(() => {
         console.log(`🔌 Global Socket init: Connecting to ${GATEWAY_URL}`);
 
         const newSocket = io(GATEWAY_URL, {
-            path: GATEWAY_PATH,          // Important : doit correspondre à votre config
+            path: GATEWAY_PATH,
             withCredentials: true,
-            transports: ['websocket'],   // Force le websocket pour la stabilité
+            transports: ['websocket'],
             reconnection: true,
             reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
         });
 
-        // --- Gestion des événements ---
-
         newSocket.on('connect', () => {
-            console.log('✅ Global Socket Connected to Gateway (4006)');
+            console.log('✅ Global Socket Connected');
             setIsConnected(true);
         });
 
         newSocket.on('disconnect', (reason) => {
             console.warn('❌ Global Socket Disconnected:', reason);
-            // On ignore les déconnexions volontaires du client (ex: changement de page qui démonterait le socket)
             if (reason !== "io client disconnect") {
                 setIsConnected(false);
             }
         });
 
         newSocket.on('connect_error', (err) => {
-            // Normalement, cette erreur ne devrait plus apparaître si le port 4006 est ouvert
-            console.error(`🔥 Global Socket Connection Error:`, err.message);
+            // Au F5, ceci peut arriver brièvement, mais le timer l'absorbera
+            console.error(`🔥 Connection Error:`, err.message);
             setIsConnected(false);
+        });
+
+        newSocket.on('exception', (error: any) => {
+            console.error('⚠ Gateway Exception:', error);
+            if (error?.status === 'error' || error?.message === 'Unauthorized' || error?.code === 503) {
+                setIsConnected(false);
+            }
         });
 
         setSocket(newSocket);
@@ -66,8 +104,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     return (
         <SocketContext.Provider value={{ socket, isConnected }}>
-            {/* L'overlay s'affiche uniquement si isConnected est false */}
-            {!isConnected && <ConnectionErrorView />}
+            {/* On utilise maintenant l'état visuel temporisé */}
+            {showErrorScreen && <ConnectionErrorView />}
             {children}
         </SocketContext.Provider>
     );

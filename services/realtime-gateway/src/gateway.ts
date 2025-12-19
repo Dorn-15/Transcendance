@@ -16,7 +16,7 @@ import type {
 	PongState,
 	MatchJoin,
 } from '@transcendance/pong';
-import { PongExchangeService } from './pong';
+import { PongExchangeService } from './pong'; // Assure-toi que le nom du fichier d'import est bon
 
 const	COOKIE_NAME = 'pong_ws_token';
 const	activeTokens = new Map<string, string>();
@@ -141,6 +141,24 @@ export class GatewayService
 		return this.pongExchange.handleJoinMatch(client, payload);
 	}
 
+	// --- AJOUT 1 : Pour mettre en pause quand on quitte l'écran ---
+	@SubscribeMessage('pong:leave')
+	async leaveMatch(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { matchId?: string },
+	): Promise<void> {
+		return this.pongExchange.handleLeaveMatch(client, payload);
+	}
+
+	// --- AJOUT 2 : Pour détruire complètement la partie ---
+	@SubscribeMessage('pong:stop')
+	async stopMatch(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { matchId?: string },
+	): Promise<void> {
+		return this.pongExchange.handleStopMatch(client, payload);
+	}
+
 	@SubscribeMessage('pong:move')
 	async move(
 		@ConnectedSocket() client: Socket,
@@ -150,4 +168,3 @@ export class GatewayService
 		return this.pongExchange.handleMove(client, payload);
 	}
 }
-

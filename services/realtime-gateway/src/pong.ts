@@ -79,6 +79,56 @@ export class PongExchangeService {
 		}
 	}
 
+	// --- AJOUT : Gestion du départ volontaire (Mise en pause) ---
+	async handleLeaveMatch(
+		client: Socket,
+		payload: { matchId?: string }
+	): Promise<void> {
+		const sessions = this.clientSessions.get(client.id);
+		if (!sessions) return;
+
+		// Si un matchId est fourni, on ne quitte que celui-là. Sinon tous.
+		const sessionsToLeave = payload?.matchId
+			? sessions.filter((s) => s.matchId === payload.matchId)
+			: sessions;
+
+		for (const session of sessionsToLeave) {
+			try {
+				// 1. On prévient le moteur de jeu que le joueur est "parti"
+				// Cela doit déclencher le statut 'paused' côté moteur
+				await this.notifyDisconnect(session);
+				
+				// 2. On retire le joueur de la room socket
+				client.leave(this.getRoom(session.matchId));
+				
+				// 3. On arrête de suivre ce client pour ce match dans le service
+				this.unregisterClient(session.matchId, client.id);
+
+				// 4. On nettoie la session locale
+				const remaining = (this.clientSessions.get(client.id) ?? [])
+					.filter(s => s.matchId !== session.matchId);
+				this.clientSessions.set(client.id, remaining);
+
+				this.logger.log(`Client ${client.id} left match ${session.matchId} (Paused)`);
+			} catch (error) {
+				this.logger.warn(`Error handling leave for match ${session.matchId}: ${(error as Error).message}`);
+			}
+		}
+	}
+
+	// --- AJOUT : Gestion de l'arrêt total (Destruction) ---
+	async handleStopMatch(
+		client: Socket, 
+		payload: { matchId?: string }
+	): Promise<void> {
+		// Logique similaire à leave, mais on pourrait appeler un endpoint DELETE
+		// Pour l'instant, on fait un leave propre pour s'assurer que c'est nettoyé
+		await this.handleLeaveMatch(client, payload);
+		
+		// TODO: Si tu as un endpoint DELETE sur ton moteur de jeu, appelle-le ici :
+		// await this.fetcher(`${this.gamesBaseUrl}/pong/matches/${payload.matchId}`, { method: 'DELETE' });
+	}
+
 	async handleMove(
 		client: Socket,
 		payload: { matchId: string; player: string; direction: PongDirection },
@@ -192,6 +242,7 @@ export class PongExchangeService {
 			return;
 		}
 
+		// Polling à 60fps pour récupérer l'état du moteur de jeu
 		tracker.interval = setInterval(async () => {
 			try {
 				const	state = await this.getJson<PongState>(
@@ -200,9 +251,11 @@ export class PongExchangeService {
 
 				this.emitState(matchId, state);
 			} catch (error) {
-				this.logger.warn(
-					`Polling match ${matchId} échoué: ${(error as Error).message}`,
-				);
+				// Si le match n'existe plus côté moteur, on arrête le polling
+				this.logger.warn(`Polling match ${matchId} échoué: ${(error as Error).message}`);
+				const t = this.matchTrackers.get(matchId);
+				if (t && t.interval) clearInterval(t.interval);
+				this.matchTrackers.delete(matchId);
 			}
 		}, 1000 / 60);
 
@@ -252,5 +305,3 @@ export class PongExchangeService {
 		return (await response.json()) as T;
 	}
 }
-
-
