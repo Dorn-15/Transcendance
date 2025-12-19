@@ -23,7 +23,6 @@ export async function getAuthStatus(): Promise<AuthStatus> {
         });
 
         if (!res.ok) {
-            console.log("Navbar Server: Auth check failed with status:", res.status);
             return { authenticated: false };
         }
         return res.json();

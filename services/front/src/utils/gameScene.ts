@@ -192,7 +192,6 @@ class GameScene {
 
         // --- QUAND TOUT EST CHARGÉ ---
         Promise.all(loadingPromises).then(() => {
-            console.log("All assets loaded!");
             // On attend une frame pour être sûr que le rendu est prêt
             this.scene.executeWhenReady(() => {
                 if (this.onSceneLoaded) {

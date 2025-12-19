@@ -1,143 +1,232 @@
-/* Import de la police style Arcade */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+/* --- CONTENEUR PRINCIPAL --- */
 .card {
-  width: 100%;
-  max-width: 900px;
+  width: 95vw; 
+  max-width: 800px;
   margin: 0 auto;
-  background-color: #000000;
-  color: #ffffff;
-  /* Bordure blanche simple comme un écran TV ancien */
-  border: 10px solid #ffffff; 
-  padding: 20px;
+  
+  background-color: #000;
+  color: #fff;
+  border: 4px solid #fff; 
+  box-sizing: border-box;
+  
+  padding: 10px;
+  
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  font-family: 'Press Start 2P', cursive, monospace; /* Police pixel */
+  gap: 8px; /* Réduit l'espace entre les gros blocs (Header, Jeu, etc) */
+  
+  font-family: 'Press Start 2P', cursive, monospace; 
   text-transform: uppercase;
+  
+  /* On limite la hauteur pour voir le bouton Quitter en dessous */
+  max-height: 80dvh; 
+  overflow-y: auto; 
 }
 
+/* --- HEADER --- */
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 15px;
-  border-bottom: 4px solid #333; /* Séparation discrète UI/Jeu */
-  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 0px; /* Moins de marge sous le header */
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .label {
-  font-size: 20px;
-  line-height: 1.5;
+  font-size: clamp(8px, 3vw, 14px);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65%;
 }
+
+.highlight { color: #f37022; }
 
 .status {
-  font-size: 10px;
-  padding: 8px;
-  background: #ffffff;
-  color: #000000;
+  font-size: clamp(8px, 2.5vw, 10px);
+  padding: 4px 6px;
+  border-radius: 2px;
+  color: black;
+  white-space: nowrap;
 }
 
-/* Zone des boutons et inputs */
-.row {
+.online { background-color: #0f0; }
+.offline { background-color: #f00; color: white; }
+
+/* --- CONTROLES (Input + Boutons) --- */
+.controlsRow {
   display: flex;
-  gap: 15px;
+  gap: 5px; /* Espace réduit */
   flex-wrap: wrap;
-}
-
-.inputGroup {
-  display: flex;
-  flex: 1;
+  width: 100%;
 }
 
 .input {
-  width: 100%;
-  padding: 15px;
-  background: #000000;
-  border: 4px solid #ffffff;
-  color: #ffffff;
-  font-family: inherit; /* Garde la police pixel */
-  font-size: 12px;
+  flex: 1 1 100%; 
+  padding: 8px;
+  background: #000;
+  border: 2px solid #666;
+  color: #fff;
+  font-family: inherit;
+  font-size: clamp(10px, 3vw, 12px);
   outline: none;
-  border-radius: 0;
+  box-sizing: border-box;
 }
 
-.input:focus {
-  background: #1a1a1a;
+.input:focus { border-color: #f37022; }
+
+.buttonGroup {
+    display: flex;
+    flex: 1 1 100%;
+    gap: 5px;
 }
 
 .button {
-  padding: 15px 20px;
-  background: #000000;
-  color: #ffffff;
-  border: 4px solid #ffffff;
+  flex: 1;
+  padding: 8px; /* Boutons un peu moins hauts */
+  background: #222;
+  color: #fff;
+  border: 2px solid #fff;
   cursor: pointer;
   font-family: inherit;
-  font-size: 12px;
-  transition: transform 0.1s;
+  font-size: clamp(9px, 3vw, 12px);
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.button:active {
-  transform: translateY(2px);
+.button:active { background: #fff; color: #000; }
+.button:disabled { border-color: #444; color: #444; }
+
+/* --- JEU ET PLATEAU (MAP) --- */
+.gameArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    /* On s'assure que cette zone prend de la place mais ne pousse pas trop */
+    flex-shrink: 0; 
 }
 
-.button:disabled {
-  border-color: #555;
-  color: #555;
-  cursor: not-allowed;
-}
-
-.button.secondary {
-  border-style: double; /* Petit style différent pour les boutons secondaires */
-  border-width: 6px;
-}
-
-.error {
-  color: #ff0000; /* Rouge rétro pur */
+.boardWrapper {
+  width: 100%;
+  max-width: 100%;
   background: #000;
-  border: 4px solid #ff0000;
-  padding: 10px;
-  text-align: center;
-  font-size: 10px;
-}
-
-.board {
+  border: 4px solid #333;
+  box-sizing: border-box;
+  aspect-ratio: 4 / 3; 
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  justify-content: center;
   align-items: center;
-  width: 100%;
-  background: #000;
+  margin-bottom: 5px;
 }
 
-/* Le Canvas imite l'écran du jeu */
 .canvas {
-  display: block;
   width: 100%;
-  height: auto;
-  background: #000000;
-  image-rendering: pixelated;
-  /* Pas de bordure autour du canvas lui-même, 
-     car le jeu original est "infini" sur fond noir, 
-     mais on peut en mettre une si tu veux délimiter la zone */
-  border: 4px solid #333; 
+  height: 100%;
+  display: block;
 }
 
 .tagline {
-  color: #ffffff;
+  color: #fff;
   text-align: center;
-  padding: 60px 20px;
-  font-size: 14px;
-  line-height: 2;
-  border: 4px solid #ffffff;
+  font-size: clamp(10px, 3vw, 14px);
+  line-height: 1.5;
+  padding: 10px;
   width: 100%;
+  box-sizing: border-box;
 }
 
+/* --- CONTROLES TACTILES --- */
+.mobileControls {
+    display: none;
+    width: 100%;
+    gap: 8px;
+    height: 50px; /* Réduit un peu la hauteur des boutons tactiles */
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+.controlBtn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #f37022;
+    font-size: 18px; /* Flèches un peu plus petites */
+    border-radius: 6px;
+    cursor: pointer;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.controlBtn:active {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: #f37022;
+}
+
+/* --- INFOS FOOTER (Le correctif est ici) --- */
 .infos {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 0;
-  color: #666;
-  font-size: 10px;
+  /* Changement de couleur : blanc au lieu de gris pour être sûr de les voir */
+  color: #ffffff; 
+  font-size: clamp(9px, 3vw, 11px); /* Légèrement plus gros */
+  
+  /* On s'assure qu'elles ne collent pas aux boutons */
+  padding-top: 5px;
+  padding-bottom: 5px;
+  
+  border-top: 1px solid #333; /* Petite ligne de séparation */
+  background-color: #000; /* Fond noir pour passer par dessus le reste si besoin */
+}
+
+.error {
+    color: #f55;
+    border: 1px solid #f55;
+    padding: 5px;
+    font-size: 10px;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+/* --- MEDIA QUERIES --- */
+@media (max-width: 480px) {
+    .card {
+        width: 90vw;
+        border-width: 2px;
+        padding: 8px;
+        /* Sur très petit écran, on laisse plus de place au scroll */
+        padding-bottom: 20px; 
+    }
+
+    .boardWrapper {
+        border-width: 2px;
+    }
+
+    .mobileControls {
+        display: flex;
+    }
+    
+    .controlsRow {
+        flex-direction: column;
+    }
+
+    .label {
+        max-width: 150px;
+    }
+    
+    /* Si l'écran est vraiment petit en hauteur, on cache la phrase "Créer ou rejoindre" dans le canvas */
+    .subTagline {
+        display: none; 
+    }
 }

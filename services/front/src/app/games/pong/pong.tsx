@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { GatewayConfig } from '@/app/play/[gameId]/GameOverlayClient';
 import type { PongState } from '@transcendance/pong';
-import type { GameInfo } from '@/utils/languageData'; // Import du type pour les textes
+import type { GameInfo } from '@/utils/languageData';
 import styles from './pong.module.css';
 
 type PongProps = {
 	gatewayConfig: GatewayConfig;
 	userName: string;
-	texts: GameInfo; // Prop ajoutée pour les traductions
+	texts: GameInfo;
 };
 
 function extractMatchId(raw: string): string {
@@ -22,15 +22,15 @@ function extractMatchId(raw: string): string {
 		if (fromQuery && fromQuery.trim() !== '') return fromQuery.trim();
 		const segments = url.pathname.split('/').filter(Boolean);
 		if (segments.length > 0) return segments[segments.length - 1].trim();
-	} catch {
-		// Not a URL
-	}
+	} catch { }
 	return trimmed;
 }
 
 export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 	const socketRef = useRef<Socket | null>(null);
-	const pressedRef = useRef<'up' | 'down' | 'none'>('none');
+	
+    // État pour savoir si on est sur mobile (pour afficher les contrôles tactiles)
+    const [isMobile, setIsMobile] = useState(false);
 
 	const [connected, setConnected] = useState(false);
 	const [matchId, setMatchId] = useState<string>('');
@@ -39,6 +39,14 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 	const [lastError, setLastError] = useState<string | null>(null);
 	
 	const activeMatch = pongState && pongState.status !== 'ended';
+
+    // Détection basique du mobile au montage
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
 	const requireSocket = useCallback((): Socket | null => {
 		const socket = socketRef.current;
@@ -49,7 +57,7 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 		return socket;
 	}, []);
 
-	// --- LOGIQUE CONNEXION ---
+	// --- SOCKET LOGIC ---
 	const handleConnect = useCallback((): void => {
 		if (socketRef.current?.connected) return;
 		
@@ -104,11 +112,10 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 	const handleMove = useCallback((direction: 'up' | 'down' | 'none'): void => {
 		const socket = requireSocket();
 		if (!socket || !matchId) return;
-		if (pressedRef.current === direction) return;
-		pressedRef.current = direction;
 		socket.emit('pong:move', { matchId, player: userName, direction });
 	}, [matchId, userName, requireSocket]);
 
+	// --- KEYBOARD ---
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.repeat) return;
@@ -123,16 +130,26 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 		return () => {
 			window.removeEventListener('keydown', onKeyDown);
 			window.removeEventListener('keyup', onKeyUp);
-			pressedRef.current = 'none';
 		};
 	}, [handleMove]);
+
+	// --- TOUCH CONTROLS ---
+	const handleTouchStart = (dir: 'up' | 'down') => (e: React.PointerEvent) => {
+		e.preventDefault(); 
+		handleMove(dir);
+	};
+	
+	const handleTouchEnd = (e: React.PointerEvent) => {
+		e.preventDefault();
+		handleMove('none');
+	};
 
 	const renderCanvas = (state: PongState | null): React.ReactNode => {
 		if (!state) {
 			return (
 				<div className={styles.tagline}>
 					<p>{texts.coin}</p>
-					<p>{texts.CreateOrJoin}</p>
+					<p className={styles.subTagline}>{texts.CreateOrJoin}</p>
 				</div>
 			);
 		}
@@ -156,38 +173,67 @@ export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 
 	return (
 		<div className={styles.card}>
+			{/* HEADER (Pseudo + Status) */}
 			<div className={styles.cardHeader}>
 				<div className={styles.label}>
-					{texts.welcome.toUpperCase()}: {userName.toUpperCase()}
+					{texts.welcome}: <span className={styles.highlight}>{userName}</span>
 				</div>
-				<div className={styles.status}>
-					{connected ? texts.online : texts.loading.toUpperCase()}
+				<div className={`${styles.status} ${connected ? styles.online : styles.offline}`}>
+					{connected ? 'ONLINE' : '...'}
 				</div>
 			</div>
 
-			<div className={styles.row}>
-				<div className={styles.inputGroup}>
-					<input
-						className={styles.input}
-						type="text"
-						value={joinInput}
-						onChange={(e) => setJoinInput(e.target.value)}
-						placeholder="MATCH ID"
-						disabled={!connected}
-					/>
+			{/* ACTIONS (Input + Buttons) */}
+			<div className={styles.controlsRow}>
+				<input
+					className={styles.input}
+					type="text"
+					value={joinInput}
+					onChange={(e) => setJoinInput(e.target.value)}
+					placeholder="MATCH ID"
+					disabled={!connected}
+				/>
+				<div className={styles.buttonGroup}>
+					<button className={styles.button} onClick={handleCreate} disabled={!connected || Boolean(activeMatch)}>
+						{texts.create}
+					</button>
+					<button className={`${styles.button} ${styles.secondary}`} onClick={handleJoin} disabled={!connected}>
+						{texts.join}
+					</button>
 				</div>
-				<button className={styles.button} onClick={handleCreate} disabled={!connected || Boolean(activeMatch)}>
-					{texts.create}
-				</button>
-				<button className={`${styles.button} ${styles.secondary}`} onClick={handleJoin} disabled={!connected}>
-					{texts.join}
-				</button>
 			</div>
 
 			{lastError && <div className={styles.error}>{texts.error} {lastError}</div>}
 
-			<div className={styles.board}>
-				{renderCanvas(pongState)}
+			{/* ZONE DE JEU + CONTROLES TACTILES */}
+			<div className={styles.gameArea}>
+				<div className={styles.boardWrapper}>
+					{renderCanvas(pongState)}
+				</div>
+				
+				{/* Contrôles tactiles (seulement si match actif ou sur mobile) */}
+				{(activeMatch || isMobile) && (
+					<div className={styles.mobileControls}>
+						<button 
+							className={styles.controlBtn} 
+							onPointerDown={handleTouchStart('up')} 
+							onPointerUp={handleTouchEnd}
+							onPointerLeave={handleTouchEnd}
+						>
+							▲
+						</button>
+						<div className={styles.spacer}></div>
+						<button 
+							className={styles.controlBtn} 
+							onPointerDown={handleTouchStart('down')} 
+							onPointerUp={handleTouchEnd}
+							onPointerLeave={handleTouchEnd}
+						>
+							▼
+						</button>
+					</div>
+				)}
+				
 				<div className={styles.infos}>
 					<span>ID: {matchId || '---'}</span>
 					<span>{texts.state} {pongState?.status || texts.waiting}</span>

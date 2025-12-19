@@ -2,9 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import './GameOverlay.css';
+
+// Import des composants de jeux
 import { Pong } from '@/app/games/pong/pong';
+import BreakoutPlaceholder from '@/app/games/breakout/Breakout';
+import SpaceInvadersPlaceholder from '@/app/games/space-invaders/SpaceInvaders';
+
 import { GatewayConfig } from '@/app/play/[gameId]/GameOverlayClient';
-import { GameInfo } from '@/utils/languageData'; // Import du type pour les textes
+import { GameInfo } from '@/utils/languageData';
 
 type GameOverlayProps = {
 	gameId: string;
@@ -12,7 +17,7 @@ type GameOverlayProps = {
 	gatewayConfig: GatewayConfig;
 	onClose: () => void;
 	userName: string;
-	texts: GameInfo; // Ajout de la prop texts
+	texts: GameInfo;
 };
 
 export default function GameOverlay({ 
@@ -21,10 +26,11 @@ export default function GameOverlay({
 	onClose, 
 	gatewayConfig, 
 	userName,
-	texts // Récupération des textes
+	texts 
 }: GameOverlayProps) {
 	const frameRef = useRef<HTMLIFrameElement>(null);
 
+	// Gestion de la navigation (Retour / Echap)
 	useEffect(() => {
 		const handlePopState = () => {
 			onClose();
@@ -44,6 +50,7 @@ export default function GameOverlay({
 		};
 	}, [onClose]);
 
+	// Focus automatique (utile pour l'accessibilité)
 	useEffect(() => {
 		const timer = requestAnimationFrame(() => {
 			frameRef.current?.contentWindow?.focus();
@@ -54,16 +61,45 @@ export default function GameOverlay({
 		};
 	}, []);
 
-	return (
-		<main className="game-overlay-page">
-			<div className="game-overlay">
-				<div className="game-overlay__frame">
-					{/* On transmet le userName et les texts au composant Pong */}
+	// Logique de sélection du jeu
+	const renderGameContent = () => {
+		const id = gameId ? gameId.toLowerCase().trim() : 'pong';
+
+		switch (id) {
+			case 'pong':
+				return (
 					<Pong 
 						gatewayConfig={gatewayConfig} 
 						userName={userName} 
 						texts={texts}
 					/>
+				);
+			
+			case 'breakout':
+				// On passe texts ici
+				return <BreakoutPlaceholder texts={texts} />;
+			
+			case 'space-invaders':
+				// On passe texts ici aussi
+				return <SpaceInvadersPlaceholder texts={texts} />;
+			
+			default:
+				return (
+					<div style={{ color: 'white', textAlign: 'center', fontFamily: 'monospace' }}>
+						<h2>GAME NOT FOUND</h2>
+						<p>ID: {gameId}</p>
+					</div>
+				);
+		}
+	};
+
+	return (
+		<main className="game-overlay-page">
+			<div className="game-overlay">
+				<div className="game-overlay__frame">
+					
+					{/* Affichage dynamique du jeu */}
+					{renderGameContent()}
 					
 					<button className="game-overlay__close" onClick={onClose}>
 						{closeLabel}

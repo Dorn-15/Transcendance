@@ -12,7 +12,6 @@ import StatsView from '../views/StatsView';
 
 import './Navbar.css';
 
-// Ajout de l'interface pour les props
 interface NavbarClientProps {
     userName: string;
 }
@@ -21,19 +20,19 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // 1. On calcule la langue directement depuis l'URL à chaque rendu
+    // Calcul de la langue
     const langParam = searchParams.get('lang');
     const paramValue = Number(langParam);
-    
-    // Si le paramètre est valide (existe dans ALL_LANGUAGES), on l'utilise, sinon par défaut 1
     const currentLang: LangKey = (langParam && ALL_LANGUAGES[paramValue]) 
         ? (paramValue as LangKey) 
         : 1;
 
-    // Seule la vue a besoin d'un useState local
+    // État des vues (modales)
     const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'stats'>('menu');
+    
+    // NOUVEAU : État pour le menu mobile latéral
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // 2. La fonction pour changer de langue met simplement à jour l'URL
     const changeLanguage = (langId: LangKey) => {
         router.push(`/?lang=${langId}`, { scroll: false });
     };
@@ -53,22 +52,38 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     const texts = ALL_LANGUAGES[currentLang].defaultInfo;
     const backToMenu = () => setCurrentView('menu');
 
+    // Fonction pour ouvrir une vue et fermer le menu mobile en même temps
+    const openViewFromMobile = (view: 'settings' | 'social' | 'stats') => {
+        setCurrentView(view);
+        setIsMobileMenuOpen(false);
+    };
+
     return (
         <>
             <header>
                 <div className="title-overlay">
+                    {/* Bouton Hamburger (Visible uniquement sur Mobile via CSS) */}
+                    <button 
+                        className="mobile-menu-btn" 
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        aria-label="Open Menu"
+                    >
+                        ☰
+                    </button>
+
                     <div className="main-title">{texts.trans}</div>
 
-                    <nav className="main-menu">
+                    {/* Navigation Desktop (Cachée sur Mobile via CSS) */}
+                    <nav className="main-menu desktop-only">
                         <button onClick={() => setCurrentView('settings')}>{texts.param}</button>
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
                     </nav>
                     
-                    <div className="user-cluster">
+                    {/* User Info Desktop (Cachée sur Mobile via CSS) */}
+                    <div className="user-cluster desktop-only">
                             <div className="user-info">
                                 <span className="user-label">{texts.connectedAs}</span>
-                                {/* On utilise ici la prop userName transmise par le serveur */}
                                 <span className="user-name">{userName}</span>
                             </div>
                             
@@ -79,6 +94,30 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                 </div>
             </header>
 
+            {/* --- MENU LATÉRAL MOBILE --- */}
+            <div className={`mobile-sidebar-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
+            
+            <div className={`mobile-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+                <button className="mobile-close-btn" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
+                
+                <div className="mobile-user-section">
+                    <span className="mobile-user-label">{texts.connectedAs}</span>
+                    <span className="mobile-user-name">{userName}</span>
+                </div>
+
+                <nav className="mobile-nav">
+                    <button onClick={() => openViewFromMobile('settings')}>{texts.param}</button>
+                    <button onClick={() => openViewFromMobile('social')}>{texts.social}</button>
+                    <button onClick={() => openViewFromMobile('stats')}>{texts.stat}</button>
+                </nav>
+
+                <button className="mobile-logout-btn" onClick={handleLogout}>
+                    Sign out
+                </button>
+            </div>
+
+
+            {/* --- MODALES (Settings, Social, Stats) --- */}
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (

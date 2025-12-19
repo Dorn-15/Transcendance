@@ -22,9 +22,8 @@ export const preloadAsset = async (fileName: string) => {
         const objectUrl = URL.createObjectURL(blob);
         assetsCache[fileName] = objectUrl;
         
-        console.log(`✅ Asset préchargé : ${fileName}`);
     } catch (error) {
-        console.error(`❌ Erreur chargement ${fileName}`, error);
+        console.error(`Erreur chargement ${fileName}`, error);
     }
 };
 

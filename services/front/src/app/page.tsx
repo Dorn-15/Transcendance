@@ -28,8 +28,6 @@ export default async function Home(props: Props) {
       ? (paramValue as LangKey) 
       : 1;
 
-  console.log("SERVER HOME - Lang detected:", currentLang); // Regarde ton terminal serveur
-
   return (
     <main className="game-container">
       <Navbar /> 

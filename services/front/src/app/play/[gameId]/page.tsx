@@ -26,8 +26,6 @@ export default async function Page(props: PageProps) {
         ? (langId as LangKey) 
         : 1;
 
-    console.log("SERVER PAGE LANG DETECTED:", safeLangId); // Regardez votre terminal serveur
-
     const texts = ALL_LANGUAGES[safeLangId].defaultInfo;
 
     return <GameOverlayClient userName={userName} texts={texts} />;

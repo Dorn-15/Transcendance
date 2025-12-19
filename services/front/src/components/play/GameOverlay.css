@@ -1,85 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-/* On supprime les marges par défaut du body pour éviter les scrolls inutiles */
-body, html {
-    margin: 0;
-    padding: 0;
-    overflow: hidden; 
-}
+/* src/components/play/GameOverlay.css */
 
 .game-overlay-page {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
-    height: 100vh;
-    background-color: #000;
+    height: 100dvh;
+    z-index: 200;
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    opacity: 0;
+    animation: fadeIn 0.4s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
 }
 
 .game-overlay {
-    position: fixed;
-    inset: 0;
     width: 100%;
     height: 100%;
+    
+    /* DÉSACTIVATION DU SCROLL */
+    overflow: hidden; 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Centre verticalement */
+}
+
+.game-overlay__frame {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    width: 100%;
+    height: 100%; /* Prend toute la hauteur pour gérer le centrage */
+    
+    /* On garde un petit padding de sécurité sur les côtés, 
+       mais on réduit le haut/bas pour éviter de pousser hors de l'écran */
+    padding: 10px; 
+    box-sizing: border-box;
 }
 
-.game-overlay__frame {
-    position: relative;
-    width: 1850px;  
-    height: 1350px; 
-    box-sizing: border-box; 
-    
-    background-color: #000; 
-    
-    border: 180px solid #d1cdc1; 
-    border-top-color: #9d8e81;    /* Plus clair (Lumière) */
-    border-bottom-color: #554b43; /* Plus sombre (Ombre portée) */
-    border-left-color: #7e7064;   /* Base */
-    border-right-color: #7e7064;
-
-    box-shadow: inset 0 0 40px rgba(0,0,0,1);
-    
-    /* MODIFICATIONS ICI */
-    display: flex;
-    flex-direction: column; /* Aligne les enfants (Pong et Bouton) verticalement */
-    align-items: center;    /* Centre horizontalement */
-    justify-content: center; /* Centre verticalement l'ensemble */
-}
-
+/* --- LE BOUTON QUITTER --- */
 .game-overlay__close {
-    margin-top: 2vh; /* L'espace que vous avez demandé */
-    position: relative; /* Assure qu'il suit le flux du flexbox */
-    background-color: #000000;
-    color: #ffffff;
-    border: 4px solid #ffffff;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white;
     font-family: 'Press Start 2P', cursive, monospace;
     text-transform: uppercase;
-    font-size: 12px;
-    padding: 15px 25px;
+    
+    /* Espace au-dessus du bouton pour l'aération */
+    margin-top: 25px; 
+    
+    padding: 15px 30px;
+    font-size: clamp(10px, 1.5vh, 14px);
     cursor: pointer;
-    z-index: 110;
-    transition: all 0.1s;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    letter-spacing: 1px;
 }
 
 .game-overlay__close:hover {
-    background-color: #ff0000;
-    transform: scale(1.1);
+    background: white;
+    color: black;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    border-color: white;
 }
 
 .game-overlay__close:active {
-    transform: translateY(3px);
+    transform: translateY(1px);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
 }
 
-/* Adaptation Mobile (on réduit l'épaisseur du cadre) */
-@media (max-width: 768px) {
+/* --- MEDIA QUERIES (Mobile) --- */
+@media (max-width: 480px) {
     .game-overlay__frame {
-        border-width: 20px;
+        /* Sur mobile, on s'assure que le contenu ne touche pas les bords */
+        padding: 0;
+        justify-content: center;
     }
+
     .game-overlay__close {
-        bottom: 40px;
-        font-size: 10px;
         width: 80%;
+        text-align: center;
+        margin-top: 20px; 
+        padding: 12px;
     }
 }

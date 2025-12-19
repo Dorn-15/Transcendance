@@ -27,6 +27,13 @@ export interface GameInfo {
     state: string;
     waiting: string;
     online: string;
+    descPong: string;
+    descBreakout: string;
+    descSpaceInvaders: string;
+    workIn: string;
+    laterCoin: string;
+    alienLate: string;
+    play: string;
 }
 
 export interface LanguageData {
@@ -62,7 +69,14 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             error: "ERREUR",
             state: "ETAT",
             waiting: "EN ATTENTE",
-            online: "CONNECTE"
+            online: "CONNECTE",
+            descPong: "LE JEUX DE PING PONG ORIGINEL",
+            descBreakout: "DETRUIT LES BRIQUES",
+            descSpaceInvaders: "PROTEGE LA TERRE",
+            workIn: "CHANTIER EN COURS",
+            laterCoin: "INSEREZ UNE PIECE PLUS TARD...",
+            alienLate: "LES ALIENS SONT EN RETARD",
+            play: "JOUER"
         }
     },
     // 2 = ANGLAIS
@@ -93,7 +107,14 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             error: "ERROR",
             state: "STATE",
             waiting: "WAITING",
-            online: "ONLINE"
+            online: "ONLINE",
+            descPong: "THE ORIGINAL PING PONG GAME",
+            descBreakout: "DESTROY THE BRICKS",
+            descSpaceInvaders: "DEFEND THE EARTH",
+            workIn: "WORK IN PROGRESS",
+            laterCoin: "INSERT COIN LATER...",
+            alienLate: "THE ALIENS ARE LATE",
+            play: "PLAY"
         }
     },
     // 3 = ESPAGNOL
@@ -124,7 +145,14 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             error: "ERROR",
             state: "ESTADO",
             waiting: "ESPERA",
-            online: "EN LÍNEA"
+            online: "EN LÍNEA",
+            descPong: "EL JUEGO DE PING PONG ORIGINAL",
+            descBreakout: "DESTRUYE LOS LADRILLOS",
+            descSpaceInvaders: "PROTEJAMOS LA TIERRA",
+            workIn: "CONSTRUCCIÓN EN CURSO",
+            laterCoin: "INSERTE UNA MONEDA MÁS TARDE...",
+            alienLate: "LOS EXTRATERRESTRES LLEGAN TARDE",
+            play: "JUGAR"
         }
     },
     // 4 = ALLEMAND
@@ -156,7 +184,14 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             error: "FEHLER",
             state: "ZUSTAND",
             waiting: "WARTEN",
-            online: "VERBUNDEN"
+            online: "VERBUNDEN",
+            descPong: "DAS ORIGINAL-PING-PONG-SPIEL",
+            descBreakout: "ZERSTÖRT DIE ZIEGEL",
+            descSpaceInvaders: "SCHÜTZT DIE ERDE",
+            workIn: "BAUARBEITEN IM LAUFENDEN",
+            laterCoin: "WERFEN SIE SPÄTER EINE MÜNZE EIN...",
+            alienLate: "DIE ALIENS SIND ZU SPÄT",
+            play: "SPIELEN"
         }
     }
 };

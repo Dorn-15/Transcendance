@@ -1,94 +1,144 @@
+/* SocialView.css */
+
+/* Surcharge de la hauteur pour la vue Social afin d'avoir de la place pour la liste */
+.social-modal {
+    height: clamp(400px, 60vh, 700px); /* Hauteur fluide mais bornée */
+}
+
+/* --- AJOUT D'AMI --- */
 .add-friend-container {
     display: flex;
-    gap: 1vh;
+    gap: 10px;
     width: 100%;
-    margin-bottom: 2vh;
+    margin-bottom: 20px;
 }
 
 .friend-input {
     flex-grow: 1;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 6px;
-    padding: 0.8vh;
+    border-radius: 8px;
+    
+    /* Padding fluide */
+    padding: clamp(8px, 1.2vh, 12px) 12px;
+    
     color: white;
-    font-size: 1.4vh;
+    /* 16px minimum pour éviter le zoom auto sur iPhone */
+    font-size: clamp(14px, 1.6vh, 16px);
     outline: none;
+    transition: border-color 0.2s;
 }
 
 .friend-input:focus {
     border-color: #ffaa00;
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .btn-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
+    border-radius: 8px;
     color: white;
     cursor: pointer;
-    padding: 0 1.5vh;
-    font-size: 1.5vh;
-    transition: background 0.2s;
+    
+    /* Taille carrée confortable */
+    width: clamp(36px, 5vh, 44px);
+    font-size: clamp(14px, 1.5vh, 18px);
+    
+    transition: all 0.2s;
 }
 
 .btn-add:hover {
     background: rgba(0, 255, 0, 0.2);
     border-color: #00ff00;
+    transform: scale(1.05);
 }
 
+.btn-add:active {
+    transform: scale(0.95);
+}
+
+/* --- LISTE D'AMIS --- */
 .friends-list {
     width: 100%;
-    flex-grow: 1;
-    overflow-y: auto;
-    margin-bottom: 2vh;
-    padding-right: 0.5vh;
+    flex-grow: 1; /* Prend tout l'espace restant */
+    overflow-y: auto; /* Scroll vertical */
+    margin-bottom: 20px;
+    padding-right: 5px; /* Espace pour la scrollbar */
+    
+    /* Support Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #ffaa00 rgba(255, 255, 255, 0.1);
 }
 
+/* Scrollbar Webkit (Chrome, Safari) */
 .friends-list::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
+}
+.friends-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
 }
 .friends-list::-webkit-scrollbar-thumb {
     background: #ffaa00; 
-    border-radius: 5px;
+    border-radius: 3px;
 }
 
+/* --- ITEM AMI --- */
 .friend-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: rgba(255, 255, 255, 0.05);
-    padding: 1vh;
-    margin-bottom: 0.8vh;
-    border-radius: 6px;
+    
+    padding: clamp(8px, 1.2vh, 12px);
+    margin-bottom: 8px;
+    
+    border-radius: 8px;
     border: 1px solid transparent;
+    transition: background 0.2s;
 }
 
 .friend-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
 .friend-name {
-    font-size: 1.4vh;
+    font-size: clamp(14px, 1.5vh, 16px);
     color: #eee;
+    font-weight: 500;
 }
 
 .btn-remove {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 1.4vh;
+    font-size: clamp(14px, 1.5vh, 18px);
     opacity: 0.7;
+    padding: 5px; /* Zone de clic agrandie */
     transition: opacity 0.2s, transform 0.2s;
 }
 
 .btn-remove:hover {
     opacity: 1;
-    transform: scale(1.2);
+    transform: scale(1.1) rotate(10deg);
+}
+
+/* --- EMPTY STATE --- */
+.no-friends-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .no-friends {
     font-style: italic;
-    color: #888;
-    font-size: 1.2vh;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: clamp(12px, 1.4vh, 14px);
+    text-align: center;
 }

@@ -27,7 +27,6 @@ export async function POST(request: Request) {
         const setCookieHeader = res.headers.get('set-cookie');
         
         if (setCookieHeader) {
-            console.log("✅ Proxy: Forwarding Cookie to Browser:", setCookieHeader);
             response.headers.set('Set-Cookie', setCookieHeader);
         } else {
             console.warn("⚠️ Proxy: Backend returned 200 OK but NO Set-Cookie header found!");
