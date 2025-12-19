@@ -78,9 +78,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
                 }}>
                     <div className="loader-spinner"></div>
                     <h2>{texts.loading}</h2>
-                    <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.5 }}>
-                        Connecting as {userName}...
-                    </p>
                 </div>
             )}
 
