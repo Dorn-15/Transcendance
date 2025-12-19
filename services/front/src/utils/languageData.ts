@@ -7,7 +7,7 @@ export interface GameInfo {
     image: string;
     param: string;
     social: string;
-    stat: string;
+    legal: string;
     win: string;
     lose: string;
     back: string;
@@ -48,9 +48,9 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             title: "Arcade Room 3D",
             description: "Bienvenue dans la salle d'arcade virtuelle. Découvrez nos bornes interactives.",
             image: "/assets/previews/room.jpg",
-            param: "Paramètres",
+            param: "Parametres",
             social: "Amis",
-            stat: "Statistiques",
+            legal: "Condition General",
             win: "Victoires",
             lose: "Defaites",
             back: "Retour",
@@ -88,7 +88,7 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             image: "/assets/previews/room.jpg",
             param: "Settings",
             social: "Friends",
-            stat: "Statistics",
+            legal: "general condition",
             win: "victories",
             lose: "defeat",
             back: "Back",
@@ -126,7 +126,7 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             image: "/assets/previews/room.jpg",
             param: "Ajustes",
             social: "Amigos",
-            stat: "Estadísticas",
+            legal: "condición general",
             win: "victorias",
             lose: "fracaso",
             back: "Atrás",
@@ -165,7 +165,7 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             image: "/assets/previews/room.jpg",
             param: "Einstellungen",
             social: "Freunde",
-            stat: "Statistiken",
+            legal: "Allgemeinzustand",
             win: "Siege",
             lose: "Niederlagen",
             back: "Zurück",

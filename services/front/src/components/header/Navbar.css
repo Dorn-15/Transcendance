@@ -66,6 +66,7 @@ header {
     pointer-events: auto;
     cursor: pointer;
     background: transparent;
+    font-family: 'Montserrat', sans-serif; 
     border: none;
     color: #1b0a00;
     padding: 0.5vh 1vh;

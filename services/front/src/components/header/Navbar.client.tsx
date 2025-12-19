@@ -8,7 +8,7 @@ import { LogOut } from '../../app/logout/logout';
 
 import SettingsView from '../views/SettingsView';
 import SocialView from '../views/SocialView';
-import StatsView from '../views/StatsView';
+import LegalView from '../views/LegalView'; // Changé de StatsView à LegalView
 
 import './Navbar.css';
 
@@ -27,8 +27,8 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
         ? (paramValue as LangKey) 
         : 1;
 
-    // État des vues (modales)
-    const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'stats'>('menu');
+    // État des vues (modales) - 'stats' remplacé par 'legal'
+    const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'legal'>('menu');
     
     // NOUVEAU : État pour le menu mobile latéral
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     const backToMenu = () => setCurrentView('menu');
 
     // Fonction pour ouvrir une vue et fermer le menu mobile en même temps
-    const openViewFromMobile = (view: 'settings' | 'social' | 'stats') => {
+    const openViewFromMobile = (view: 'settings' | 'social' | 'legal') => {
         setCurrentView(view);
         setIsMobileMenuOpen(false);
     };
@@ -77,7 +77,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                     <nav className="main-menu desktop-only">
                         <button onClick={() => setCurrentView('settings')}>{texts.param}</button>
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
-                        <button onClick={() => setCurrentView('stats')}>{texts.stat}</button>
+                        <button onClick={() => setCurrentView('legal')}>{texts.legal}</button>
                     </nav>
                     
                     {/* User Info Desktop (Cachée sur Mobile via CSS) */}
@@ -108,7 +108,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                 <nav className="mobile-nav">
                     <button onClick={() => openViewFromMobile('settings')}>{texts.param}</button>
                     <button onClick={() => openViewFromMobile('social')}>{texts.social}</button>
-                    <button onClick={() => openViewFromMobile('stats')}>{texts.stat}</button>
+                    <button onClick={() => openViewFromMobile('legal')}>{texts.legal}</button>
                 </nav>
 
                 <button className="mobile-logout-btn" onClick={handleLogout}>
@@ -117,7 +117,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
             </div>
 
 
-            {/* --- MODALES (Settings, Social, Stats) --- */}
+            {/* --- MODALES (Settings, Social, Legal) --- */}
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (
@@ -133,8 +133,8 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                             currentLang={currentLang} 
                         />
                     )}
-                    {currentView === 'stats' && (
-                        <StatsView
+                    {currentView === 'legal' && (
+                        <LegalView
                             onClose={backToMenu}
                             currentLang={currentLang} 
                         />
