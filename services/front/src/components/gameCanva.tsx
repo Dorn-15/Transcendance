@@ -1,10 +1,17 @@
 'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { initGame } from '@/utils/gameScene';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
 
-export default function GameCanva() {
+// Mise à jour de l'interface pour accepter userName ET initialLang
+interface GameCanvaProps {
+    userName: string;
+    initialLang: LangKey; // La langue passée par le serveur (page.tsx)
+}
+
+export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const searchParams = useSearchParams();
     
@@ -13,18 +20,15 @@ export default function GameCanva() {
 
     const gameControlsRef = useRef<{ destroy: () => void; updateLanguage: (id: LangKey) => void } | null>(null);
 
-    const langParam = searchParams.get('lang');
-    const currentLang: LangKey = (langParam && ALL_LANGUAGES[Number(langParam)]) 
-        ? (Number(langParam) as LangKey) 
-        : 1;
-
-    const texts = ALL_LANGUAGES[currentLang].defaultInfo;
+    // On utilise directement la prop 'initialLang' pour définir les textes initiaux
+    // Cela évite que le texte soit en français puis change brutalement
+    const texts = ALL_LANGUAGES[initialLang].defaultInfo;
 
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        // 2. On passe le callback qui désactive le chargement
-        const controls = initGame(canvasRef.current, currentLang, () => {
+        // 2. On initialise le jeu avec la langue reçue en prop (initialLang)
+        const controls = initGame(canvasRef.current, initialLang, () => {
             setIsLoading(false);
         });
         
@@ -36,20 +40,26 @@ export default function GameCanva() {
                 gameControlsRef.current = null;
             }
         };
+        // On met initialLang dans les dépendances pour être propre, 
+        // mais en pratique le initGame ne se lance qu'au montage.
     }, []); 
 
+    // 3. Ce useEffect gère le changement de langue dynamique (si on clique sur un drapeau sans recharger la page)
     useEffect(() => {
         const langParam = searchParams.get('lang');
 
         if (gameControlsRef.current && langParam) {
             const newLang = parseInt(langParam) as LangKey;
-            gameControlsRef.current.updateLanguage(newLang);
+            // On vérifie que c'est une langue valide avant de mettre à jour
+            if (ALL_LANGUAGES[newLang]) {
+                gameControlsRef.current.updateLanguage(newLang);
+            }
         }
     }, [searchParams]);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* 3. L'écran de chargement */}
+            {/* L'écran de chargement utilise maintenant les textes traduits correctement dès le départ */}
             {isLoading && (
                 <div style={{
                     position: 'absolute',
@@ -57,7 +67,7 @@ export default function GameCanva() {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    backgroundColor: '#1a1a1a', // Couleur de fond
+                    backgroundColor: '#1a1a1a', 
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -66,8 +76,11 @@ export default function GameCanva() {
                     zIndex: 10,
                     transition: 'opacity 0.5s ease-out'
                 }}>
-                    <div className="loader-spinner"></div> {/* Vous pouvez ajouter du CSS pour un spinner */}
+                    <div className="loader-spinner"></div>
                     <h2>{texts.loading}</h2>
+                    <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.5 }}>
+                        Connecting as {userName}...
+                    </p>
                 </div>
             )}
 

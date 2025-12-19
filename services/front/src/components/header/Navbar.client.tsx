@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react'; // useEffect n'est plus nécessaire pour la langue
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
 
@@ -12,7 +12,12 @@ import StatsView from '../views/StatsView';
 
 import './Navbar.css';
 
-export default function NavbarClient() {
+// Ajout de l'interface pour les props
+interface NavbarClientProps {
+    userName: string;
+}
+
+export default function NavbarClient({ userName }: NavbarClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -30,7 +35,6 @@ export default function NavbarClient() {
 
     // 2. La fonction pour changer de langue met simplement à jour l'URL
     const changeLanguage = (langId: LangKey) => {
-        // Next.js détectera le changement d'URL et re-rendra le composant avec le nouveau currentLang
         router.push(`/?lang=${langId}`, { scroll: false });
     };
 
@@ -64,7 +68,8 @@ export default function NavbarClient() {
                     <div className="user-cluster">
                             <div className="user-info">
                                 <span className="user-label">{texts.connectedAs}</span>
-                                <span className="user-name">someone</span>
+                                {/* On utilise ici la prop userName transmise par le serveur */}
+                                <span className="user-name">{userName}</span>
                             </div>
                             
                             <button className="sign-out-btn" onClick={handleLogout}>

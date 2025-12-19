@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { GatewayConfig } from '@/app/play/[gameId]/page';
+import type { GatewayConfig } from '@/app/play/[gameId]/GameOverlayClient';
 import type { PongState } from '@transcendance/pong';
+import type { GameInfo } from '@/utils/languageData'; // Import du type pour les textes
 import styles from './pong.module.css';
 
 type PongProps = {
 	gatewayConfig: GatewayConfig;
+	userName: string;
+	texts: GameInfo; // Prop ajoutée pour les traductions
 };
 
 function extractMatchId(raw: string): string {
@@ -25,13 +28,12 @@ function extractMatchId(raw: string): string {
 	return trimmed;
 }
 
-export function Pong({ gatewayConfig }: PongProps) {
+export function Pong({ gatewayConfig, userName = 'GUEST', texts }: PongProps) {
 	const socketRef = useRef<Socket | null>(null);
 	const pressedRef = useRef<'up' | 'down' | 'none'>('none');
 
 	const [connected, setConnected] = useState(false);
 	const [matchId, setMatchId] = useState<string>('');
-	const [playerName, setPlayerName] = useState<string>('');
 	const [joinInput, setJoinInput] = useState<string>('');
 	const [pongState, setPongState] = useState<PongState | null>(null);
 	const [lastError, setLastError] = useState<string | null>(null);
@@ -41,73 +43,71 @@ export function Pong({ gatewayConfig }: PongProps) {
 	const requireSocket = useCallback((): Socket | null => {
 		const socket = socketRef.current;
 		if (!socket) {
-			setLastError('Non connecté au serveur');
+			setLastError('Not connected');
 			return null;
 		}
 		return socket;
 	}, []);
 
-	// --- LOGIQUE SOCKET (INCHANGÉE) ---
+	// --- LOGIQUE CONNEXION ---
 	const handleConnect = useCallback((): void => {
-		if (socketRef.current) socketRef.current.disconnect();
-		console.log("Connexion...", gatewayConfig.origin);
-
+		if (socketRef.current?.connected) return;
+		
 		const socket = io(gatewayConfig.origin, {
 			path: gatewayConfig.path,
 			transports: ['websocket'],
 		});
 		socketRef.current = socket;
 
-		socket.on('connect', () => { setConnected(true); setLastError(null); });
+		socket.on('connect', () => { 
+			setConnected(true); 
+			setLastError(null); 
+		});
 		socket.on('disconnect', () => { setConnected(false); });
-		socket.on('connect_error', (err) => { setLastError("Erreur: " + err.message); });
+		socket.on('connect_error', (err) => { setLastError("Error: " + err.message); });
 		socket.on('pong:state', (state: PongState) => { setPongState(state); setMatchId(state.matchId); });
 		socket.on('pong:error', (msg: string) => { setLastError(msg); });
 	}, [gatewayConfig.origin, gatewayConfig.path]);
 
-	const handleDisconnect = useCallback((): void => {
-		if (socketRef.current) {
-			socketRef.current.disconnect();
-			socketRef.current = null;
-		}
-		setConnected(false);
-		setPongState(null);
-		setMatchId('');
-	}, []);
+	useEffect(() => {
+		handleConnect();
+		return () => {
+			if (socketRef.current) socketRef.current.disconnect();
+		};
+	}, [handleConnect]);
 
 	const handleCreate = useCallback((): void => {
 		const socket = requireSocket();
 		if (!socket) return;
-		if (activeMatch) { setLastError('Partie en cours.'); return; }
+		if (activeMatch) return;
 
-		socket.emit('pong:create', { player: playerName || 'PLAYER 1' }, (res: any) => {
+		socket.emit('pong:create', { player: userName }, (res: any) => {
 			if (res?.error) setLastError(res.error);
 			if (res?.matchId) { setMatchId(res.matchId); setJoinInput(res.matchId); }
 			if (res?.state) setPongState(res.state);
 		});
-	}, [activeMatch, playerName, requireSocket]);
+	}, [activeMatch, userName, requireSocket]);
 
 	const handleJoin = useCallback((): void => {
 		const socket = requireSocket();
 		if (!socket) return;
 		const targetId = joinInput ? extractMatchId(joinInput) : matchId;
 		const normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
-		if (normalizedMatchId) setMatchId(normalizedMatchId);
 
-		socket.emit('pong:join', { matchId: normalizedMatchId, player: playerName || 'PLAYER 2' }, (res: any) => {
+		socket.emit('pong:join', { matchId: normalizedMatchId, player: userName }, (res: any) => {
 			if (res?.error) setLastError(res.error);
 			if (res?.matchId) setMatchId(res.matchId);
 			if (res?.state) setPongState(res.state);
 		});
-	}, [joinInput, matchId, playerName, requireSocket]);
+	}, [joinInput, matchId, userName, requireSocket]);
 
 	const handleMove = useCallback((direction: 'up' | 'down' | 'none'): void => {
 		const socket = requireSocket();
 		if (!socket || !matchId) return;
 		if (pressedRef.current === direction) return;
 		pressedRef.current = direction;
-		socket.emit('pong:move', { matchId, player: playerName || 'player', direction });
-	}, [matchId, playerName, requireSocket]);
+		socket.emit('pong:move', { matchId, player: userName, direction });
+	}, [matchId, userName, requireSocket]);
 
 	useEffect(() => {
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -127,13 +127,12 @@ export function Pong({ gatewayConfig }: PongProps) {
 		};
 	}, [handleMove]);
 
-	// --- RENDU VISUEL MODIFIÉ (STYLE RETRO) ---
 	const renderCanvas = (state: PongState | null): React.ReactNode => {
 		if (!state) {
 			return (
 				<div className={styles.tagline}>
-					INSERT COIN<br /><br />
-					(CRÉEZ OU REJOIGNEZ UNE PARTIE)
+					<p>{texts.coin}</p>
+					<p>{texts.CreateOrJoin}</p>
 				</div>
 			);
 		}
@@ -144,73 +143,13 @@ export function Pong({ gatewayConfig }: PongProps) {
 		const scaleY = VIEWPORT_HEIGHT / state.height;
 
 		return (
-			<svg
-				className={styles.canvas}
-				viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`}
-				preserveAspectRatio="xMidYMid meet"
-				shapeRendering="crispEdges" // Important pour les bords nets (pixel perfect)
-			>
-				{/* SCORES : Intégrés dans le SVG pour le look Arcade */}
-				{/* Score Gauche */}
-				<text 
-					x={VIEWPORT_WIDTH / 4} 
-					y={100} 
-					fill="white" 
-					fontSize="80" 
-					fontFamily="'Press Start 2P', monospace" 
-					textAnchor="middle"
-				>
-					{state.scoreLeft}
-				</text>
-
-				{/* Score Droite */}
-				<text 
-					x={(VIEWPORT_WIDTH / 4) * 3} 
-					y={100} 
-					fill="white" 
-					fontSize="80" 
-					fontFamily="'Press Start 2P', monospace" 
-					textAnchor="middle"
-				>
-					{state.scoreRight}
-				</text>
-
-				{/* Filet Central (Carrés discontinus) */}
-				<line
-					x1={VIEWPORT_WIDTH / 2}
-					y1={0}
-					x2={VIEWPORT_WIDTH / 2}
-					y2={VIEWPORT_HEIGHT}
-					stroke="white"
-					strokeWidth={10} // Ligne épaisse
-					strokeDasharray="15, 15" // Tirets pour faire des carrés
-				/>
-
-				{/* Raquette Gauche (Carré blanc) */}
-				<rect
-					x={(state.paddleThickness - 4 * scaleX) * scaleX}
-					y={state.leftY * scaleY}
-					width={15 * scaleX} // Un peu plus large pour le style rétro
-					height={state.paddleHeight * scaleY}
-					fill="white"
-				/>
-
-				{/* Raquette Droite (Carré blanc) */}
-				<rect
-					x={VIEWPORT_WIDTH - state.paddleThickness * scaleX}
-					y={state.rightY * scaleY}
-					width={15 * scaleX}
-					height={state.paddleHeight * scaleY}
-					fill="white"
-				/>
-				{/* Balle (Carré blanc) */}
-				<rect
-					x={(state.ballX * scaleX) - (state.ballRadius)}
-					y={(state.ballY * scaleY) - (state.ballRadius)}
-					width={state.ballRadius * 2}
-					height={state.ballRadius * 2}
-					fill="white"
-				/>
+			<svg className={styles.canvas} viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet" shapeRendering="crispEdges">
+				<text x={VIEWPORT_WIDTH / 4} y={100} fill="white" fontSize="80" fontFamily="'Press Start 2P', monospace" textAnchor="middle">{state.scoreLeft}</text>
+				<text x={(VIEWPORT_WIDTH / 4) * 3} y={100} fill="white" fontSize="80" fontFamily="'Press Start 2P', monospace" textAnchor="middle">{state.scoreRight}</text>
+				<line x1={VIEWPORT_WIDTH / 2} y1={0} x2={VIEWPORT_WIDTH / 2} y2={VIEWPORT_HEIGHT} stroke="white" strokeWidth={10} strokeDasharray="15, 15" />
+				<rect x={(state.paddleThickness - 4 * scaleX) * scaleX} y={state.leftY * scaleY} width={15 * scaleX} height={state.paddleHeight * scaleY} fill="white" />
+				<rect x={VIEWPORT_WIDTH - state.paddleThickness * scaleX} y={state.rightY * scaleY} width={15 * scaleX} height={state.paddleHeight * scaleY} fill="white" />
+				<rect x={(state.ballX * scaleX) - (state.ballRadius)} y={(state.ballY * scaleY) - (state.ballRadius)} width={state.ballRadius * 2} height={state.ballRadius * 2} fill="white" />
 			</svg>
 		);
 	};
@@ -218,30 +157,11 @@ export function Pong({ gatewayConfig }: PongProps) {
 	return (
 		<div className={styles.card}>
 			<div className={styles.cardHeader}>
-				<div className={styles.label}>PONG</div>
-				<div className={styles.status}>
-					{connected ? 'ONLINE' : 'OFFLINE'}
+				<div className={styles.label}>
+					{texts.welcome.toUpperCase()}: {userName.toUpperCase()}
 				</div>
-			</div>
-
-			<div className={styles.row}>
-				<button className={styles.button} onClick={handleConnect} disabled={connected}>
-					CONNEXION
-				</button>
-				<button className={`${styles.button} ${styles.secondary}`} onClick={handleDisconnect} disabled={!connected}>
-					DÉCONNEXION
-				</button>
-				
-				<div className={styles.inputGroup}>
-					<input
-						className={styles.input}
-						type="text"
-						value={playerName}
-						onChange={(e) => setPlayerName(e.target.value.toUpperCase())}
-						placeholder="PLAYER 1"
-						disabled={!connected}
-						maxLength={10}
-					/>
+				<div className={styles.status}>
+					{connected ? texts.online : texts.loading.toUpperCase()}
 				</div>
 			</div>
 
@@ -257,22 +177,20 @@ export function Pong({ gatewayConfig }: PongProps) {
 					/>
 				</div>
 				<button className={styles.button} onClick={handleCreate} disabled={!connected || Boolean(activeMatch)}>
-					START GAME
+					{texts.create}
 				</button>
 				<button className={`${styles.button} ${styles.secondary}`} onClick={handleJoin} disabled={!connected}>
-					JOIN GAME
+					{texts.join}
 				</button>
 			</div>
 
-			{lastError && <div className={styles.error}>ERROR: {lastError}</div>}
+			{lastError && <div className={styles.error}>{texts.error} {lastError}</div>}
 
 			<div className={styles.board}>
-				{/* Note : J'ai retiré la div de score externe pour utiliser celle du SVG */}
 				{renderCanvas(pongState)}
-
 				<div className={styles.infos}>
 					<span>ID: {matchId || '---'}</span>
-					<span>STATE: {pongState?.status || 'WAITING'}</span>
+					<span>{texts.state} {pongState?.status || texts.waiting}</span>
 				</div>
 			</div>
 		</div>

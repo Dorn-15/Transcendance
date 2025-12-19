@@ -415,8 +415,8 @@ class GameScene {
     }
 
     showGameInterface(gameId: string) {
-        // ... code existant
-         const targetLang = this.currentLangId;
+        const targetLang = this.currentLangId;
+        
         const targetUrl = `/play/${gameId}?lang=${targetLang}`;
 
         if (typeof window !== 'undefined') {

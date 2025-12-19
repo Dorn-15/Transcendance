@@ -19,6 +19,14 @@ export interface GameInfo {
     username: string;
     enter: string;
     loading: string;
+    coin: string;
+    CreateOrJoin: string;
+    create: string;
+    join: string;
+    error: string;
+    state: string;
+    waiting: string;
+    online: string;
 }
 
 export interface LanguageData {
@@ -46,7 +54,15 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             welcome: "Bienvenue",
             username: "Pseudo",
             enter: "Entrer",
-            loading: "Chargement des modeles"
+            loading: "Chargement des modeles",
+            coin: "INSEREZ UNE PIECE",
+            CreateOrJoin: "(CREEZ OU REJOIGNEZ UNE PARTIE)",
+            create: "CREER",
+            join: "REJOINDRE",
+            error: "ERREUR",
+            state: "ETAT",
+            waiting: "EN ATTENTE",
+            online: "CONNECTE"
         }
     },
     // 2 = ANGLAIS
@@ -69,7 +85,15 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             welcome: "Welcome",
             username: "Username",
             enter: "Enter",
-            loading: "Loading models"
+            loading: "Loading models",
+            coin: "INSERT COIN",
+            CreateOrJoin: "(CREATE OR JOIN A GAME)",
+            create: "CREATE",
+            join: "JOIN",
+            error: "ERROR",
+            state: "STATE",
+            waiting: "WAITING",
+            online: "ONLINE"
         }
     },
     // 3 = ESPAGNOL
@@ -92,7 +116,15 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             welcome: "Bienvenido",
             username: "nombre de usuario",
             enter: "ingresar",
-            loading: "Cargando modelos"
+            loading: "Cargando modelos",
+            coin: "INSERTAR UNA MONEDA",
+            CreateOrJoin: "(CREAR O UNIRSE A UN JUEGO)",
+            create: "CREAR",
+            join: "UNIRSE",
+            error: "ERROR",
+            state: "ESTADO",
+            waiting: "ESPERA",
+            online: "EN LÍNEA"
         }
     },
     // 4 = ALLEMAND
@@ -116,7 +148,15 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             welcome: "Willkommen",
             username: "Benutzername",
             enter: "eingeben",
-            loading: "Laden von Modellen"
+            loading: "Laden von Modellen",
+            coin: "MÜNZE EINWEICHEN",
+            CreateOrJoin: "(SPIEL ERSTELLEN ODER BEITRETEN)",
+            create: "ERSTELLEN",
+            join: "VERBINDEN",
+            error: "FEHLER",
+            state: "ZUSTAND",
+            waiting: "WARTEN",
+            online: "VERBUNDEN"
         }
     }
 };
