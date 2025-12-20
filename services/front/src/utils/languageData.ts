@@ -34,6 +34,7 @@ export interface GameInfo {
     laterCoin: string;
     alienLate: string;
     play: string;
+    running: string;
 }
 
 export interface LanguageData {
@@ -76,7 +77,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             workIn: "CHANTIER EN COURS",
             laterCoin: "INSEREZ UNE PIECE PLUS TARD...",
             alienLate: "LES ALIENS SONT EN RETARD",
-            play: "JOUER"
+            play: "JOUER",
+            running: "EN COURS"
         }
     },
     // 2 = ANGLAIS
@@ -114,7 +116,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             workIn: "WORK IN PROGRESS",
             laterCoin: "INSERT COIN LATER...",
             alienLate: "THE ALIENS ARE LATE",
-            play: "PLAY"
+            play: "PLAY",
+            running: "RUNNING"
         }
     },
     // 3 = ESPAGNOL
@@ -152,7 +155,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             workIn: "CONSTRUCCIÓN EN CURSO",
             laterCoin: "INSERTE UNA MONEDA MÁS TARDE...",
             alienLate: "LOS EXTRATERRESTRES LLEGAN TARDE",
-            play: "JUGAR"
+            play: "JUGAR",
+            running: "CORRER"
         }
     },
     // 4 = ALLEMAND
@@ -191,7 +195,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             workIn: "BAUARBEITEN IM LAUFENDEN",
             laterCoin: "WERFEN SIE SPÄTER EINE MÜNZE EIN...",
             alienLate: "DIE ALIENS SIND ZU SPÄT",
-            play: "SPIELEN"
+            play: "SPIELEN",
+            running: "LÄUFT"
         }
     }
 };

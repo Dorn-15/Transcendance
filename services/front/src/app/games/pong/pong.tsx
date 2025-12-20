@@ -41,7 +41,6 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 	const isEnded = pongState?.status === 'ended';
 	const canMove = pongState?.status === 'running';
 
-	// synchronize state -> ref
 	useEffect(() => {
 		matchIdRef.current = matchId;
 	}, [matchId]);
@@ -66,7 +65,6 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 		if (!socket)
 			return;
 
-		// reset initial local state when socket instance changes
 		isGameIntentional.current = false;
 		setPongState(null);
 		setMatchId('');

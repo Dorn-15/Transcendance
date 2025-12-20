@@ -11,9 +11,9 @@
   box-sizing: border-box;
 
   padding: 10px;
-
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 100%;
+  align-content: start;
   gap: 8px;
 
   font-family: 'Press Start 2P', cursive, monospace;
@@ -21,6 +21,11 @@
 
   max-height: 80dvh;
   overflow-y: auto;
+}
+
+
+.card > * {
+  min-width: 0;
 }
 
 .cardHeader {
@@ -58,13 +63,13 @@
 
 .controlsRow {
   display: flex;
+  flex-direction: column;
   gap: 5px;
-  flex-wrap: wrap;
   width: 100%;
 }
 
 .input {
-  flex: 1 1 100%;
+  width: 100%;
   padding: 8px;
   background: #000;
   border: 2px solid #666;
@@ -79,7 +84,7 @@
 
 .buttonGroup {
   display: flex;
-  flex: 1 1 100%;
+  width: 100%;
   gap: 5px;
 }
 
@@ -94,6 +99,9 @@
   font-size: clamp(9px, 3vw, 12px);
   white-space: nowrap;
   box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .button:active { background: #fff; color: #000; }
@@ -104,7 +112,6 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  flex-shrink: 0;
 }
 
 .boardWrapper {
@@ -227,11 +234,7 @@
   .mobileControls {
     display: flex;
   }
-
-  .controlsRow {
-    flex-direction: column;
-  }
-
+  
   .label {
     max-width: 150px;
   }

@@ -22,9 +22,9 @@ export default function SpaceInvadersPlaceholder({ texts }: SpaceInvadersProps) 
 
             <div className="messageBox">
                 <p className="text">
-                    {texts.loading.toUpperCase()}...
+                    {texts.alienLate.toUpperCase()}...
                 </p>
-                <p className="subtext">{texts.coin}</p>
+                <p className="subtext">{texts.laterCoin}</p>
             </div>
         </div>
     );
