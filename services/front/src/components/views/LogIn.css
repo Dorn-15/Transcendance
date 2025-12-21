@@ -1,12 +1,3 @@
-/* --- FONTS (Si pas déjà chargée globalement) --- */
-@font-face {
-    font-family: 'TT';
-    src: url('/font/inline/TT-Me.otf') format('opentype');
-    font-weight: medium;
-    font-style: normal;
-    font-display: swap;
-}
-
 /* --- LAYOUT GLOBAL --- */
 .login-overlay {
     position: fixed;
@@ -15,25 +6,25 @@
     width: 100vw;
     height: 100dvh; /* Utilise dvh pour gérer la barre d'adresse mobile */
     z-index: 100;
-    
+
     display: flex;
     justify-content: center;
     align-items: center;
-    
+
     /* GESTION DU FOND D'ÉCRAN */
     background-image: url('../../../public/assets/backGroundLogin.png');
     background-position: center;
     background-size: cover; /* Important : l'image couvre tout l'écran */
     background-repeat: no-repeat;
-    
+
     /* Ajout d'une couche sombre par-dessus l'image pour la lisibilité */
-    background-color: rgba(0, 0, 0, 0.6); 
-    background-blend-mode: overlay; 
-    
+    background-color: rgba(0, 0, 0, 0.6);
+    background-blend-mode: overlay;
+
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     pointer-events: auto;
-    
+
     /* Animation d'entrée douce */
     opacity: 0;
     animation: fadeIn 0.5s forwards;
@@ -45,18 +36,18 @@
 
 /* --- BOITE DE LOGIN --- */
 .login-box {
-    background-color: #e6dacd; 
+    background-color: #e6dacd;
     /* Padding fluide : minimum 20px, ideal 3vh, max 40px */
     padding: clamp(20px, 3vh, 40px);
-    
+
     border: 1px solid #1b0a00;
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     text-align: center;
-    
+
     /* Largeur responsive : 90% sur mobile, mais jamais plus de 400px */
     width: 90%;
     max-width: 400px;
-    
+
     border-radius: 4px; /* Léger arrondi */
 }
 
@@ -139,7 +130,7 @@
         width: 85%;
         padding: 25px 20px;
     }
-    
+
     .login-box h3 {
         margin-bottom: 20px;
     }
