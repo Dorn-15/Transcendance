@@ -7,18 +7,15 @@ services:
     depends_on:
       - ${FRONTEND_NAME}
       - ${AUTH_SERVICE_NAME}
-      - ${SOCIAL_SERVICE_NAME}
       - ${GAME_SERVICE_NAME}
       - ${REALTIME_GATEWAY_NAME}
     environment:
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
       - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
       - FRONT_PATH=${FRONT_PATH}
       - AUTH_PATH=${AUTH_PATH}
-      - SOCIAL_PATH=${SOCIAL_PATH}
       - GAMES_PATH=${GAMES_PATH}
       - WS_PATH=${WS_PATH}
     # for prod -----------------------------------------------
@@ -57,11 +54,9 @@ services:
       - DOMAIN=${DOMAIN}
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
       - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
       - AUTH_PATH=${AUTH_PATH}
-      - SOCIAL_PATH=${SOCIAL_PATH}
       - GAMES_PATH=${GAMES_PATH}
       - WS_PATH=${WS_PATH}
     networks:
@@ -79,23 +74,6 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${AUTH_PORT}
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-    networks:
-      - internal
-
-  social_service:
-    build:
-      context: ./services/social
-      dockerfile: dockerfile
-    container_name: ${SOCIAL_SERVICE_NAME}
-    depends_on:
-      - ${POSTGRES_HOST}
-      - ${REDIS_HOST}
-    expose:
-      - "${SOCIAL_PORT}"
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${SOCIAL_PORT}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
     networks:
@@ -140,7 +118,6 @@ services:
     container_name: ${REALTIME_GATEWAY_NAME}
     depends_on:
       - ${AUTH_SERVICE_NAME}
-      - ${SOCIAL_SERVICE_NAME}
       - ${GAME_SERVICE_NAME}
       - ${REDIS_HOST}
     expose:
@@ -150,7 +127,6 @@ services:
       - PORT=${REALTIME_GATEWAY_PORT}
       - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
       - AUTH_HOST=http://${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=http://${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=http://${GAME_SERVICE_NAME}:${GAME_PORT}
     networks:
       - internal
@@ -165,6 +141,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - internal
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine

@@ -1,13 +1,22 @@
 'use server'
 
+import { AUTH_SERVICE_URL } from '../api/login/route'
 import { cookies } from 'next/headers'
 
 export async function LogOut() {
-    // 1. Await cookies (Next.js 15+)
-    const cookieStore = await cookies();
-    
-    // 2. Delete the cookie
-    cookieStore.delete('Authentication');
+	const cookieStore = await cookies();
+	const cookie = cookieStore.get('Authentication');
 
-    // 3. Do NOT redirect here. Just return.
+	if (cookie) {
+		await fetch(`${AUTH_SERVICE_URL}/auth/logout`, {
+			method: 'POST',
+			headers: {
+				Cookie: cookieStore.toString(),
+			},
+		}).catch((err) => {
+			console.error('Logout failed:', err);
+		});
+	}
+
+	cookieStore.delete('Authentication');
 }

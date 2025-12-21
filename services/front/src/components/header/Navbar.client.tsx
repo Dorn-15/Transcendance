@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
 
-import { LogOut } from '../../app/logout/logout';
-
 import SettingsView from '../views/SettingsView';
 import SocialView from '../views/SocialView';
 import LegalView from '../views/LegalView'; // Changé de StatsView à LegalView
@@ -23,13 +21,13 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     // Calcul de la langue
     const langParam = searchParams.get('lang');
     const paramValue = Number(langParam);
-    const currentLang: LangKey = (langParam && ALL_LANGUAGES[paramValue]) 
-        ? (paramValue as LangKey) 
+    const currentLang: LangKey = (langParam && ALL_LANGUAGES[paramValue])
+        ? (paramValue as LangKey)
         : 1;
 
     // État des vues (modales) - 'stats' remplacé par 'legal'
     const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'legal'>('menu');
-    
+
     // NOUVEAU : État pour le menu mobile latéral
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -39,9 +37,12 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
     const handleLogout = async () => {
         try {
-            await LogOut();
+			await fetch('/api/logout', {
+				method: 'POST',
+				credentials: 'include',
+			});
             router.refresh();
-            router.push(`/?lang=${currentLang}`); 
+            router.push(`/?lang=${currentLang}`);
         } catch (error) {
             if ((error as Error).message !== 'NEXT_REDIRECT') {
                 console.error("Logout failed:", error);
@@ -63,8 +64,8 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
             <header>
                 <div className="title-overlay">
                     {/* Bouton Hamburger (Visible uniquement sur Mobile via CSS) */}
-                    <button 
-                        className="mobile-menu-btn" 
+                    <button
+                        className="mobile-menu-btn"
                         onClick={() => setIsMobileMenuOpen(true)}
                         aria-label="Open Menu"
                     >
@@ -79,14 +80,14 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('legal')}>{texts.legal}</button>
                     </nav>
-                    
+
                     {/* User Info Desktop (Cachée sur Mobile via CSS) */}
                     <div className="user-cluster desktop-only">
                             <div className="user-info">
                                 <span className="user-label">{texts.connectedAs}</span>
                                 <span className="user-name">{userName}</span>
                             </div>
-                            
+
                             <button className="sign-out-btn" onClick={handleLogout}>
                                 Sign out
                             </button>
@@ -96,10 +97,10 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
             {/* --- MENU LATÉRAL MOBILE --- */}
             <div className={`mobile-sidebar-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
-            
+
             <div className={`mobile-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <button className="mobile-close-btn" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
-                
+
                 <div className="mobile-user-section">
                     <span className="mobile-user-label">{texts.connectedAs}</span>
                     <span className="mobile-user-name">{userName}</span>
@@ -130,13 +131,13 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                     {currentView === 'social' && (
                         <SocialView
                             onClose={backToMenu}
-                            currentLang={currentLang} 
+                            currentLang={currentLang}
                         />
                     )}
                     {currentView === 'legal' && (
                         <LegalView
                             onClose={backToMenu}
-                            currentLang={currentLang} 
+                            currentLang={currentLang}
                         />
                     )}
                 </div>

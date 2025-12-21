@@ -124,6 +124,9 @@
     background: #555;
 }
 
+.login-error {
+	margin-top: 0;
+}
 /* --- MOBILE SPECIFICS (< 480px) --- */
 @media (max-width: 480px) {
     .login-box {
