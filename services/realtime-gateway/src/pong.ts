@@ -22,7 +22,7 @@ export class PongExchangeService {
 		Array<{ matchId: string; player: string }>
 	>();
 	private readonly	gamesBaseUrl =
-		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://game_service:4005';
+		process.env.GAMES_BASE_URL ?? process.env.GAME_HOST ?? 'http://localhost:4005';
 	private readonly	fetcher: any = (globalThis as any).fetch;
 
 	setServer(server: Server): void {
@@ -34,6 +34,7 @@ export class PongExchangeService {
 		payload: { player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
+			console.log('handleCreateMatch', payload);
 			const	body = { player: payload?.player ?? 'player' };
 			const	response = await this.postJson<MatchJoin>('/pong/matches', body);
 
@@ -57,11 +58,12 @@ export class PongExchangeService {
 		payload: { matchId?: string; player: string },
 	): Promise<MatchJoin | { error: string }> {
 		try {
+			console.log('handleJoinMatch', payload);
 			const	body = {
-				player: payload?.player ?? 'player',
+				player: payload?.player,
 				matchId: payload?.matchId,
 			};
-			const	path = `/pong/matches/join`;
+			const	path = `/pong/matches/${payload?.matchId}/join`;
 			const	response = await this.postJson<MatchJoin>(path, body);
 
 			await client.join(this.getRoom(response.matchId));
@@ -72,6 +74,61 @@ export class PongExchangeService {
 			this.emitState(response.matchId, response.state);
 
 			return response;
+		} catch (error) {
+			const	message = (error as Error).message;
+			this.logger.error(message);
+			return { error: message };
+		}
+	}
+
+	async handleLeaveMatch(
+		client: Socket,
+		payload: { matchId?: string }
+	): Promise<void> {
+		console.log('handleLeaveMatch', payload);
+		const sessions = this.clientSessions.get(client.id);
+		if (!sessions) return;
+
+		const sessionsToLeave = payload?.matchId
+			? sessions.filter((s) => s.matchId === payload.matchId)
+			: sessions;
+
+		for (const session of sessionsToLeave) {
+			await this.closeMatchForAll(session.matchId, 'leave');
+		}
+	}
+
+	async handleStopMatch(
+		client: Socket,
+		payload: { matchId?: string }
+	): Promise<void> {
+		console.log('handleStopMatch', payload);
+		const sessions = this.clientSessions.get(client.id);
+		if (!sessions) return;
+
+		const sessionsToStop = payload?.matchId
+			? sessions.filter((s) => s.matchId === payload.matchId)
+			: sessions;
+
+		for (const session of sessionsToStop) {
+			await this.closeMatchForAll(session.matchId, 'stop');
+		}
+	}
+
+	async handleRestartMatch(
+		client: Socket,
+		payload: { matchId: string; player: string },
+	): Promise<{ state?: PongState; error?: string }> {
+		console.log('handleRestartMatch', payload);
+		if (!payload?.matchId)
+			return { error: 'matchId manquant' };
+		try {
+			const	state = await this.postJson<PongState>(
+				`/pong/matches/${payload.matchId}/restart`,
+				{ player: payload?.player ?? 'player' },
+			);
+			this.emitState(payload.matchId, state);
+			return { state };
 		} catch (error) {
 			const	message = (error as Error).message;
 			this.logger.error(message);
@@ -112,6 +169,7 @@ export class PongExchangeService {
 
 	cleanupClient(client: Socket): void {
 		const	sessions = this.clientSessions.get(client.id) ?? [];
+		console.log('cleanupClient', sessions);
 		this.clientSessions.delete(client.id);
 
 		for (const	session of sessions) {
@@ -183,15 +241,55 @@ export class PongExchangeService {
 		this.clientSessions.set(socketId, sessions);
 	}
 
+	private cleanupSessionsForMatch(matchId: string): void {
+		for (const [socketId, sessions] of this.clientSessions.entries()) {
+			const	remaining = sessions.filter((s) => s.matchId !== matchId);
+			if (remaining.length === 0)
+				this.clientSessions.delete(socketId);
+			else
+				this.clientSessions.set(socketId, remaining);
+		}
+	}
+
+	private stopPolling(matchId: string): void {
+		const	tracker = this.matchTrackers.get(matchId);
+		if (!tracker)
+			return;
+		if (tracker.interval)
+			clearInterval(tracker.interval);
+		this.matchTrackers.delete(matchId);
+	}
+
+	private async closeMatchForAll(matchId: string, reason: 'leave' | 'stop' | 'disconnect'): Promise<void> {
+		if (!matchId)
+			return;
+
+		try {
+			await this.postJson<{ matchId: string; removed: boolean }>(
+				`/pong/matches/${matchId}/close`,
+				{},
+			);
+		} catch (error) {
+			this.logger.warn(`Close match ${matchId} échoué: ${(error as Error).message}`);
+		}
+
+		if (this.server) {
+			const	room = this.getRoom(matchId);
+			this.server.to(room).emit('pong:closed', { matchId, reason });
+			(this.server as any).in(room).socketsLeave(room);
+		}
+
+		this.cleanupSessionsForMatch(matchId);
+		this.stopPolling(matchId);
+	}
+
 	private startPolling(matchId: string): void {
 		const	tracker =
 			this.matchTrackers.get(matchId) ??
 			({ sockets: new Set() } as MatchTracker);
 
-		if (tracker.interval) {
+		if (tracker.interval)
 			return;
-		}
-
 		tracker.interval = setInterval(async () => {
 			try {
 				const	state = await this.getJson<PongState>(
@@ -200,11 +298,12 @@ export class PongExchangeService {
 
 				this.emitState(matchId, state);
 			} catch (error) {
-				this.logger.warn(
-					`Polling match ${matchId} échoué: ${(error as Error).message}`,
-				);
+				this.logger.warn(`Polling match ${matchId} échoué: ${(error as Error).message}`);
+				const t = this.matchTrackers.get(matchId);
+				if (t && t.interval) clearInterval(t.interval);
+				this.matchTrackers.delete(matchId);
 			}
-		}, 1000 / 30);
+		}, 1000 / 60);
 
 		this.matchTrackers.set(matchId, tracker);
 	}
@@ -252,5 +351,3 @@ export class PongExchangeService {
 		return (await response.json()) as T;
 	}
 }
-
-

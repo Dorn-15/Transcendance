@@ -4,7 +4,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus:9090/prometheus
+    url: http://prometheus:9090
     uid: prometheus
     isDefault: true
     editable: true
@@ -12,4 +12,5 @@ datasources:
       timeInterval: "15s"
       httpMethod: POST
       queryTimeout: "60s"
+      path: /prometheus
 

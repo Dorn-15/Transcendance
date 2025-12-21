@@ -20,5 +20,11 @@ rebuild: down build up
 clean:
 	$(COMPOSE) -f $(COMPOSE_FILE) down -v --remove-orphans
 
-.PHONY: build up down logs clean restart
+fclean: clean
+	$(COMPOSE) -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans
+
+nuke: fclean
+	docker system prune -af
+
+.PHONY: build up down logs clean fclean nuke restart
 

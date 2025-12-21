@@ -1,379 +1,324 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import type { GatewayConfig } from '@/app/play/[gameId]/page';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { useSocket } from '@/app/context/socketProvider';
 import type { PongState } from '@transcendance/pong';
-import styles from './pong.module.css';
+import type { GameInfo } from '@/utils/languageData';
+import './pong.css';
 
 type PongProps = {
-	gatewayConfig: GatewayConfig;
+	userName: string;
+	texts: GameInfo;
 };
 
-function	extractMatchId(raw: string): string {
-	const	trimmed = raw.trim();
-
-	if (trimmed === '')
-		return '';
+function extractMatchId(raw: string): string {
+	const trimmed = raw.trim();
+	if (trimmed === '') return '';
 	try {
-		const	url = new URL(trimmed);
-		const	fromQuery = url.searchParams.get('matchId');
-
-		if (fromQuery && fromQuery.trim() !== '')
-			return fromQuery.trim();
-		const	segments = url.pathname.split('/').filter(Boolean);
-
-		if (segments.length > 0)
-			return segments[segments.length - 1].trim();
-	} catch {
-		// Not a URL, treat as raw ID
-	}
+		const url = new URL(trimmed);
+		const fromQuery = url.searchParams.get('matchId');
+		if (fromQuery && fromQuery.trim() !== '') return fromQuery.trim();
+		const segments = url.pathname.split('/').filter(Boolean);
+		if (segments.length > 0) return segments[segments.length - 1].trim();
+	} catch { }
 	return trimmed;
 }
 
-export function Pong({ gatewayConfig }: PongProps) {
-	const	socketRef = useRef<Socket | null>(null);
-	const	pressedRef = useRef<'up' | 'down' | 'none'>('none');
+export function Pong({ userName = 'GUEST', texts }: PongProps) {
+	const { socket, isConnected } = useSocket();
+	const [isMobile, setIsMobile] = useState(false);
 
-	const	[connected, setConnected] = useState(false);
-	const	[matchId, setMatchId] = useState<string>('');
-	const	[playerName, setPlayerName] = useState<string>('');
-	const	[joinInput, setJoinInput] = useState<string>('');
-	const	[pongState, setPongState] = useState<PongState | null>(null);
-	const	[lastError, setLastError] = useState<string | null>(null);
-	const	activeMatch = pongState && pongState.status !== 'ended';
+	const matchIdRef = useRef<string>('');
+	const isGameIntentional = useRef(false);
 
-	const	requireSocket = useCallback((): Socket | null => {
-		const	socket = socketRef.current;
+	const [matchId, setMatchId] = useState<string>('');
+	const [joinInput, setJoinInput] = useState<string>('');
+	const [pongState, setPongState] = useState<PongState | null>(null);
+	const [lastError, setLastError] = useState<string | null>(null);
+	const [didCopyId, setDidCopyId] = useState<boolean>(false);
+	const [didRequestRestart, setDidRequestRestart] = useState<boolean>(false);
 
-		if (!socket) {
-			setLastError('Non connecté au serveur');
-			return null;
-		}
-		return socket;
-	}, []);
-
-	const	handleConnect = useCallback((): void => {
-		if (socketRef.current) {
-			socketRef.current.disconnect();
-		}
-
-		const	socket = io(gatewayConfig.origin, {
-			path: gatewayConfig.path,
-			transports: ['websocket'],
-		});
-
-		socketRef.current = socket;
-
-		socket.on('connect', () => {
-			setConnected(true);
-			setLastError(null);
-		});
-
-		socket.on('disconnect', () => {
-			setConnected(false);
-		});
-
-		socket.on('connect_error', (error) => {
-			setLastError(error.message);
-		});
-
-		socket.on('pong:state', (state: PongState) => {
-			setPongState(state);
-			setMatchId(state.matchId);
-		});
-
-		socket.on('pong:error', (message: string) => {
-			setLastError(message);
-		});
-	}, [gatewayConfig.origin, gatewayConfig.path]);
-
-	const	handleDisconnect = useCallback((): void => {
-		if (socketRef.current) {
-			socketRef.current.disconnect();
-			socketRef.current = null;
-		}
-		setConnected(false);
-	}, []);
-
-	const	handleCreate = useCallback((): void => {
-		const	socket = requireSocket();
-
-		if (!socket) {
-			return;
-		}
-
-		if (activeMatch) {
-			setLastError('Une partie est déjà en cours, rejoignez-la ou attendez sa fin.');
-			return;
-		}
-
-		socket.emit(
-			'pong:create',
-			{ player: playerName || 'player' },
-			(response: { matchId?: string; state?: PongState; error?: string }) => {
-				if (response?.error) {
-					setLastError(response.error);
-					return;
-				}
-
-				if (response?.matchId) {
-					setMatchId(response.matchId);
-					setJoinInput(response.matchId);
-				}
-
-				if (response?.state) {
-					setPongState(response.state);
-				}
-			},
-		);
-	}, [activeMatch, playerName, requireSocket]);
-
-	const	handleJoin = useCallback((): void => {
-		const	socket = requireSocket();
-
-		if (!socket) {
-			return;
-		}
-
-		const	targetId = joinInput ? extractMatchId(joinInput) : matchId;
-		const	normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
-
-		if (normalizedMatchId)
-			setMatchId(normalizedMatchId);
-
-		socket.emit(
-			'pong:join',
-			{
-				matchId: normalizedMatchId,
-				player: playerName || 'player',
-			},
-			(response: { matchId?: string; state?: PongState; error?: string }) => {
-				if (response?.error) {
-					setLastError(response.error);
-					return;
-				}
-
-				if (response?.matchId) {
-					setMatchId(response.matchId);
-				}
-
-				if (response?.state) {
-					setPongState(response.state);
-				}
-			},
-		);
-	}, [joinInput, matchId, playerName, requireSocket]);
-
-	const	handleMove = useCallback(
-		(direction: 'up' | 'down' | 'none'): void => {
-			const	socket = requireSocket();
-
-			if (!socket || !matchId) {
-				return;
-			}
-
-			if (pressedRef.current === direction) {
-				return;
-			}
-
-			pressedRef.current = direction;
-
-			socket.emit('pong:move', {
-				matchId,
-				player: playerName || 'player',
-				direction,
-			});
-		},
-		[matchId, playerName, requireSocket],
-	);
+	const isEnded = pongState?.status === 'ended';
+	const canMove = pongState?.status === 'running';
 
 	useEffect(() => {
-		const	onKeyDown = (event: KeyboardEvent): void => {
-			if (event.repeat)
+		matchIdRef.current = matchId;
+	}, [matchId]);
+
+	useEffect(() => {
+		const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
+	}, []);
+
+	useEffect(() => {
+		let				timerId: ReturnType<typeof setTimeout>;
+
+		if (!didCopyId)
+			return;
+		timerId = setTimeout(() => setDidCopyId(false), 1200);
+		return () => clearTimeout(timerId);
+	}, [didCopyId]);
+
+	useEffect(() => {
+		if (!socket)
+			return;
+
+		isGameIntentional.current = false;
+		setPongState(null);
+		setMatchId('');
+		matchIdRef.current = '';
+		setDidRequestRestart(false);
+
+		const onPongState = (state: PongState) => {
+			if (!isGameIntentional.current) return;
+			setPongState(state);
+			setMatchId(state.matchId);
+			if (state.status !== 'ended')
+				setDidRequestRestart(false);
+		};
+
+		const onPongError = (msg: string) => {
+			if (!isGameIntentional.current) return;
+			setLastError(msg);
+		};
+
+		const onPongClosed = (payload: { matchId: string; reason: 'leave' | 'stop' | 'disconnect' }) => {
+			if (payload?.matchId && matchIdRef.current && payload.matchId !== matchIdRef.current)
 				return;
-			if (event.key === 'ArrowUp')
-				handleMove('up');
-			else if (event.key === 'ArrowDown')
-				handleMove('down');
+			isGameIntentional.current = false;
+			setPongState(null);
+			setMatchId('');
+			matchIdRef.current = '';
+			setJoinInput('');
+			setDidRequestRestart(false);
+			setLastError(null);
 		};
 
-		const	onKeyUp = (event: KeyboardEvent): void => {
-			if (event.key === 'ArrowUp' || event.key === 'ArrowDown')
-				handleMove('none');
-		};
+		socket.on('pong:state', onPongState);
+		socket.on('pong:error', onPongError);
+		socket.on('pong:closed', onPongClosed);
 
+		// leave the match when the component unmounts
+		return () => {
+			const currentMatchId = matchIdRef.current;
+			if (currentMatchId)
+				socket.emit('pong:leave', { matchId: currentMatchId });
+
+			isGameIntentional.current = false;
+			socket.off('pong:state', onPongState);
+			socket.off('pong:error', onPongError);
+			socket.off('pong:closed', onPongClosed);
+		};
+	}, [socket]);
+
+
+	const handleCreate = useCallback((): void => {
+		if (!socket || !isConnected) return;
+		isGameIntentional.current = true;
+		setLastError(null);
+		setDidRequestRestart(false);
+
+		socket.emit('pong:create', { player: userName }, (res: any) => {
+			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
+			if (res?.matchId) { setMatchId(res.matchId); setJoinInput(res.matchId); }
+			if (res?.state) setPongState(res.state);
+		});
+	}, [userName, socket, isConnected]);
+
+	const handleJoin = useCallback((): void => {
+		if (!socket || !isConnected)
+			return;
+		isGameIntentional.current = true;
+		setLastError(null);
+		setDidRequestRestart(false);
+
+		const targetId = joinInput ? extractMatchId(joinInput) : matchId;
+		const normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
+		if (!normalizedMatchId) {
+			setLastError('Missing match id');
+			return;
+		}
+
+		socket.emit('pong:join', { matchId: normalizedMatchId, player: userName }, (res: any) => {
+			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
+			if (res?.matchId) setMatchId(res.matchId);
+			if (res?.state) setPongState(res.state);
+		});
+	}, [joinInput, matchId, userName, socket, isConnected]);
+
+	const handleMove = useCallback((direction: 'up' | 'down' | 'none'): void => {
+		if (!socket || !matchId || !isConnected) return;
+		socket.emit('pong:move', { matchId, player: userName, direction });
+	}, [matchId, userName, socket, isConnected]);
+
+	const handleExit = useCallback((): void => {
+		const currentMatchId = matchIdRef.current;
+		if (!socket || !isConnected || !currentMatchId) return;
+		socket.emit('pong:leave', { matchId: currentMatchId });
+	}, [socket, isConnected]);
+
+	const handleRestart = useCallback((): void => {
+		const currentMatchId = matchIdRef.current;
+		if (!socket || !isConnected || !currentMatchId) return;
+		setDidRequestRestart(true);
+		socket.emit('pong:restart', { matchId: currentMatchId, player: userName }, (res: any) => {
+			if (res?.error) setLastError(res.error);
+		});
+	}, [socket, isConnected, userName]);
+
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.repeat) return;
+			if (!canMove) return;
+			if (e.key === 'ArrowUp') handleMove('up');
+			else if (e.key === 'ArrowDown') handleMove('down');
+		};
+		const onKeyUp = (e: KeyboardEvent) => {
+			if (!canMove) return;
+			if (e.key === 'ArrowUp' || e.key === 'ArrowDown') handleMove('none');
+		};
 		window.addEventListener('keydown', onKeyDown);
 		window.addEventListener('keyup', onKeyUp);
-
 		return () => {
 			window.removeEventListener('keydown', onKeyDown);
 			window.removeEventListener('keyup', onKeyUp);
-			pressedRef.current = 'none';
 		};
-	}, [handleMove]);
+	}, [handleMove, canMove]);
 
-	const	renderCanvas = (state: PongState | null): React.ReactNode => {
+	const handleTouchStart = (dir: 'up' | 'down') => (e: React.PointerEvent) => { e.preventDefault(); handleMove(dir); };
+	const handleTouchEnd = (e: React.PointerEvent) => { e.preventDefault(); handleMove('none'); };
+
+	const handleCopyMatchId = useCallback(async (): Promise<void> => {
+		const textToCopy = matchId.trim();
+		if (textToCopy === '')
+			return;
+		try {
+			await navigator.clipboard.writeText(textToCopy);
+			setDidCopyId(true);
+		} catch { }
+	}, [matchId]);
+
+	const renderCanvas = (state: PongState | null): React.ReactNode => {
 		if (!state) {
 			return (
-				<div className={styles.tagline}>
-					Créez ou rejoignez un match pour voir le terrain.
+				<div className="tagline">
+					<p>{texts.coin}</p>
+					<p className="subTagline">{texts.CreateOrJoin}</p>
 				</div>
 			);
 		}
-
-		const	VIEWPORT_WIDTH = 800;
-		const	VIEWPORT_HEIGHT = 600;
-
-		const	scaleX = VIEWPORT_WIDTH / state.width;
-		const	scaleY = VIEWPORT_HEIGHT / state.height;
+		const VIEWPORT_WIDTH = 800;
+		const VIEWPORT_HEIGHT = 600;
+		const scaleX = VIEWPORT_WIDTH / state.width;
+		const scaleY = VIEWPORT_HEIGHT / state.height;
 
 		return (
-			<svg
-				className={styles.canvas}
-				viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`}
-				preserveAspectRatio="xMidYMid meet"
-			>
+			<svg className="canvas" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet" shapeRendering="crispEdges">
+				<text
+					x={VIEWPORT_WIDTH / 4}
+					y={100} fill="white" fontSize="80"
+					fontFamily="'Press Start 2P', monospace"
+					textAnchor="middle">{state.scoreLeft}
+				</text>
+				<text
+					x={(VIEWPORT_WIDTH / 4) * 3}
+					y={100} fill="white" fontSize="80"
+					fontFamily="'Press Start 2P', monospace"
+					textAnchor="middle">{state.scoreRight}
+				</text>
 				<line
 					x1={VIEWPORT_WIDTH / 2}
 					y1={0}
 					x2={VIEWPORT_WIDTH / 2}
 					y2={VIEWPORT_HEIGHT}
-					stroke="#1d4ed8"
-					strokeDasharray={8 * scaleX}
-					strokeWidth={4 * scaleX}
+					stroke="white" strokeWidth={5}
+					strokeDasharray="15, 15"
 				/>
 				<rect
-					x={16 - (4 * scaleX)}
+					x={(state.paddleThickness - 10 * scaleX) * scaleX}
 					y={state.leftY * scaleY}
-					width={4 * scaleX}
+					width={10 * scaleX}
 					height={state.paddleHeight * scaleY}
-					fill="#22d3ee"
-					rx="4"
+					fill="white"
 				/>
 				<rect
-					x={VIEWPORT_WIDTH - 16}
+					x={VIEWPORT_WIDTH - state.paddleThickness * scaleX}
 					y={state.rightY * scaleY}
-					width={4 * scaleX}
+					width={10 * scaleX}
 					height={state.paddleHeight * scaleY}
-					fill="#a855f7"
-					rx="4"
+					fill="white"
 				/>
-				<circle
-					cx={state.ballX * scaleX}
-					cy={state.ballY * scaleY}
-					r={10 * scaleX}
-					fill="#fbbf24"
+				<rect
+					x={(state.ballX * scaleX) - (state.ballRadius)}
+					y={(state.ballY * scaleY) - (state.ballRadius)}
+					width={state.ballRadius * 2}
+					height={state.ballRadius * 2}
+					fill="white"
 				/>
 			</svg>
 		);
 	};
 
 	return (
-		<div className={styles.card}>
-			<div className={styles.cardHeader}>
-				<div className={styles.label}>Client Pong</div>
-				<div className={styles.status}>
-					{connected ? 'Connecté' : 'Déconnecté'}
+		<div className="card">
+			<div className="cardHeader">
+				<div className="label">
+					{texts.welcome}: <span className="highlight">{userName}</span>
+				</div>
+				<div className={`status ${isConnected ? 'online' : 'offline'}`}>
+					{isConnected ? 'ONLINE' : 'OFFLINE'}
 				</div>
 			</div>
 
-			<div className={styles.row}>
-				<button
-					className={styles.button}
-					onClick={handleConnect}
-					disabled={connected}
-				>
-					Connexion
-				</button>
-				<button
-					className={`${styles.button} ${styles.secondary}`}
-					onClick={handleDisconnect}
-					disabled={!connected}
-				>
-					Déconnexion
-				</button>
-			</div>
-
-			<div className={styles.row}>
-				<div className={styles.inputGroup}>
-					<label
-						className={styles.fieldLabel}
-						htmlFor="player-name-input"
-					>
-						Nom du joueur
-					</label>
-					<input
-						id="player-name-input"
-						className={styles.input}
-						type="text"
-						value={playerName}
-						onChange={(event) => setPlayerName(event.target.value)}
-						placeholder="Entrez votre nom"
-						disabled={!connected}
-					/>
+			{!pongState && (
+				<div className="controlsRow">
+					<input className="input" type="text" value={joinInput} onChange={(e) => setJoinInput(e.target.value)} placeholder="MATCH ID" disabled={!isConnected} />
+					<div className="buttonGroup">
+						<button className="button" onClick={handleCreate} disabled={!isConnected}>{texts.create}</button>
+						<button className="button secondary" onClick={handleJoin} disabled={!isConnected}>{texts.join}</button>
+					</div>
 				</div>
-			</div>
+			)}
 
-			<div className={styles.row}>
-				<div className={styles.inputGroup}>
-					<label
-						className={styles.fieldLabel}
-						htmlFor="match-link-input"
-					>
-						Lien ou ID du match à rejoindre
-					</label>
-					<input
-						id="match-link-input"
-						className={styles.input}
-						type="text"
-						value={joinInput}
-						onChange={(event) => setJoinInput(event.target.value)}
-						placeholder="Collez ici le lien ou l'identifiant du match"
-						disabled={!connected}
-					/>
+			{lastError && <div className="error">{texts.error} {lastError}</div>}
+
+
+			<div className="gameArea">
+				<div className="boardWrapper">
+					{renderCanvas(pongState)}
 				</div>
-			</div>
-
-			<div className={styles.row}>
-				<button
-					className={styles.button}
-					onClick={handleCreate}
-					disabled={!connected || Boolean(activeMatch)}
-				>
-					Créer match
-				</button>
-				<button
-					className={`${styles.button} ${styles.secondary}`}
-					onClick={handleJoin}
-					disabled={!connected}
-				>
-					Rejoindre match
-				</button>
-			</div>
-
-			{lastError && <div className={styles.error}>{lastError}</div>}
-
-			<div className={styles.board}>
-				<div className={styles.stateLine}>
-					<span>Match</span>
-					<span>{matchId || 'Aucun'}</span>
-				</div>
-				{pongState && (
-					<>
-						<div className={styles.stateLine}>
-							<span>Score</span>
-							<span>
-								{pongState.scoreLeft} - {pongState.scoreRight}
-							</span>
-						</div>
-						<div className={styles.stateLine}>
-							<span>Statut : {pongState.status}</span>
-						</div>
-					</>
+				{(canMove && isMobile) && (
+					<div className="mobileControls">
+						<button className="controlBtn" onPointerDown={handleTouchStart('up')} onPointerUp={handleTouchEnd} onPointerLeave={handleTouchEnd}>▲</button>
+						<div className="spacer"></div>
+						<button className="controlBtn" onPointerDown={handleTouchStart('down')} onPointerUp={handleTouchEnd} onPointerLeave={handleTouchEnd}>▼</button>
+					</div>
 				)}
+				<div className="infos">
+					<button
+						className={`idCopy ${matchId ? 'clickable' : 'disabled'}`}
+						type="button"
+						onClick={handleCopyMatchId}
+						disabled={!matchId}
+						title={matchId ? (didCopyId ? 'Copied!' : 'Click to copy') : 'No match id'}
+					>
+						ID: {matchId || '------'}{didCopyId ? ' (COPIED)' : ''}
+					</button>
+					<span>{texts.state} {pongState?.status || texts.waiting}</span>
+				</div>
 
-				{renderCanvas(pongState)}
+				{isEnded && (
+					<div className="controlsRow">
+						<div className="buttonGroup">
+							<button className="button secondary" onClick={handleExit} disabled={!isConnected}>EXIT</button>
+							<button className="button" onClick={handleRestart} disabled={!isConnected || didRequestRestart}>
+								{didRequestRestart ? 'WAITING RESTART...' : 'RESTART'}
+							</button>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

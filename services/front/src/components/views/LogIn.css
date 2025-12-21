@@ -1,0 +1,191 @@
+
+
+/* --- LAYOUT GLOBAL --- */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh; /* Utilise dvh pour gérer la barre d'adresse mobile */
+    z-index: 100;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* GESTION DU FOND D'ÉCRAN */
+    background-image: url('../../../public/assets/backGroundLogin.png');
+    background-position: center;
+    background-size: cover; /* Important : l'image couvre tout l'écran */
+    background-repeat: no-repeat;
+    
+    /* Ajout d'une couche sombre par-dessus l'image pour la lisibilité */
+    background-color: rgba(0, 0, 0, 0.6); 
+    background-blend-mode: overlay; 
+    
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    pointer-events: auto;
+    
+    /* Animation d'entrée douce */
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* --- BOITE DE LOGIN --- */
+.login-box {
+    background-color: #e6dacd; 
+    /* Padding fluide : minimum 20px, ideal 3vh, max 40px */
+    padding: clamp(20px, 3vh, 40px);
+    
+    border: 1px solid #1b0a00;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    text-align: center;
+    
+    /* Largeur responsive : 90% sur mobile, mais jamais plus de 400px */
+    width: 90%;
+    max-width: 400px;
+    
+    border-radius: 4px; /* Léger arrondi */
+}
+
+/* TITRE */
+.login-box h3 {
+    margin-top: 0;
+    margin-bottom: 2.5vh;
+    color: #1b0a00;
+    /* Taille fluide du titre */
+    font-size: clamp(20px, 2.5vh, 28px);
+    letter-spacing: 1px;
+}
+
+/* INPUT */
+.login-box input {
+    width: 100%;
+    padding: 12px 15px; /* Padding confortable pour le tactile */
+    margin-bottom: 2.5vh;
+    border: 1px solid #ccc;
+    background: white;
+    font-size: 16px; /* 16px minimum évite le zoom auto sur iPhone */
+    color: #333;
+    box-sizing: border-box;
+    border-radius: 4px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.login-box input:focus {
+    outline: none;
+    border-color: #f37022;
+}
+
+/* ACTIONS / BOUTONS */
+.login-actions {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.login-actions button {
+    width: 100%; /* Le bouton prend toute la largeur */
+    padding: 12px;
+    cursor: pointer;
+    border: 1px solid #1b0a00;
+    background: transparent;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    font-size: clamp(14px, 1.8vh, 18px);
+    letter-spacing: 1px;
+}
+
+.login-actions button.confirm-btn {
+    background: #000000de;
+    color: #fff;
+}
+
+.login-actions button.confirm-btn:hover {
+    background: #f37022;
+    border-color: #f37022;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.login-actions button.confirm-btn:active {
+    transform: translateY(0);
+}
+
+.login-actions button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #555;
+}
+
+/* --- MOBILE SPECIFICS (< 480px) --- */
+@media (max-width: 480px) {
+    .login-box {
+        width: 85%;
+        padding: 25px 20px;
+    }
+    
+    .login-box h3 {
+        margin-bottom: 20px;
+    }
+
+    .login-box input {
+        margin-bottom: 20px;
+    }
+}
+
+/* LogIn.css */
+
+/* Modifie le conteneur des actions pour permettre l'empilement vertical si besoin */
+.column-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Style du bouton principal (au cas où il n'ait pas width: 100%) */
+.confirm-btn {
+    width: 100%;
+}
+
+/* Le petit bouton "Nouveau compte" */
+.switch-auth-btn {
+    background: transparent;
+    border: none;
+    color: #e6dacd; /* Ou votre couleur de texte secondaire */
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    font-family: inherit;
+    padding: 5px;
+}
+
+.switch-auth-btn:hover {
+    opacity: 1;
+}
+
+/* Bouton retour pour la page NewAccount */
+.cancel-btn-small {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #e6dacd;
+    font-size: 0.8rem;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+.cancel-btn-small:hover {
+    background: rgba(255,255,255,0.1);
+}

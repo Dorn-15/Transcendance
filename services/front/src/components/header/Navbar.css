@@ -1,12 +1,9 @@
-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    z-index: 10;
-    pointer-events: none;
-}
+/* src/components/header/Navbar.css */
+
+/* --- IMPORTS FONTS --- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gravitas+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Notable&display=swap');
 
 @font-face {
     font-family: 'TT';
@@ -16,18 +13,30 @@ header {
     font-display: swap;
 }
 
+/* --- HEADER PRINCIPAL --- */
+header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto; 
+    z-index: 50; 
+    pointer-events: none; 
+}
+
 .title-overlay {
     position: relative;
     width: 100%;
-    height: 12.4vh;
+    min-height: 12.4vh; 
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    opacity: 1;
     background-color: #998168;
-    transition: opacity, background-color 1s ease-out;
+    padding: 10px 0;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .title-overlay.undisplay {
@@ -38,29 +47,36 @@ header {
 
 .main-title {
     color: #1b0a00;
-    font-family: 'TT';
-    font-size: 3vh;
+    /* Par défaut (Desktop) : Police TT */
+    font-family: 'Notable', sans-serif;
+    font-size: clamp(20px, 3vh, 40px);
     letter-spacing: -0.05vh;
+    margin-bottom: 0.5vh;
+    pointer-events: auto; 
 }
 
+/* --- MENU NAVIGATION DESKTOP --- */
 .main-menu {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 2.5vh;
-    margin-top: 1vh;
+    margin-top: 0.5vh;
 }
 
 .main-menu button {
     pointer-events: auto;
     cursor: pointer;
-    background: rgba(0, 0, 0, 0);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif; 
     border: none;
     color: #1b0a00;
-    padding: 0.5vh 0;
-    font-size: 1.2vh;
+    padding: 0.5vh 1vh;
+    font-size: clamp(10px, 1.2vh, 16px);
     text-transform: uppercase;
     position: relative;
+    font-weight: 600;
+    font-family: 'TT', sans-serif; 
 }
 
 .main-menu button::after {
@@ -74,36 +90,313 @@ header {
     transition: width 0.3s ease-in-out;
 }
 
-.main-menu button:hover::after {
-    width: 100%;
-}
+.main-menu button:hover::after { width: 100%; }
 
-.main-menu button.active::after {
-    background-color: #f37022;
-    width: 100%;
-}
-
-.blur-overlay {
+/* --- CLUSTER UTILISATEUR DESKTOP --- */
+.user-cluster {
     position: absolute;
+    right: 3vw;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 1.2vw;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    color: #1b0a00;
+    margin-right: 10px;
+}
+
+.user-label {
+    font-size: clamp(8px, 0.8vh, 12px);
+    opacity: 0.6;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.user-name {
+    font-weight: 700;
+    font-size: clamp(12px, 1.6vh, 18px);
+}
+
+.sign-out-btn {
+    background-color: #1b0a00;
+    color: #998168;
+    border: none;
+    padding: 0.8vh 1.4vh;
+    font-size: clamp(10px, 1.1vh, 14px);
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    border-radius: 2px;
+    box-shadow: 0 3px 0px rgba(0,0,0,0.3);
+}
+
+.sign-out-btn:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+/* --- BOUTON HAMBURGER --- */
+.mobile-menu-btn {
+    display: none; 
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    color: #1b0a00;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 60;
+}
+
+/* --- MENU LATÉRAL MOBILE --- */
+/* Note: On laisse les styles de base, mais on le cache par défaut sur Desktop via les Media Queries plus bas */
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px; 
+    height: 100dvh;
+    background-color: #1b0a00;
+    color: #e6dacd;
+    z-index: 100;
+    /* Flex est appliqué ici pour la structure interne, mais l'affichage global est géré en bas */
+    display: flex; 
+    flex-direction: column;
+    padding: 30px 25px;
+    box-sizing: border-box;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-out;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    pointer-events: auto;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.mobile-sidebar.open { transform: translateX(0); }
+
+.mobile-sidebar-overlay {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 90;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    pointer-events: auto;
+}
 
-    background-color: rgba(0, 0, 0, 0.4);
+.mobile-sidebar-overlay.open { opacity: 1; visibility: visible; }
 
+.mobile-close-btn {
+    align-self: flex-end;
+    background: transparent;
+    border: none;
+    color: #e6dacd;
+    font-size: 24px;
+    cursor: pointer;
+    margin-bottom: 30px;
+}
+
+.mobile-user-section {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 15px;
+}
+
+.mobile-user-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.mobile-user-name {
+    font-size: 20px;
+    font-weight: 700; 
+    color: #f37022; 
+}
+
+.mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mobile-nav button {
+    background: transparent;
+    border: none;
+    color: #e6dacd;
+    text-align: left;
+    font-family: 'Montserrat', sans-serif; 
+    font-weight: 600;
+    font-size: 18px; 
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 10px 0;
+    transition: color 0.2s, padding-left 0.2s;
+}
+
+.mobile-nav button:hover {
+    color: #f37022;
+    padding-left: 10px;
+}
+
+.mobile-logout-btn {
+    margin-top: auto; 
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e6dacd;
+    padding: 15px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: 'Montserrat', sans-serif; 
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+/* --- OVERLAY BLUR DES MODALES --- */
+.blur-overlay {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); 
     display: flex;
     justify-content: center;
     align-items: center;
-
-    z-index: 50;
-
+    z-index: 150; 
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    animation: fadeInOverlay 0.3s ease-out;
+    pointer-events: auto;
 }
 
-@keyframes fadeInOverlay {
-    from { opacity: 0; backdrop-filter: blur(0px); }
-    to { opacity: 1; backdrop-filter: blur(10px); }
+/* --- MODAL CONTAINER --- */
+.modal-container {
+    width: min(500px, 90vw); 
+    max-height: 85dvh;       
+    background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(10, 10, 10, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    color: #eeeeee;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;    
+    padding: 2rem; 
+    animation: fadeIn 0.3s ease-out;
+    overflow-y: auto; 
+}
+
+.modal-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.2rem, 2.5vh, 2rem); 
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #ffaa00;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+}
+
+.btn-back {
+    margin-top: 20px; 
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: white;
+}
+
+/* ========================================= */
+/* --- MEDIA QUERIES (RESPONSIVE RULES) --- */
+/* ========================================= */
+
+/* 1. RÈGLES POUR ORDINATEUR / GRAND ÉCRAN (Plus large que 768px) */
+/* C'est ici qu'on corrige le bug : on force le masquage des éléments mobiles */
+@media (min-width: 769px) {
+    .mobile-sidebar, 
+    .mobile-sidebar-overlay,
+    .mobile-menu-btn {
+        display: none !important; /* IMPORTANT : Cache le texte orange sur PC */
+    }
+
+    .desktop-only {
+        display: flex !important; /* Force l'affichage du menu PC */
+    }
+}
+
+/* 2. RÈGLES POUR MOBILE / TABLETTE (768px ou moins) */
+@media (max-width: 768px) {
+    /* Cache les éléments PC */
+    .desktop-only { 
+        display: none !important; 
+    }
+    
+    /* Affiche le bouton menu burger */
+    .mobile-menu-btn { 
+        display: block; 
+    }
+
+    /* Autorise l'affichage de la sidebar pour qu'elle puisse s'ouvrir/fermer */
+    .mobile-sidebar {
+        display: flex;
+    }
+
+    .title-overlay { 
+        min-height: auto; 
+        padding: 15px 0; 
+    }
+
+    /* Changement de police pour le titre sur mobile */
+    .main-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800; 
+        letter-spacing: 1px;
+    }
+
+    .modal-container {
+        width: 70%;
+        max-width: 400px;
+        padding: 1.5rem;
+        max-height: 90dvh;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

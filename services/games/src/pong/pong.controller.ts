@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PongService } from './pong.service';
 import type {
+	PongDirection,
 	PongState,
 	MatchJoin,
 	DisconnectResult,
@@ -14,20 +15,11 @@ export class PongController {
 	createMatch(
 		@Body() body: { player: string },
 	): MatchJoin {
-		const	match = this.pongService.createMatch(body?.player ?? 'player');
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
 
-		return {
-			matchId: match.id,
-			state: match.state,
-			players: match.players,
-		};
-	}
-
-	@Post('matches/join')
-	joinAny(
-		@Body() body: { player: string; matchId?: string },
-	): MatchJoin {
-		const	match = this.pongService.joinMatch(body?.matchId, body?.player ?? 'player');
+		const	match = this.pongService.createMatch(player);
 
 		return {
 			matchId: match.id,
@@ -41,7 +33,11 @@ export class PongController {
 		@Param('matchId') matchId: string,
 		@Body() body: { player: string },
 	): MatchJoin {
-		const	match = this.pongService.joinMatch(matchId, body?.player ?? 'player');
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		const	match = this.pongService.joinMatch(matchId, player);
 
 		return {
 			matchId: match.id,
@@ -53,12 +49,20 @@ export class PongController {
 	@Post('matches/:matchId/input')
 	input(
 		@Param('matchId') matchId: string,
-		@Body() body: { player: string; direction: 'up' | 'down' | 'none' },
+		@Body() body: { player: string; direction: PongDirection },
 	): PongState {
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		const	direction = body?.direction ?? 'none';
+		if (direction !== 'up' && direction !== 'down' && direction !== 'none')
+			throw new BadRequestException('invalid direction');
+
 		return this.pongService.applyInput(
 			matchId,
-			body?.player ?? 'player',
-			body?.direction ?? 'none',
+			player,
+			direction,
 		);
 	}
 
@@ -67,7 +71,30 @@ export class PongController {
 		@Param('matchId') matchId: string,
 		@Body() body: { player: string },
 	): DisconnectResult {
-		return this.pongService.disconnectPlayer(matchId, body?.player ?? 'player');
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		return this.pongService.disconnectPlayer(matchId, player);
+	}
+
+	@Post('matches/:matchId/restart')
+	restart(
+		@Param('matchId') matchId: string,
+		@Body() body: { player: string },
+	): PongState {
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		return this.pongService.restartMatch(matchId, player);
+	}
+
+	@Post('matches/:matchId/close')
+	close(
+		@Param('matchId') matchId: string,
+	): { matchId: string; removed: boolean } {
+		return this.pongService.closeMatch(matchId);
 	}
 
 	@Get('matches/:matchId/state')

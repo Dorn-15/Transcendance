@@ -79,7 +79,6 @@ services:
     expose:
       - "${FRONTEND_PORT}"
     environment:
-      - NODE_ENV=${NODE_ENV}
       - PORT=${FRONTEND_PORT}
       - DOMAIN=${DOMAIN}
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
@@ -266,6 +265,8 @@ services:
       - GF_INSTALL_PLUGINS=
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
     # ports:
     #   - "3001:${GRAFANA_PORT}"
     networks:

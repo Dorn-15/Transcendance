@@ -16,8 +16,7 @@ import type {
 	PongState,
 	MatchJoin,
 } from '@transcendance/pong';
-import { PongExchangeService } from './pong';
-import { MetricsService } from './metrics/metrics.service';
+import { PongExchangeService } from './pong'; // Assure-toi que le nom du fichier d'import est bon
 
 const	COOKIE_NAME = 'pong_ws_token';
 const	activeTokens = new Map<string, string>();
@@ -67,19 +66,14 @@ function	readSocketToken(client: Socket): string | null {
 
 @WebSocketGateway({
 	cors: {
-		origin: '*',
+		origin: (origin, callback): void => {
+			callback(null, origin ?? true);
+		},
 		credentials: true,
 	},
 	transports: ['websocket'],
 	allowRequest: (req, callback): void => {
 		const	token = ensureRequestToken(req);
-		const	existing = activeTokens.get(token);
-
-		if (existing) {
-			callback('TOO_MANY_CONNECTIONS', false);
-			return;
-		}
-
 		activeTokens.set(token, 'pending');
 		setTimeout(() => {
 			if (activeTokens.get(token) === 'pending')
@@ -98,7 +92,6 @@ export class GatewayService
 
 	constructor(
 		private readonly	pongExchange: PongExchangeService,
-		private readonly	metricsService: MetricsService,
 	) {}
 
 	afterInit(): void {
@@ -113,11 +106,15 @@ export class GatewayService
 	handleConnection(client: Socket): void {
 		this.logger.log(`Client ${client.id} connecté`);
 		const	token = readSocketToken(client);
-		if (token)
+		if (token) {
+			const	previousClientId = activeTokens.get(token);
+			if (previousClientId && previousClientId !== client.id) {
+				const	previousClient = this.server.sockets.sockets.get(previousClientId);
+				if (previousClient)
+					previousClient.disconnect(true);
+			}
 			activeTokens.set(token, client.id);
-		
-		// Track WebSocket connection metrics
-		this.metricsService.incrementWebSocketConnections();
+		}
 	}
 
 	handleDisconnect(client: Socket): void {
@@ -125,9 +122,8 @@ export class GatewayService
 		const	token = readSocketToken(client);
 		if (token && activeTokens.get(token) === client.id)
 			activeTokens.delete(token);
+		console.log('handleDisconnect', client.id);
 		this.pongExchange.cleanupClient(client);
-		
-		this.metricsService.decrementWebSocketConnections();
 	}
 
 	@SubscribeMessage('pong:create')
@@ -136,19 +132,7 @@ export class GatewayService
 		@MessageBody()
 		payload: { player: string },
 	): Promise<MatchJoin | { error: string }> {
-		const startTime = Date.now();
-		this.metricsService.incrementWebSocketMessages('pong:create');
-		
-		try {
-			const result = await this.pongExchange.handleCreateMatch(client, payload);
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:create', duration);
-			return result;
-		} catch (error) {
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:create', duration);
-			throw error;
-		}
+		return this.pongExchange.handleCreateMatch(client, payload);
 	}
 
 	@SubscribeMessage('pong:join')
@@ -157,19 +141,23 @@ export class GatewayService
 		@MessageBody()
 		payload: { matchId?: string; player: string },
 	): Promise<MatchJoin | { error: string }> {
-		const startTime = Date.now();
-		this.metricsService.incrementWebSocketMessages('pong:join');
-		
-		try {
-			const result = await this.pongExchange.handleJoinMatch(client, payload);
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:join', duration);
-			return result;
-		} catch (error) {
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:join', duration);
-			throw error;
-		}
+		return this.pongExchange.handleJoinMatch(client, payload);
+	}
+
+	@SubscribeMessage('pong:leave')
+	async leaveMatch(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { matchId?: string },
+	): Promise<void> {
+		return this.pongExchange.handleLeaveMatch(client, payload);
+	}
+
+	@SubscribeMessage('pong:stop')
+	async stopMatch(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { matchId?: string },
+	): Promise<void> {
+		return this.pongExchange.handleStopMatch(client, payload);
 	}
 
 	@SubscribeMessage('pong:move')
@@ -178,19 +166,15 @@ export class GatewayService
 		@MessageBody()
 		payload: { matchId: string; player: string; direction: PongDirection },
 	): Promise<{ state?: PongState; error?: string }> {
-		const startTime = Date.now();
-		this.metricsService.incrementWebSocketMessages('pong:move');
-		
-		try {
-			const result = await this.pongExchange.handleMove(client, payload);
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:move', duration);
-			return result;
-		} catch (error) {
-			const duration = (Date.now() - startTime) / 1000;
-			this.metricsService.recordWebSocketMessageDuration('pong:move', duration);
-			throw error;
-		}
+		return this.pongExchange.handleMove(client, payload);
+	}
+
+	@SubscribeMessage('pong:restart')
+	async restart(
+		@ConnectedSocket() client: Socket,
+		@MessageBody()
+		payload: { matchId: string; player: string },
+	): Promise<{ state?: PongState; error?: string }> {
+		return this.pongExchange.handleRestartMatch(client, payload);
 	}
 }
-

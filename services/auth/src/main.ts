@@ -1,14 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { MetricsService } from './metrics/metrics.service';
-import { MetricsInterceptor } from './metrics/metrics.interceptor';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  const metricsService = app.get(MetricsService);
-  app.useGlobalInterceptors(new MetricsInterceptor(metricsService));
-  
-  await app.listen(process.env.PORT ?? 4001);
+	const app = await NestFactory.create(AppModule);
+	app.use(cookieParser());
+	await app.listen(process.env.PORT ?? 4001);
 }
+
 bootstrap();

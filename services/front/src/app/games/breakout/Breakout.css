@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+.container {
+    width: 95vw;
+    max-width: 800px;
+    margin: 0 auto;
+
+    aspect-ratio: 4/5;
+    max-height: 65vh;
+
+    background-color: #111;
+    color: white;
+
+    font-family: 'Press Start 2P', cursive;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    box-sizing: border-box;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.wall {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 20px;
+}
+
+.row {
+    width: 90%;
+    height: 15px;
+    margin: 0 auto;
+    opacity: 0.8;
+}
+
+.red { background-color: #ff3333; box-shadow: 0 0 10px #ff3333; }
+.orange { background-color: #ffaa00; }
+.yellow { background-color: #ffff00; }
+.green { background-color: #33ff33; }
+
+.content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    z-index: 2;
+    padding: 20px;
+}
+
+.title {
+    font-size: clamp(20px, 4vw, 30px);
+    color: #ccc;
+    text-shadow: 4px 4px #000;
+    margin: 0;
+}
+
+.icon {
+    font-size: clamp(30px, 5vw, 50px);
+    animation: bounce 1s infinite alternate;
+}
+
+.message {
+    font-size: clamp(10px, 2.5vw, 14px);
+    line-height: 1.8;
+    color: #ffaa00;
+    border: 4px dashed #ffaa00;
+    padding: 15px;
+    background: rgba(0,0,0,0.5);
+}
+
+.loader {
+    width: 50px;
+    height: 8px;
+    background: #333;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 30%;
+    height: 100%;
+    background: #fff;
+    animation: slide 1s infinite linear;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+}
+
+@keyframes slide {
+    from { left: -30%; }
+    to { left: 100%; }
+}
+
+@media (min-width: 768px) {
+    .container {
+        aspect-ratio: 4/3;
+        max-height: 600px;
+    }
+}

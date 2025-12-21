@@ -1,25 +1,47 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { GameInfo } from '@/utils/languageData';
 import './GameOverlay.css';
-import {Pong} from '@/app/games/pong/pong';
-import { GatewayConfig } from '@/app/play/[gameId]/page';
-type	GameOverlayProps = {
+
+const Pong = dynamic(
+	() => import('@/app/games/pong/pong').then((mod) => mod.Pong),
+	{ ssr: false }
+);
+const BreakoutPlaceholder = dynamic(
+	() => import('@/app/games/breakout/Breakout'),
+	{ ssr: false }
+);
+const SpaceInvadersPlaceholder = dynamic(
+	() => import('@/app/games/space-invaders/SpaceInvaders'),
+	{ ssr: false }
+);
+
+type GameOverlayProps = {
 	gameId: string;
 	closeLabel: string;
-	gatewayConfig: GatewayConfig;
 	onClose: () => void;
+	userName: string;
+	texts: GameInfo;
 };
 
-export default function GameOverlay({ gameId, closeLabel, onClose, gatewayConfig }: GameOverlayProps) {
-	const	frameRef = useRef<HTMLIFrameElement>(null);
+export default function GameOverlay({
+	gameId,
+	closeLabel,
+	onClose,
+	userName,
+	texts
+}: GameOverlayProps) {
+	const frameRef = useRef<HTMLIFrameElement>(null);
 
+	// handle the navigation (back / escape)
 	useEffect(() => {
-		const	handlePopState = () => {
+		const handlePopState = () => {
 			onClose();
 		};
 
-		const	handleKeyDown = (event: KeyboardEvent) => {
+		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape')
 				onClose();
 		};
@@ -34,7 +56,7 @@ export default function GameOverlay({ gameId, closeLabel, onClose, gatewayConfig
 	}, [onClose]);
 
 	useEffect(() => {
-		const	timer = requestAnimationFrame(() => {
+		const timer = requestAnimationFrame(() => {
 			frameRef.current?.contentWindow?.focus();
 		});
 
@@ -43,15 +65,38 @@ export default function GameOverlay({ gameId, closeLabel, onClose, gatewayConfig
 		};
 	}, []);
 
+	// Game selection logic
+	const renderGameContent = () => {
+		const id = gameId ? gameId.toLowerCase().trim() : 'pong';
+
+		switch (id) {
+			case 'pong':
+				return <Pong userName={userName} texts={texts} />;
+			case 'breakout':
+				return <BreakoutPlaceholder texts={texts} />;
+			case 'space-invaders':
+				return <SpaceInvadersPlaceholder texts={texts} />;
+
+			default:
+				return (
+					<div style={{ color: 'white', textAlign: 'center', fontFamily: 'monospace' }}>
+						<h2>GAME NOT FOUND</h2>
+						<p>ID: {gameId}</p>
+					</div>
+				);
+		}
+	};
+
 	return (
 		<main className="game-overlay-page">
 			<div className="game-overlay">
-				<Pong gatewayConfig={gatewayConfig} />
-				<button className="game-overlay__close" onClick={onClose}>
-					{closeLabel}
-				</button>
+				<div className="game-overlay__frame">
+					{renderGameContent()}
+					<button className="game-overlay_close" onClick={onClose}>
+						{closeLabel}
+					</button>
+				</div>
 			</div>
 		</main>
 	);
 }
-

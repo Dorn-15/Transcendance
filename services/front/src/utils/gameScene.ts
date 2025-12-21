@@ -1,6 +1,8 @@
+// gameScene.ts
 import * as BABYLON from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import { LangKey } from './languageData';
+import { getAssetUrl } from '@/utils/assetLoader';
 
 declare global {
     interface Window {
@@ -14,14 +16,23 @@ class GameScene {
     camera!: BABYLON.ArcRotateCamera;
 
     currentLangId: LangKey;
-
     initialCameraState: any = null;
     isCameraAnimating: boolean = false;
+    
+    // Nouveau : Callback pour prévenir React que c'est fini
+    onSceneLoaded?: () => void;
 
-    constructor(canvasElement: HTMLCanvasElement, langId: LangKey = 1) {
+    constructor(
+        canvasElement: HTMLCanvasElement, 
+        langId: LangKey = 1, 
+        onSceneLoaded?: () => void // Ajouter ce paramètre
+    ) {
         this.currentLangId = langId;
+        this.onSceneLoaded = onSceneLoaded; // Stocker le callback
 
         this.engine = new BABYLON.Engine(canvasElement, true);
+        
+        // On crée la scène (qui lance le chargement)
         this.scene = this.createScene();
 
         this.engine.runRenderLoop(() => {
@@ -96,7 +107,7 @@ class GameScene {
         shadowGenerator.useBlurExponentialShadowMap = true;
         shadowGenerator.blurKernel = 32;
 
-        const setupShadows = (meshRoot: any, casts: boolean, receives: boolean) => {
+        const setupShadows = (meshRoot: BABYLON.AbstractMesh, casts: boolean, receives: boolean) => {
             meshRoot.getChildMeshes().forEach((m: any) => {
                 if (casts) {
                     shadowGenerator.addShadowCaster(m, true);
@@ -108,11 +119,26 @@ class GameScene {
             });
         };
 
-        // --- LOAD MESHES ---
-        BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "Breakout.glb", scene)
-            .then((result: any) => {
-                const root = result.meshes[0];
-                root.position = new BABYLON.Vector3(-1.5, 0, 2.3);
+        // --- FONCTION DE CHARGEMENT MODIFIÉE (Retourne une Promise) ---
+        const loadGameMesh = (fileName: string, position: BABYLON.Vector3, onLoaded: (root: BABYLON.AbstractMesh) => void) => {
+            const { root, file } = getAssetUrl(fileName, "/assets/glbFile/");
+            
+            // On retourne la promesse générée par ImportMeshAsync
+            return BABYLON.SceneLoader.ImportMeshAsync("", root, file, scene, undefined, ".glb")
+                .then((result: any) => {
+                    const meshRoot = result.meshes[0];
+                    meshRoot.position = position;
+                    onLoaded(meshRoot);
+                })
+                .catch((err) => console.error(`Error loading ${fileName}:`, err));
+        };
+
+        // --- LISTE DES PROMESSES DE CHARGEMENT ---
+        const loadingPromises: Promise<void | void[]>[] = [];
+
+        // 1. Breakout
+        loadingPromises.push(
+            loadGameMesh("Breakout.glb", new BABYLON.Vector3(-1.5, 0, 2.3), (root) => {
                 root.rotate(BABYLON.Axis.Y, Math.PI / 4, BABYLON.Space.LOCAL);
                 root.metadata = {
                     arcade: true,
@@ -120,24 +146,24 @@ class GameScene {
                     zoomSettings: { height: 1.28, beta: Math.PI / 2.7, radius: 1.3 }
                 };
                 setupShadows(root, true, false);
-            });
+            })
+        );
 
-        BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "Pong.glb", scene)
-            .then((result: any) => {
-                const root = result.meshes[0];
-                root.position = new BABYLON.Vector3(0, 0, 2);
+        // 2. Pong
+        loadingPromises.push(
+            loadGameMesh("Pong.glb", new BABYLON.Vector3(0, 0, 2), (root) => {
                 root.metadata = {
                     arcade: true,
                     gameId: "pong",
-                    zoomSettings: { height: 1.5, beta: Math.PI / 2.5, radius: 0.8 }
+                    zoomSettings: { height: 1.5, beta: Math.PI / 2.6, radius: 0.52 }
                 };
                 setupShadows(root, true, false);
-            });
+            })
+        );
 
-        BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "SpaceInvaders.glb", scene)
-            .then((result: any) => {
-                const root = result.meshes[0];
-                root.position = new BABYLON.Vector3(1.5, 0, 2.3);
+        // 3. Space Invaders
+        loadingPromises.push(
+            loadGameMesh("SpaceInvaders.glb", new BABYLON.Vector3(1.5, 0, 2.3), (root) => {
                 root.rotate(BABYLON.Axis.Y, -Math.PI / 4, BABYLON.Space.LOCAL);
                 root.metadata = {
                     arcade: true,
@@ -145,27 +171,39 @@ class GameScene {
                     zoomSettings: { height: 1.48, beta: Math.PI / 2.3, radius: 1.1 }
                 };
                 setupShadows(root, true, false);
-            });
+            })
+        );
 
-        BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "room.glb", scene)
-            .then((result: any) => {
-                const root = result.meshes[0];
-                root.position = new BABYLON.Vector3(0, 0, 6.2);
+        // 4. Room
+        loadingPromises.push(
+            loadGameMesh("room.glb", new BABYLON.Vector3(0, 0, 6.2), (root) => {
                 root.metadata = { arcade: false };
                 setupShadows(root, false, true);
-            });
+            })
+        );
 
-        BABYLON.SceneLoader.ImportMeshAsync("", "/assets/glbFile/", "table.glb", scene)
-            .then((result: any) => {
-                const root = result.meshes[0];
-                root.position = new BABYLON.Vector3(0, 0, 6.2);
+        // 5. Table
+        loadingPromises.push(
+            loadGameMesh("table.glb", new BABYLON.Vector3(0, 0, 6.2), (root) => {
                 root.metadata = { arcade: false };
                 setupShadows(root, false, true);
-            });
+            })
+        );
 
-        // --- POINTER EVENTS ---
+        // --- QUAND TOUT EST CHARGÉ ---
+        Promise.all(loadingPromises).then(() => {
+            // On attend une frame pour être sûr que le rendu est prêt
+            this.scene.executeWhenReady(() => {
+                if (this.onSceneLoaded) {
+                    this.onSceneLoaded();
+                }
+            });
+        });
+
+        // --- POINTER EVENTS (Reste inchangé) ---
         scene.onPointerObservable.add((pointerInfo: any) => {
-            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+            // ... (ton code existant pour le click) ...
+             if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                 if (this.isCameraAnimating) return;
 
                 if (pointerInfo.event.button === 2) {
@@ -185,34 +223,38 @@ class GameScene {
                         currentMesh = currentMesh.parent;
                     }
 
-					if (parentRoot) {
-						this.zoomToMesh(parentRoot);
-						const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
-						if (titleDiv) {
-							titleDiv.classList.add("undisplay");
-						}
-					}
+                    if (parentRoot) {
+                        this.zoomToMesh(parentRoot);
+                        const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
+                        if (titleDiv) {
+                            titleDiv.classList.add("undisplay");
+                        }
+                    }
                 }
             }
         });
 
+        // Gestion de l'initial game ID
         const initialGameId = typeof window !== 'undefined' ? window.INITIAL_GAME_ID : null;
         if (initialGameId && initialGameId !== "") {
-            setTimeout(() => {
-                this.showGameInterface(initialGameId);
-            }, 100);
+            // On attend que tout soit chargé pour lancer l'animation si besoin
+            Promise.all(loadingPromises).then(() => {
+                 this.showGameInterface(initialGameId);
+            });
         }
 
         return scene;
     }
 
+    // ... (Le reste des méthodes resetCamera, zoomToMesh, showGameInterface restent inchangées) ...
     resetCamera() {
+        // ... code existant
         if (!this.initialCameraState) return;
 
         this.isCameraAnimating = true;
         const titleDiv = document.querySelector(".title-overlay") as HTMLElement;
         if (titleDiv) {
-			titleDiv.classList.remove("undisplay");
+            titleDiv.classList.remove("undisplay");
         }
 
         const frameRate = 60;
@@ -275,11 +317,12 @@ class GameScene {
             ease,
             () => {
                 this.isCameraAnimating = false;
-        });
+            });
     }
 
     zoomToMesh(targetMesh: any) {
-        this.isCameraAnimating = true;
+        // ... code existant
+         this.isCameraAnimating = true;
         const frameRate = 60;
         const duration = 1;
         const ease = new BABYLON.CubicEase();
@@ -296,7 +339,7 @@ class GameScene {
         targetEnd.y += settings.height;
 
         const localForward = new BABYLON.Vector3(0, 0, 1);
-        let worldForward = new BABYLON.Vector3(0,0,1);
+        let worldForward = new BABYLON.Vector3(0, 0, 1);
 
         if (targetMesh.absoluteRotationQuaternion) {
             worldForward = localForward.applyRotationQuaternion(targetMesh.absoluteRotationQuaternion);
@@ -370,19 +413,25 @@ class GameScene {
         );
     }
 
-	showGameInterface(gameId: string) {
-		const	targetLang = this.currentLangId;
-		const	targetUrl = `/play/${gameId}?lang=${targetLang}`;
+    showGameInterface(gameId: string) {
+        const targetLang = this.currentLangId;
+        
+        const targetUrl = `/play/${gameId}?lang=${targetLang}`;
 
-		if (typeof window !== 'undefined') {
-			window.location.assign(targetUrl);
-		}
-		this.isCameraAnimating = false;
-	}
+        if (typeof window !== 'undefined') {
+            window.location.assign(targetUrl);
+        }
+        this.isCameraAnimating = false;
+    }
 }
 
 
-export function initGame(container: HTMLDivElement | HTMLCanvasElement, langId: LangKey = 1) {
+// --- MODIFICATION DE LA FONCTION HELPER ---
+export function initGame(
+    container: HTMLDivElement | HTMLCanvasElement, 
+    langId: LangKey = 1,
+    onLoaded?: () => void // Nouveau paramètre
+) {
     let canvas: HTMLCanvasElement;
 
     if (container instanceof HTMLDivElement) {
@@ -395,7 +444,8 @@ export function initGame(container: HTMLDivElement | HTMLCanvasElement, langId: 
         canvas = container as HTMLCanvasElement;
     }
 
-    const gameInstance = new GameScene(canvas, langId);
+    // On passe le callback au constructeur
+    const gameInstance = new GameScene(canvas, langId, onLoaded);
 
     return {
         destroy: () => {
