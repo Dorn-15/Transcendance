@@ -55,7 +55,6 @@
 .login-box h3 {
     margin-top: 0;
     margin-bottom: 2.5vh;
-    font-family: 'TT', sans-serif;
     color: #1b0a00;
     /* Taille fluide du titre */
     font-size: clamp(20px, 2.5vh, 28px);
@@ -95,7 +94,6 @@
     cursor: pointer;
     border: 1px solid #1b0a00;
     background: transparent;
-    font-family: 'TT', sans-serif;
     text-transform: uppercase;
     transition: all 0.2s ease;
     font-size: clamp(14px, 1.8vh, 18px);

@@ -150,6 +150,7 @@ header {
 }
 
 /* --- MENU LATÉRAL MOBILE --- */
+/* Note: On laisse les styles de base, mais on le cache par défaut sur Desktop via les Media Queries plus bas */
 .mobile-sidebar {
     position: fixed;
     top: 0;
@@ -159,6 +160,7 @@ header {
     background-color: #1b0a00;
     color: #e6dacd;
     z-index: 100;
+    /* Flex est appliqué ici pour la structure interne, mais l'affichage global est géré en bas */
     display: flex;
     flex-direction: column;
     padding: 30px 25px;
@@ -329,16 +331,50 @@ header {
     border-color: white;
 }
 
-/* --- MEDIA QUERIES MOBILE --- */
-@media (max-width: 768px) {
-    .desktop-only { display: none !important; }
-    .mobile-menu-btn { display: block; }
-    .title-overlay { min-height: auto; padding: 15px 0; }
+/* ========================================= */
+/* --- MEDIA QUERIES (RESPONSIVE RULES) --- */
+/* ========================================= */
 
-    /* ICI : CHANGEMENT DE POLICE POUR LE TITRE SUR MOBILE */
+/* 1. RÈGLES POUR ORDINATEUR / GRAND ÉCRAN (Plus large que 768px) */
+/* C'est ici qu'on corrige le bug : on force le masquage des éléments mobiles */
+@media (min-width: 769px) {
+    .mobile-sidebar,
+    .mobile-sidebar-overlay,
+    .mobile-menu-btn {
+        display: none !important; /* IMPORTANT : Cache le texte orange sur PC */
+    }
+
+    .desktop-only {
+        display: flex !important; /* Force l'affichage du menu PC */
+    }
+}
+
+/* 2. RÈGLES POUR MOBILE / TABLETTE (768px ou moins) */
+@media (max-width: 768px) {
+    /* Cache les éléments PC */
+    .desktop-only {
+        display: none !important;
+    }
+
+    /* Affiche le bouton menu burger */
+    .mobile-menu-btn {
+        display: block;
+    }
+
+    /* Autorise l'affichage de la sidebar pour qu'elle puisse s'ouvrir/fermer */
+    .mobile-sidebar {
+        display: flex;
+    }
+
+    .title-overlay {
+        min-height: auto;
+        padding: 15px 0;
+    }
+
+    /* Changement de police pour le titre sur mobile */
     .main-title {
         font-family: 'Montserrat', sans-serif;
-        font-weight: 800; /* Plus gras pour avoir de l'impact sur mobile */
+        font-weight: 800;
         letter-spacing: 1px;
     }
 

@@ -12,14 +12,13 @@ export default function LogIn() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
-	// 1. Calcul de la langue sécurisé
-	const currentLang = useMemo<LangKey>(() => {
-		const langParam = searchParams.get('lang');
-		const paramValue = Number(langParam);
-		return (langParam && ALL_LANGUAGES[paramValue])
-			? (paramValue as LangKey)
-			: 1;
-	}, [searchParams]);
+    const currentLang = useMemo<LangKey>(() => {
+        const langParam = searchParams.get('lang');
+        const paramValue = Number(langParam);
+        return (langParam && ALL_LANGUAGES[paramValue])
+            ? (paramValue as LangKey)
+            : 1;
+    }, [searchParams]);
 
 	const texts = ALL_LANGUAGES[currentLang].defaultInfo;
 
@@ -27,6 +26,7 @@ export default function LogIn() {
 	const [loginInput, setLoginInput] = useState('');
 	const [emailInput, setEmailInput] = useState('');
 	const [passwordInput, setPasswordInput] = useState('');
+	const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
 
@@ -61,6 +61,10 @@ export default function LogIn() {
 
 		try {
 			const endpoint = mode === 'login' ? '/api/login' : '/api/register';
+			if (mode === 'register' && passwordInput !== confirmPasswordInput) {
+				setErrorMessage(texts.confirmPasswordError);
+				return;
+			}
 			const payload =
 				mode === 'login'
 					? { identifier: loginInput.trim(), password: passwordInput.trim() }
@@ -85,7 +89,15 @@ export default function LogIn() {
 				}
 			} else {
 				const data = await res.json().catch(() => ({}));
-				setErrorMessage(data?.message || 'Operation failed');
+				if (data?.message === 'Email already exists')
+					setErrorMessage(texts.emailAlreadyExists);
+				else if (data?.message === 'User already exists')
+					setErrorMessage(texts.userAlreadyExists);
+				else if (data?.message === 'Missing fields')
+					setErrorMessage(texts.missingFields);
+				else
+					setErrorMessage(data?.message || texts.operationFailed);
+				return;
 			}
 		} catch (error) {
 			console.error(error);
@@ -98,13 +110,13 @@ export default function LogIn() {
 	return (
 		<div className="login-overlay">
 			<div className="login-box">
-				<h3>{mode === 'login' ? texts.welcome : 'Create account'}</h3>
+				<h3>{mode === 'login' ? texts.welcome : texts.newAccount}</h3>
 				{errorMessage && <p className="login-error">{errorMessage}</p>}
 
 				<form onSubmit={handleSubmit}>
 					<input
 						type="text"
-						placeholder={mode === 'login' ? 'Login or email' : 'Login'}
+						placeholder={mode === 'login' ? texts.loginOrEmail : texts.username}
 						value={loginInput}
 						onChange={(e) => setLoginInput(e.target.value)}
 						disabled={isSubmitting}
@@ -114,7 +126,7 @@ export default function LogIn() {
 					{mode === 'register' && (
 						<input
 							type="email"
-							placeholder="Email"
+							placeholder={texts.email}
 							value={emailInput}
 							onChange={(e) => setEmailInput(e.target.value)}
 							disabled={isSubmitting}
@@ -123,15 +135,25 @@ export default function LogIn() {
 					)}
 					<input
 						type="password"
-						placeholder="Password"
+						placeholder={texts.passWord}
 						value={passwordInput}
 						onChange={(e) => setPasswordInput(e.target.value)}
 						disabled={isSubmitting}
 						maxLength={64}
 					/>
+					{mode === 'register' && (
+						<input
+						type="password"
+						placeholder={texts.confirmPassword}
+						value={confirmPasswordInput}
+						onChange={(e) => setConfirmPasswordInput(e.target.value)}
+						disabled={isSubmitting}
+						maxLength={64}
+						/>
+					)}
 					<div className="login-actions">
 						<button type="submit" className="confirm-btn" disabled={isSubmitting}>
-							{isSubmitting ? '...' : mode === 'login' ? texts.enter : 'Register'}
+							{isSubmitting ? '...' : mode === 'login' ? texts.enter : texts.create}
 						</button>
 						<button
 							type="button"
@@ -142,7 +164,7 @@ export default function LogIn() {
 								setErrorMessage('');
 							}}
 						>
-							{mode === 'login' ? 'Need an account?' : 'Back to login'}
+							{mode === 'login' ? texts.newAccount : texts.back}
 						</button>
 					</div>
 				</form>
