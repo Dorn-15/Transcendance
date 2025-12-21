@@ -44,6 +44,7 @@ export default function LegalView({ onClose, currentLang }: LegalViewProps) {
       
       <div className="legal-columns-container">
         
+        {/* Privacy Policy Column */}
         <div className="legal-column">
             <button 
                 className={`legal-accordion-btn ${showPrivacy ? 'open' : 'closed'}`}
@@ -64,54 +65,55 @@ export default function LegalView({ onClose, currentLang }: LegalViewProps) {
                     
                     <p>
                         <strong>{texts.dataCollected}</strong><br/>
-                        We may collect the following types of information:<br/>
-                        - <strong>[LIST DATA, e.g., Email, Username, Game Stats]</strong>.
+                        {texts.mayCollect}<br/>
+                        - <strong>{texts.listData}</strong>.
                     </p>
                     
                     <p>
-                        <strong>3. How We Use Your Data</strong><br/>
-                        Your data is used to provide and improve the Service, specifically for <strong>[PURPOSE, e.g., authentication, leaderboard tracking]</strong>.
+                        <strong>{texts.howWeUsed}</strong><br/>
+                        {texts.usedDataDesc}
                     </p>
                     
                     <p>
-                        <strong>4. Contact Us</strong><br/>
-                        If you have any questions about this Privacy Policy, please contact us at: <strong>[INSERT CONTACT EMAIL]</strong>.
+                        <strong>{texts.contactUs}</strong><br/>
+                        {texts.contactText} <strong>adoireau@student.42.fr</strong>
                     </p>
                 </div>
             )}
         </div>
 
+        {/* Terms of Service Column */}
         <div className="legal-column">
             <button 
                 className={`legal-accordion-btn ${showTerms ? 'open' : 'closed'}`}
                 onClick={handleToggleTerms}
             >
-                <span>TERM OF SERVICE</span>
+                <span>{texts.termsOfService}</span>
                 <span>{showTerms ? '▲' : '▼'}</span>
             </button>
 
             {showTerms && (
                 <div className="legal-text-content">
-                    <p><strong>Last Updated:</strong> [INSERT DATE]</p>
+                    <p><strong>{texts.lastUpdated}</strong> 21/12/2025</p>
 
                     <p>
-                        <strong>1. Acceptance of Terms</strong><br/>
-                        By accessing and using <strong>[APP NAME]</strong>, you accept and agree to be bound by the terms and provision of this agreement.
+                        <strong>{texts.acceptance}</strong><br/>
+                        {texts.acceptanceDesc}
                     </p>
 
                     <p>
-                        <strong>2. User Conduct</strong><br/>
-                        You agree not to engage in any of the following prohibited activities: <strong>[LIST ACTIVITIES, e.g., cheating, hacking, distributing spam]</strong>.
+                        <strong>{texts.userConduct}</strong><br/>
+                        {texts.conductDesc}
                     </p>
 
                     <p>
-                        <strong>3. Disclaimer</strong><br/>
-                        The Service is provided on an "AS IS" and "AS AVAILABLE" basis. We make no warranties regarding the reliability or accuracy of the Service.
+                        <strong>{texts.disclaimer}</strong><br/>
+                        {texts.disclaimerDesc}
                     </p>
 
                     <p>
-                        <strong>4. Governing Law</strong><br/>
-                        These Terms shall be governed in accordance with the laws of <strong>[INSERT COUNTRY/STATE]</strong>.
+                        <strong>{texts.governingLaw}</strong><br/>
+                        {texts.governingDesc}
                     </p>
                 </div>
             )}
