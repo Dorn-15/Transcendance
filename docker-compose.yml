@@ -10,46 +10,40 @@ services:
       - ${SOCIAL_SERVICE_NAME}
       - ${GAME_SERVICE_NAME}
       - ${REALTIME_GATEWAY_NAME}
-      # - ${ROOM_SERVICE_NAME}
-      #- ${MATCHMAKING_SERVICE_NAME}
     environment:
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
       - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
       - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
-      - ROOM_HOST=${ROOM_SERVICE_NAME}:${ROOM_PORT}
-      - MATCHMAKING_HOST=${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
       - FRONT_PATH=${FRONT_PATH}
       - AUTH_PATH=${AUTH_PATH}
       - SOCIAL_PATH=${SOCIAL_PATH}
       - GAMES_PATH=${GAMES_PATH}
-      - ROOM_PATH=${ROOM_PATH}
-      - MATCHMAKING_PATH=${MATCHMAKING_PATH}
       - WS_PATH=${WS_PATH}
     # for prod -----------------------------------------------
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
-      - "traefik.http.routers.nginx-secure.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
-      - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
-      - "traefik.http.routers.nginx-secure.tls=true"
-      - "traefik.http.routers.nginx-web.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.nginx-web.entrypoints=web"
-      - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-    networks:
-      - traefik_proxy
-      - internal
-    # for dev ------------------------------------------------
-    # ports:
-    #   - "8080:80"
-    #   - "8443:443"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.docker.network=traefik_proxy"
+    #   - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    #   - "traefik.http.routers.nginx-secure.rule=Host(`${DOMAIN}`)"
+    #   - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+    #   - "traefik.http.routers.nginx-secure.tls.certresolver=myresolver"
+    #   - "traefik.http.routers.nginx-secure.tls=true"
+    #   - "traefik.http.routers.nginx-web.rule=Host(`${DOMAIN}`)"
+    #   - "traefik.http.routers.nginx-web.entrypoints=web"
+    #   - "traefik.http.routers.nginx-web.middlewares=redirect-to-https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
     # networks:
+    #   - traefik_proxy
     #   - internal
+    # for dev ------------------------------------------------
+    ports:
+      - "8080:80"
+      - "8443:443"
+    networks:
+      - internal
 
   frontend:
     build:
@@ -107,22 +101,6 @@ services:
     networks:
       - internal
 
-  # room_service:
-  #   build:
-  #     context: ./services/room
-  #     dockerfile: dockerfile
-  #   container_name: ${ROOM_SERVICE_NAME}
-  #   depends_on:
-  #     - ${POSTGRES_HOST}
-  #   expose:
-  #     - "${ROOM_SERVICE_PORT}"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - PORT=4003
-  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-  #   networks:
-  #     - internal
-
   # matchmaking_service:
   #   build:
   #     context: ./services/matchmaking
@@ -130,7 +108,6 @@ services:
   #   container_name: ${MATCHMAKING_SERVICE_NAME}
   #   depends_on:
   #     - ${REDIS_HOST}
-  #     - ${ROOM_SERVICE_NAME}
   #   expose:
   #     - "${MATCHMAKING_SERVICE_PORT}"
   #   environment:
@@ -166,8 +143,6 @@ services:
       - ${SOCIAL_SERVICE_NAME}
       - ${GAME_SERVICE_NAME}
       - ${REDIS_HOST}
-      # - ${ROOM_SERVICE_NAME}
-      # - ${MATCHMAKING_SERVICE_NAME}
     expose:
       - ${REALTIME_GATEWAY_PORT}
     environment:
@@ -177,8 +152,6 @@ services:
       - AUTH_HOST=http://${AUTH_SERVICE_NAME}:${AUTH_PORT}
       - SOCIAL_HOST=http://${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=http://${GAME_SERVICE_NAME}:${GAME_PORT}
-      - ROOM_HOST=http://${ROOM_SERVICE_NAME}:${ROOM_PORT}
-      - MATCHMAKING_HOST=http://${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
     networks:
       - internal
 

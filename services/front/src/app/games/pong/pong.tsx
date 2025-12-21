@@ -24,6 +24,25 @@ function extractMatchId(raw: string): string {
 	return trimmed;
 }
 
+function extractErrorMessage(raw: unknown): string {
+	if (!raw)
+		return 'Unknown error';
+	if (typeof raw === 'string') {
+		try {
+			const	parsed = JSON.parse(raw);
+			if (parsed?.message && typeof parsed.message === 'string')
+				return parsed.message;
+		} catch { }
+		return raw;
+	}
+	if (typeof raw === 'object' && 'message' in raw) {
+		const	message = (raw as { message?: unknown }).message;
+		if (typeof message === 'string')
+			return message;
+	}
+	return 'Unknown error';
+}
+
 export function Pong({ userName = 'GUEST', texts }: PongProps) {
 	const { socket, isConnected } = useSocket();
 	const [isMobile, setIsMobile] = useState(false);
@@ -121,7 +140,11 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 		setDidRequestRestart(false);
 
 		socket.emit('pong:create', { player: userName }, (res: any) => {
-			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
+			if (res?.error) {
+				const	message = extractErrorMessage(res.error);
+				setLastError(message);
+				isGameIntentional.current = false;
+			}
 			if (res?.matchId) { setMatchId(res.matchId); setJoinInput(res.matchId); }
 			if (res?.state) setPongState(res.state);
 		});
@@ -136,13 +159,13 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 
 		const targetId = joinInput ? extractMatchId(joinInput) : matchId;
 		const normalizedMatchId = targetId && targetId.trim() !== '' ? targetId : undefined;
-		if (!normalizedMatchId) {
-			setLastError('Missing match id');
-			return;
-		}
 
 		socket.emit('pong:join', { matchId: normalizedMatchId, player: userName }, (res: any) => {
-			if (res?.error) { setLastError(res.error); isGameIntentional.current = false; }
+			if (res?.error) {
+				const	message = extractErrorMessage(res.error);
+				setLastError(message);
+				isGameIntentional.current = false;
+			}
 			if (res?.matchId) setMatchId(res.matchId);
 			if (res?.state) setPongState(res.state);
 		});
@@ -164,7 +187,10 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 		if (!socket || !isConnected || !currentMatchId) return;
 		setDidRequestRestart(true);
 		socket.emit('pong:restart', { matchId: currentMatchId, player: userName }, (res: any) => {
-			if (res?.error) setLastError(res.error);
+			if (res?.error) {
+				const	message = extractErrorMessage(res.error);
+				setLastError(message);
+			}
 		});
 	}, [socket, isConnected, userName]);
 
