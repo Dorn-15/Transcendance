@@ -148,3 +148,53 @@
         margin-bottom: 20px;
     }
 }
+
+/* LogIn.css */
+
+/* Modifie le conteneur des actions pour permettre l'empilement vertical si besoin */
+.column-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Style du bouton principal (au cas où il n'ait pas width: 100%) */
+.confirm-btn {
+    width: 100%;
+}
+
+/* Le petit bouton "Nouveau compte" */
+.switch-auth-btn {
+    background: transparent;
+    border: none;
+    color: #e6dacd; /* Ou votre couleur de texte secondaire */
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    font-family: inherit;
+    padding: 5px;
+}
+
+.switch-auth-btn:hover {
+    opacity: 1;
+}
+
+/* Bouton retour pour la page NewAccount */
+.cancel-btn-small {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #e6dacd;
+    font-size: 0.8rem;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+.cancel-btn-small:hover {
+    background: rgba(255,255,255,0.1);
+}

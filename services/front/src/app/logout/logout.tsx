@@ -1,13 +1,12 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation' 
 
-export async function LogOut() {
-    // 1. Await cookies (Next.js 15+)
+export async function LogOut(lang: number = 1) {
     const cookieStore = await cookies();
     
-    // 2. Delete the cookie
     cookieStore.delete('Authentication');
 
-    // 3. Do NOT redirect here. Just return.
+    redirect(`/?lang=${lang}`);
 }

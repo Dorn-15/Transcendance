@@ -35,7 +35,16 @@ export interface GameInfo {
     alienLate: string;
     play: string;
     running: string;
-}
+    passWord: string;
+    signOut: string;
+    newAccount: string;
+    confirmPassword: string;
+    privacyPolicy: string;
+    effectiveDate: string;
+    introduction: string;
+    welcomeTo: string;
+    dataCollected: string;
+}   
 
 export interface LanguageData {
     defaultInfo: GameInfo;
@@ -78,7 +87,16 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSEREZ UNE PIECE PLUS TARD...",
             alienLate: "LES ALIENS SONT EN RETARD",
             play: "JOUER",
-            running: "EN COURS"
+            running: "EN COURS", 
+            passWord: "Mot de passe",
+            signOut: "Deconnexion",
+            newAccount: "NOUVEAU COMPTE",
+            confirmPassword: "Confirmez le mot de passe",
+            privacyPolicy: "Politique de confidentialite",
+            effectiveDate: "Date d'entrée en vigueur :",
+            introduction: "1. Introduction",
+            welcomeTo: "Bienvenue chez TRANSCENDANCE. Nous respectons votre vie privée et nous nous engageons à protéger vos données personnelles.",
+            dataCollected: "2. Données que nous collectons"
         }
     },
     // 2 = ANGLAIS
@@ -117,7 +135,17 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSERT COIN LATER...",
             alienLate: "THE ALIENS ARE LATE",
             play: "PLAY",
-            running: "RUNNING"
+            running: "RUNNING", 
+            passWord: "Mot de passe",
+            signOut: "Sign out",
+            newAccount: "NEW ACCOUNT",
+            confirmPassword: "Confirm Password",
+            privacyPolicy: "Privacy Policy",
+            effectiveDate: "Effective Date:",
+            introduction: "1. Introduction",
+            welcomeTo: "Welcome to TRANSCENDANCE. We respect your privacy and are committed to protecting your personal data.",
+            dataCollected: "2. Data We Collect"
+       
         }
     },
     // 3 = ESPAGNOL
@@ -156,7 +184,17 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSERTE UNA MONEDA MÁS TARDE...",
             alienLate: "LOS EXTRATERRESTRES LLEGAN TARDE",
             play: "JUGAR",
-            running: "CORRER"
+            running: "CORRER", 
+            passWord: "Contraseña",
+            signOut: "Desconectar",
+            newAccount: "NUEVA CUENTA",
+            confirmPassword: "confirmar Contraseña",
+            privacyPolicy: "Política de privacidad",
+            effectiveDate: "Fecha de vigencia:",
+            introduction: "1. Introducción",
+            welcomeTo: "Bienvenido a TRANSCENDANCE. Respetamos su privacidad y nos comprometemos a proteger sus datos personales.",
+            dataCollected: "2. Datos que recopilamos"
+       
         }
     },
     // 4 = ALLEMAND
@@ -196,7 +234,16 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "WERFEN SIE SPÄTER EINE MÜNZE EIN...",
             alienLate: "DIE ALIENS SIND ZU SPÄT",
             play: "SPIELEN",
-            running: "LÄUFT"
+            running: "LÄUFT", 
+            passWord: "Passwort",
+            signOut: "Abmelden",
+            newAccount: "NEUES KONTO",
+            confirmPassword: "Passwort bestätigen",
+            privacyPolicy: "Datenschutzrichtlinie",
+            effectiveDate: "Datum des Inkrafttretens:",
+            introduction: "1. Einführung",
+            welcomeTo: "Willkommen bei TRANSCENDANCE. Wir respektieren Ihre Privatsphäre und verpflichten uns zum Schutz Ihrer persönlichen Daten.",
+            dataCollected: "2. Von uns erfasste Daten"
         }
     }
 };

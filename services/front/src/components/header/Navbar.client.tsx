@@ -3,13 +3,10 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
-
 import { LogOut } from '../../app/logout/logout';
-
 import SettingsView from '../views/SettingsView';
 import SocialView from '../views/SocialView';
-import LegalView from '../views/LegalView'; // Changé de StatsView à LegalView
-
+import LegalView from '../views/LegalView';
 import './Navbar.css';
 
 interface NavbarClientProps {
@@ -20,17 +17,13 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Calcul de la langue
     const langParam = searchParams.get('lang');
     const paramValue = Number(langParam);
     const currentLang: LangKey = (langParam && ALL_LANGUAGES[paramValue]) 
         ? (paramValue as LangKey) 
         : 1;
 
-    // État des vues (modales) - 'stats' remplacé par 'legal'
     const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'legal'>('menu');
-    
-    // NOUVEAU : État pour le menu mobile latéral
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const changeLanguage = (langId: LangKey) => {
@@ -39,12 +32,10 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
     const handleLogout = async () => {
         try {
-            await LogOut();
-            router.refresh();
-            router.push(`/?lang=${currentLang}`); 
+            await LogOut(currentLang);
         } catch (error) {
             if ((error as Error).message !== 'NEXT_REDIRECT') {
-                console.error("Logout failed:", error);
+                console.error(error);
             }
         }
     };
@@ -52,7 +43,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
     const texts = ALL_LANGUAGES[currentLang].defaultInfo;
     const backToMenu = () => setCurrentView('menu');
 
-    // Fonction pour ouvrir une vue et fermer le menu mobile en même temps
     const openViewFromMobile = (view: 'settings' | 'social' | 'legal') => {
         setCurrentView(view);
         setIsMobileMenuOpen(false);
@@ -62,7 +52,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
         <>
             <header>
                 <div className="title-overlay">
-                    {/* Bouton Hamburger (Visible uniquement sur Mobile via CSS) */}
                     <button 
                         className="mobile-menu-btn" 
                         onClick={() => setIsMobileMenuOpen(true)}
@@ -73,14 +62,12 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
                     <div className="main-title">{texts.trans}</div>
 
-                    {/* Navigation Desktop (Cachée sur Mobile via CSS) */}
                     <nav className="main-menu desktop-only">
                         <button onClick={() => setCurrentView('settings')}>{texts.param}</button>
                         <button onClick={() => setCurrentView('social')}>{texts.social}</button>
                         <button onClick={() => setCurrentView('legal')}>{texts.legal}</button>
                     </nav>
                     
-                    {/* User Info Desktop (Cachée sur Mobile via CSS) */}
                     <div className="user-cluster desktop-only">
                             <div className="user-info">
                                 <span className="user-label">{texts.connectedAs}</span>
@@ -94,7 +81,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                 </div>
             </header>
 
-            {/* --- MENU LATÉRAL MOBILE --- */}
             <div className={`mobile-sidebar-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
             
             <div className={`mobile-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
@@ -112,12 +98,10 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
                 </nav>
 
                 <button className="mobile-logout-btn" onClick={handleLogout}>
-                    Sign out
+                    {texts.signOut}
                 </button>
             </div>
 
-
-            {/* --- MODALES (Settings, Social, Legal) --- */}
             {currentView !== 'menu' && (
                 <div className="blur-overlay">
                     {currentView === 'settings' && (

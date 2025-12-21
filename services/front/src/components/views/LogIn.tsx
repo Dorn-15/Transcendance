@@ -4,13 +4,13 @@ import { useState, FormEvent, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { preloadAsset } from '@/utils/assetLoader';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
+import NewAccount from './newAccount'; 
 import './LogIn.css';
 
 export default function LogIn() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // 1. Calcul de la langue sécurisé
     const currentLang = useMemo<LangKey>(() => {
         const langParam = searchParams.get('lang');
         const paramValue = Number(langParam);
@@ -22,9 +22,10 @@ export default function LogIn() {
     const texts = ALL_LANGUAGES[currentLang].defaultInfo;
 
     const [usernameInput, setUsernameInput] = useState('');
+    const [PassWordInput, setPassWordInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
 
-    // Préchargement des assets 3D pour qu'ils soient prêts après le login
     useEffect(() => {
         const assets = [
             "Breakout.glb",
@@ -63,6 +64,15 @@ export default function LogIn() {
         }
     };
 
+    if (isRegistering) {
+        return (
+            <NewAccount 
+                currentLang={currentLang} 
+                onBack={() => setIsRegistering(false)} 
+            />
+        );
+    }
+
     return (
         <div className="login-overlay">
             <div className="login-box">
@@ -76,11 +86,28 @@ export default function LogIn() {
                         onChange={(e) => setUsernameInput(e.target.value)}
                         disabled={isSubmitting}
                         autoFocus
-                        maxLength={15} // Limite raisonnable pour le design
+                        maxLength={50}
                     />
-                    <div className="login-actions">
+                    <input 
+                        type="password"
+                        placeholder={texts.passWord} 
+                        value={PassWordInput}
+                        onChange={(e) => setPassWordInput(e.target.value)}
+                        disabled={isSubmitting}
+                        maxLength={15}
+                    />
+                    
+                    <div className="login-actions column-actions">
                         <button type="submit" className="confirm-btn" disabled={isSubmitting}>
                             {isSubmitting ? '...' : texts.enter}
+                        </button>
+                        
+                        <button 
+                            type="button" 
+                            className="confirm-btn"
+                            onClick={() => setIsRegistering(true)}
+                        >
+                            {texts.newAccount}
                         </button>
                     </div>
                 </form>
