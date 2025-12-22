@@ -137,8 +137,6 @@ export class AuthController {
 
 		response.clearCookie('Authentication', { path: '/' });
 
-		return {
-			authenticated: false,
-		};
+		return {authenticated: false};
 	}
 }

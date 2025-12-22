@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -8,19 +7,15 @@ const authStatusUrl = `http://${authHost}/auth/status`;
 export async function middleware(request: NextRequest) {
 	const path = request.nextUrl.pathname;
 
-	if (path.startsWith('/assets')) {
+	if (path.startsWith('/assets'))
 		return NextResponse.next();
-	}
 
 	const isPublicPath = path === '/login' || path === '/register';
 	const cookie = request.cookies.get('Authentication')?.value || '';
 
-	// No cookie -> redirect if protected
-	if (!cookie && !isPublicPath) {
+	if (!cookie && !isPublicPath)
 		return NextResponse.redirect(new URL('/login', request.url));
-	}
 
-	// Validate cookie with backend
 	if (cookie) {
 		try {
 			const res = await fetch(authStatusUrl, {
@@ -29,27 +24,22 @@ export async function middleware(request: NextRequest) {
 			});
 
 			if (!res.ok) {
-				if (!isPublicPath) {
+				if (!isPublicPath)
 					return NextResponse.redirect(new URL('/login', request.url));
-				}
 				return NextResponse.next();
 			}
 
 			const data = await res.json();
 			const authenticated = Boolean(data?.authenticated);
 
-			if (!authenticated && !isPublicPath) {
+			if (!authenticated && !isPublicPath)
 				return NextResponse.redirect(new URL('/login', request.url));
-			}
-
-			if (authenticated && isPublicPath) {
+			if (authenticated && isPublicPath)
 				return NextResponse.redirect(new URL('/', request.url));
-			}
 		} catch (error) {
 			console.error('Middleware auth check failed:', error);
-			if (!isPublicPath) {
+			if (!isPublicPath)
 				return NextResponse.redirect(new URL('/login', request.url));
-			}
 		}
 	}
 

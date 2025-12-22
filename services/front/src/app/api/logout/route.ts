@@ -15,12 +15,10 @@ export async function POST(request: Request) {
 		const response = NextResponse.json(data, { status: res.status });
 
 		const setCookie = res.headers.get('set-cookie');
-		if (setCookie) {
+		if (setCookie)
 			response.headers.set('Set-Cookie', setCookie);
-		} else {
-			// Force clear locally if backend did not include header
+		else 
 			response.cookies.set('Authentication', '', { path: '/', maxAge: 0 });
-		}
 
 		return response;
 	} catch (error) {
