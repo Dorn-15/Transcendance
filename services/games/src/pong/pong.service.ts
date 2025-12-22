@@ -210,7 +210,7 @@ export class PongService implements OnModuleDestroy {
 				return;
 			}
 
-			if (lastBallVX === undefined || lastBallVX !== match.state.ballVX) {
+			if (lastBallVX === undefined || lastBallVX !== match.state.ballVX || match.state.ballVY === 0) {
 				lastBallVX = match.state.ballVX;
 				targetY = this.cumputeAiTarget(match.state);
 			}
