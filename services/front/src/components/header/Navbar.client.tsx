@@ -100,7 +100,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
 				<nav className="mobile-nav">
 					<button onClick={() => openViewFromMobile('settings')}>{texts.param}</button>
-					<button onClick={() => openViewFromMobile('social')}>{texts.social}</button>
 					<button onClick={() => openViewFromMobile('legal')}>{texts.legal}</button>
 				</nav>
 

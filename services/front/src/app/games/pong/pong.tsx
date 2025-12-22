@@ -119,7 +119,6 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 		socket.on('pong:error', onPongError);
 		socket.on('pong:closed', onPongClosed);
 
-		// leave the match when the component unmounts
 		return () => {
 			const currentMatchId = matchIdRef.current;
 			if (currentMatchId)
@@ -232,6 +231,10 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 				<div className="tagline">
 					<p>{texts.coin}</p>
 					<p className="subTagline">{texts.CreateOrJoin}</p>
+					<div className="rulesContainer">
+						<p>{texts.firstToFive}</p>
+						{!isMobile && <p>{texts.useArrows}</p>}
+					</div>
 				</div>
 			);
 		}

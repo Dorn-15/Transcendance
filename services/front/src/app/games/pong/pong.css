@@ -143,6 +143,14 @@
   box-sizing: border-box;
 }
 
+.rulesContainer {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px dashed #333;
+  color: #f37022;
+  font-size: clamp(8px, 2.5vw, 12px);
+}
+
 .mobileControls {
   display: none;
   width: 100%;

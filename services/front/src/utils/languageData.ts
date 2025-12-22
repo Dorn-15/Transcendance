@@ -44,6 +44,8 @@ export interface GameInfo {
 	emailAlreadyExists: string;
 	userAlreadyExists: string;
 	operationFailed: string;
+    firstToFive: string;
+    useArrows: string;
 
     // Privacy Policy Keys
     privacyPolicy: string;
@@ -124,6 +126,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
 			emailAlreadyExists: "Email déjà existant",
 			userAlreadyExists: "Utilisateur déjà existant",
 			operationFailed: "Erreur lors de l'opération",
+            firstToFive: "LE PREMIER A 5 GAGNE",
+            useArrows: "UTILISEZ LES FLECHES HAUT ET BAS POUR BOUGER",
 
             // Privacy
             privacyPolicy: "Politique de confidentialite",
@@ -199,6 +203,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
 			emailAlreadyExists: "Email already exists",
 			userAlreadyExists: "User already exists",
 			operationFailed: "Operation failed",
+            firstToFive: "FIRST TO 5 WINS",
+            useArrows: "USE THE UP AND DOWN ARROWS TO MOVE",
 
             // Privacy
             privacyPolicy: "Privacy Policy",
@@ -274,6 +280,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
 			emailAlreadyExists: "Email ya existe",
 			userAlreadyExists: "Usuario ya existe",
 			operationFailed: "Error al realizar la operación",
+            firstToFive: "PRIMERO A 5 GANA",
+            useArrows: "USE THE UP AND DOWN ARROWS TO MOVE",
 
             // Privacy
             privacyPolicy: "Política de privacidad",
@@ -349,6 +357,8 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
 			emailAlreadyExists: "Email bereits existiert",
 			userAlreadyExists: "Benutzer bereits existiert",
 			operationFailed: "Fehler beim Ausführen der Operation",
+            firstToFive: "WER ZUERST 5 HAT GEWINNT",
+            useArrows: "BENUTZE DIE AUF- UND AB-PFEILEN ZUM BEWEGEN",
 
             // Privacy
             privacyPolicy: "Datenschutzrichtlinie",
