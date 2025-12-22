@@ -135,6 +135,15 @@ export class GatewayService
 		return this.pongExchange.handleCreateMatch(client, payload);
 	}
 
+	@SubscribeMessage('pong:solo')
+	async createSoloMatch(
+		@ConnectedSocket() client: Socket,
+		@MessageBody()
+		payload: { player: string },
+	): Promise<MatchJoin | { error: string }> {
+		return this.pongExchange.handleCreateSoloMatch(client, payload);
+	}
+
 	@SubscribeMessage('pong:join')
 	async joinMatch(
 		@ConnectedSocket() client: Socket,

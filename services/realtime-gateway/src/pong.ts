@@ -53,6 +53,30 @@ export class PongExchangeService {
 		}
 	}
 
+	async handleCreateSoloMatch(
+		client: Socket,
+		payload: { player: string },
+	): Promise<MatchJoin | { error: string }> {
+		try {
+			console.log('handleCreateSoloMatch', payload);
+			const	body = { player: payload?.player ?? 'player' };
+			const	response = await this.postJson<MatchJoin>('/pong/matches/solo', body);
+
+			await client.join(this.getRoom(response.matchId));
+			this.registerClient(response.matchId, client.id);
+			this.registerClientSession(client.id, response.matchId, body.player);
+			this.startPolling(response.matchId);
+
+			this.emitState(response.matchId, response.state);
+
+			return response;
+		} catch (error) {
+			const	message = (error as Error).message;
+			this.logger.error(message);
+			return { error: message };
+		}
+	}
+
 	async handleJoinMatch(
 		client: Socket,
 		payload: { matchId?: string; player: string },

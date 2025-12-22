@@ -149,6 +149,22 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 		});
 	}, [userName, socket, isConnected]);
 
+	const handleCreateSolo = useCallback((): void => {
+		if (!socket || !isConnected) return;
+		isGameIntentional.current = true;
+		setLastError(null);
+		setDidRequestRestart(false);
+		socket.emit('pong:solo', { player: userName }, (res: any) => {
+			if (res?.error) {
+				const	message = extractErrorMessage(res.error);
+				setLastError(message);
+				isGameIntentional.current = false;
+			}
+			if (res?.matchId) setMatchId(res.matchId);
+			if (res?.state) setPongState(res.state);
+		});
+	}, [userName, socket, isConnected]);
+
 	const handleJoin = useCallback((): void => {
 		if (!socket || !isConnected)
 			return;
@@ -307,6 +323,7 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 					<div className="buttonGroup">
 						<button className="button" onClick={handleCreate} disabled={!isConnected}>{texts.create}</button>
 						<button className="button secondary" onClick={handleJoin} disabled={!isConnected}>{texts.join}</button>
+						<button className="button" onClick={handleCreateSolo} disabled={!isConnected}>SOLO</button>
 					</div>
 				</div>
 			)}

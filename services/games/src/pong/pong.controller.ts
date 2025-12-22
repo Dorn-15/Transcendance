@@ -28,6 +28,23 @@ export class PongController {
 		};
 	}
 
+	@Post('matches/solo')
+	createSoloMatch(
+		@Body() body: { player: string },
+	): MatchJoin {
+		const	player = body?.player?.trim();
+		if (!player)
+			throw new BadRequestException('player missing');
+
+		const	match = this.pongService.createSoloMatch(player);
+
+		return {
+			matchId: match.id,
+			state: match.state,
+			players: match.players,
+		};
+	}
+
 	@Post('matches/:matchId/join')
 	joinMatch(
 		@Param('matchId') matchId: string,
