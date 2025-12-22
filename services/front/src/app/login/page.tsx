@@ -1,4 +1,3 @@
-// app/login/page.tsx
 import { Suspense } from 'react';
 import LogIn from '../../components/views/LogIn';
 

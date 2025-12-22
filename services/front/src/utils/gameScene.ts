@@ -1,4 +1,3 @@
-// gameScene.ts
 import * as BABYLON from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import { LangKey } from './languageData';
@@ -19,20 +18,18 @@ class GameScene {
     initialCameraState: any = null;
     isCameraAnimating: boolean = false;
     
-    // Nouveau : Callback pour prévenir React que c'est fini
     onSceneLoaded?: () => void;
 
     constructor(
         canvasElement: HTMLCanvasElement, 
         langId: LangKey = 1, 
-        onSceneLoaded?: () => void // Ajouter ce paramètre
+        onSceneLoaded?: () => void
     ) {
         this.currentLangId = langId;
-        this.onSceneLoaded = onSceneLoaded; // Stocker le callback
+        this.onSceneLoaded = onSceneLoaded;
 
         this.engine = new BABYLON.Engine(canvasElement, true);
         
-        // On crée la scène (qui lance le chargement)
         this.scene = this.createScene();
 
         this.engine.runRenderLoop(() => {
@@ -63,7 +60,6 @@ class GameScene {
     createScene() {
         const scene = new BABYLON.Scene(this.engine);
 
-        // --- CAMERA ---
         this.camera = new BABYLON.ArcRotateCamera(
             "camera1",
             Math.PI / 2,
@@ -85,7 +81,6 @@ class GameScene {
             target: this.camera.target.clone()
         };
 
-        // --- LUMIERES ---
         const hemiLight = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
         hemiLight.diffuse = new BABYLON.Color3(1, 1, 1);
         hemiLight.groundColor = new BABYLON.Color3(0.4, 0.4, 0.4);
@@ -102,7 +97,6 @@ class GameScene {
         dirLight2.specular = warmOrange;
         dirLight2.intensity = 65.5;
 
-        // --- OMBRES ---
         const shadowGenerator = new BABYLON.ShadowGenerator(1024, dirLight);
         shadowGenerator.useBlurExponentialShadowMap = true;
         shadowGenerator.blurKernel = 32;
@@ -119,24 +113,20 @@ class GameScene {
             });
         };
 
-        // --- FONCTION DE CHARGEMENT MODIFIÉE (Retourne une Promise) ---
         const loadGameMesh = (fileName: string, position: BABYLON.Vector3, onLoaded: (root: BABYLON.AbstractMesh) => void) => {
             const { root, file } = getAssetUrl(fileName, "/assets/glbFile/");
             
-            // On retourne la promesse générée par ImportMeshAsync
             return BABYLON.SceneLoader.ImportMeshAsync("", root, file, scene, undefined, ".glb")
                 .then((result: any) => {
                     const meshRoot = result.meshes[0];
                     meshRoot.position = position;
                     onLoaded(meshRoot);
                 })
-                .catch((err) => console.error(`Error loading ${fileName}:`, err));
+                .catch();
         };
 
-        // --- LISTE DES PROMESSES DE CHARGEMENT ---
         const loadingPromises: Promise<void | void[]>[] = [];
 
-        // 1. Breakout
         loadingPromises.push(
             loadGameMesh("Breakout.glb", new BABYLON.Vector3(-1.5, 0, 2.3), (root) => {
                 root.rotate(BABYLON.Axis.Y, Math.PI / 4, BABYLON.Space.LOCAL);
@@ -149,7 +139,6 @@ class GameScene {
             })
         );
 
-        // 2. Pong
         loadingPromises.push(
             loadGameMesh("Pong.glb", new BABYLON.Vector3(0, 0, 2), (root) => {
                 root.metadata = {
@@ -161,7 +150,6 @@ class GameScene {
             })
         );
 
-        // 3. Space Invaders
         loadingPromises.push(
             loadGameMesh("SpaceInvaders.glb", new BABYLON.Vector3(1.5, 0, 2.3), (root) => {
                 root.rotate(BABYLON.Axis.Y, -Math.PI / 4, BABYLON.Space.LOCAL);
@@ -174,7 +162,6 @@ class GameScene {
             })
         );
 
-        // 4. Room
         loadingPromises.push(
             loadGameMesh("room.glb", new BABYLON.Vector3(0, 0, 6.2), (root) => {
                 root.metadata = { arcade: false };
@@ -182,7 +169,6 @@ class GameScene {
             })
         );
 
-        // 5. Table
         loadingPromises.push(
             loadGameMesh("table.glb", new BABYLON.Vector3(0, 0, 6.2), (root) => {
                 root.metadata = { arcade: false };
@@ -190,9 +176,7 @@ class GameScene {
             })
         );
 
-        // --- QUAND TOUT EST CHARGÉ ---
         Promise.all(loadingPromises).then(() => {
-            // On attend une frame pour être sûr que le rendu est prêt
             this.scene.executeWhenReady(() => {
                 if (this.onSceneLoaded) {
                     this.onSceneLoaded();
@@ -200,9 +184,7 @@ class GameScene {
             });
         });
 
-        // --- POINTER EVENTS (Reste inchangé) ---
         scene.onPointerObservable.add((pointerInfo: any) => {
-            // ... (ton code existant pour le click) ...
              if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                 if (this.isCameraAnimating) return;
 
@@ -234,10 +216,8 @@ class GameScene {
             }
         });
 
-        // Gestion de l'initial game ID
         const initialGameId = typeof window !== 'undefined' ? window.INITIAL_GAME_ID : null;
         if (initialGameId && initialGameId !== "") {
-            // On attend que tout soit chargé pour lancer l'animation si besoin
             Promise.all(loadingPromises).then(() => {
                  this.showGameInterface(initialGameId);
             });
@@ -246,9 +226,7 @@ class GameScene {
         return scene;
     }
 
-    // ... (Le reste des méthodes resetCamera, zoomToMesh, showGameInterface restent inchangées) ...
     resetCamera() {
-        // ... code existant
         if (!this.initialCameraState) return;
 
         this.isCameraAnimating = true;
@@ -321,7 +299,6 @@ class GameScene {
     }
 
     zoomToMesh(targetMesh: any) {
-        // ... code existant
          this.isCameraAnimating = true;
         const frameRate = 60;
         const duration = 1;
@@ -425,12 +402,10 @@ class GameScene {
     }
 }
 
-
-// --- MODIFICATION DE LA FONCTION HELPER ---
 export function initGame(
     container: HTMLDivElement | HTMLCanvasElement, 
     langId: LangKey = 1,
-    onLoaded?: () => void // Nouveau paramètre
+    onLoaded?: () => void
 ) {
     let canvas: HTMLCanvasElement;
 
@@ -444,7 +419,6 @@ export function initGame(
         canvas = container as HTMLCanvasElement;
     }
 
-    // On passe le callback au constructeur
     const gameInstance = new GameScene(canvas, langId, onLoaded);
 
     return {

@@ -50,7 +50,6 @@ export class PongService implements OnModuleDestroy {
 		this.aiPlayers.clear();
 	}
 
-// Game Management =======================================================
 	private createInitialState(matchId: string): PongState {
 		const	width = 800;
 		const	height = 600;
@@ -427,7 +426,6 @@ export class PongService implements OnModuleDestroy {
 		return { matchId, removed: true };
 	}
 
-// Game Logic ============================================================
 	private clamp(value: number, min: number, max: number): number {
 		return Math.max(min, Math.min(max, value));
 	}

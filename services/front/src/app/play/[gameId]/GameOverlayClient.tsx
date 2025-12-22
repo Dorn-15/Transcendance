@@ -16,22 +16,20 @@ export default function GameOverlayClient({ userName, texts }: GameOverlayClient
 	const searchParams = useSearchParams();
 	const params = useParams<{ gameId: string }>();
 
-	// take the lang from the url
 	const langId = useMemo<LangKey>(() => {
 		const rawLang = searchParams.get('lang');
 		const parsed = rawLang ? parseInt(rawLang, 10) : 1;
-		if (ALL_LANGUAGES[parsed]) return parsed as LangKey;
+		if (ALL_LANGUAGES[parsed])
+			return parsed as LangKey;
 		return 1;
 	}, [searchParams]);
 	const closeLabel = texts.leave;
 
-	// redirect with the chosen lang
 	const handleClose = () => {
 		const target = `/?lang=${langId}`;
 		router.push(target);
 	};
 
-	// take the game id from the url
 	const gameId = params?.gameId ?? '';
 
 	return (

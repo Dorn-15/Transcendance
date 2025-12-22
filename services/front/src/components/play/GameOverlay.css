@@ -1,5 +1,3 @@
-/* src/components/play/GameOverlay.css */
-
 .game-overlay-page {
     position: fixed;
     top: 0;
@@ -27,12 +25,11 @@
     width: 100%;
     height: 100%;
 
-    /* DÉSACTIVATION DU SCROLL */
     overflow: hidden;
 
     display: flex;
     justify-content: center;
-    align-items: center; /* Centre verticalement */
+    align-items: center; 
 }
 
 .game-overlay__frame {
@@ -41,15 +38,12 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%; /* Prend toute la hauteur pour gérer le centrage */
+    height: 100%; 
 
-    /* On garde un petit padding de sécurité sur les côtés,
-       mais on réduit le haut/bas pour éviter de pousser hors de l'écran */
     padding: 10px;
     box-sizing: border-box;
 }
 
-/* --- LE BOUTON QUITTER --- */
 .game-overlay_close {
     background: transparent;
     border: 2px solid rgba(255, 255, 255, 0.8);
@@ -57,7 +51,6 @@
     font-family: 'Press Start 2P', cursive, monospace;
     text-transform: uppercase;
 
-    /* Espace au-dessus du bouton pour l'aération */
     margin-top: 25px;
 
     padding: 15px 30px;
@@ -81,10 +74,8 @@
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
 }
 
-/* --- MEDIA QUERIES (Mobile) --- */
 @media (max-width: 480px) {
     .game-overlay__frame {
-        /* Sur mobile, on s'assure que le contenu ne touche pas les bords */
         padding: 0;
         justify-content: center;
     }

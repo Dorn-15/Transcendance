@@ -35,7 +35,6 @@ export default function GameOverlay({
 }: GameOverlayProps) {
 	const frameRef = useRef<HTMLIFrameElement>(null);
 
-	// handle the navigation (back / escape)
 	useEffect(() => {
 		const handlePopState = () => {
 			onClose();
@@ -65,7 +64,6 @@ export default function GameOverlay({
 		};
 	}, []);
 
-	// Game selection logic
 	const renderGameContent = () => {
 		const id = gameId ? gameId.toLowerCase().trim() : 'pong';
 

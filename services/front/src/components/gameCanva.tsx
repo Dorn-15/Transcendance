@@ -22,7 +22,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
 
     const gameControlsRef = useRef<{ destroy: () => void; updateLanguage: (id: LangKey) => void } | null>(null);
 
-    // 1. Calcul de la langue
     const effectiveLang = useMemo(() => {
         if (initialLang && ALL_LANGUAGES[initialLang]) return initialLang;
         const urlLang = Number(searchParams.get('lang'));
@@ -32,13 +31,11 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
 
     const texts = ALL_LANGUAGES[effectiveLang].defaultInfo;
 
-    // 2. DÉFINITION DYNAMIQUE DES JEUX (ICI, on a accès à "texts")
     const gamesList = useMemo(() => [
         {
             id: 'pong',
             label: 'PONG',
             icon: '🏓',
-            // Assurez-vous que pongDesc existe dans languageData.ts
             desc: texts.descPong || 'Classic Retro Tennis'
         },
         {
@@ -53,9 +50,7 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
             icon: '👾',
             desc: texts.descSpaceInvaders || 'Defend Earth'
         },
-    ], [texts]); // Se met à jour quand texts change
-
-    // 3. DÉTECTION MOBILE
+    ], [texts]);
     useEffect(() => {
         const checkDevice = () => {
             const mobile = window.innerWidth <= 768;
@@ -69,7 +64,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
         return () => window.removeEventListener('resize', checkDevice);
     }, []);
 
-    // 4. INITIALISATION 3D (PC Uniquement)
     useEffect(() => {
         if (!isChecked) return;
         if (isMobile) return;
@@ -89,7 +83,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
         };
     }, [isChecked, isMobile]);
 
-    // 5. MISE À JOUR LANGUE (3D)
     useEffect(() => {
         const langParam = searchParams.get('lang');
         if (!isMobile && gameControlsRef.current && langParam) {
@@ -104,11 +97,8 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
         router.push(`/play/${gameId}?lang=${effectiveLang}`);
     };
 
-    // --- RENDER ---
-
     if (!isChecked) return <div style={{ background: '#000', width: '100%', height: '100%' }}></div>;
 
-    // VERSION MOBILE
     if (isMobile) {
         return (
             <div className="mobile-menu-container">
@@ -118,7 +108,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
                 </div>
 
                 <div className="game-list">
-                    {/* On utilise gamesList ici au lieu de GAMES */}
                     {gamesList.map((game) => (
                         <div
                             key={game.id}
@@ -138,7 +127,6 @@ export default function GameCanva({ userName, initialLang }: GameCanvaProps) {
         );
     }
 
-    // VERSION DESKTOP
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             {isLoading && (

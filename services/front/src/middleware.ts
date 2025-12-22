@@ -37,7 +37,6 @@ export async function middleware(request: NextRequest) {
 			if (authenticated && isPublicPath)
 				return NextResponse.redirect(new URL('/', request.url));
 		} catch (error) {
-			console.error('Middleware auth check failed:', error);
 			if (!isPublicPath)
 				return NextResponse.redirect(new URL('/login', request.url));
 		}

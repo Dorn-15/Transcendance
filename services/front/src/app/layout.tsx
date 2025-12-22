@@ -2,10 +2,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
-// Import du Provider qu'on a créé à l'étape précédente
 import { SocketProvider } from './context/socketProvider';
 import { getGatewayConfig } from './context/gatewayConfig.server';
-// Configuration des polices Google
 const geistSans = Geist({
 	variable: "--font-geist-sans",
 	subsets: ["latin"],

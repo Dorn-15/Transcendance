@@ -14,7 +14,6 @@ export async function POST(request: Request) {
 		const data = await res.json();
 		return NextResponse.json(data, { status: res.status });
 	} catch (error) {
-		console.error('Register proxy error:', error);
 		return NextResponse.json({ success: false }, { status: 500 });
 	}
 }

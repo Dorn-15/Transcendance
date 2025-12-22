@@ -1,6 +1,3 @@
-// src/utils/assetLoader.ts
-
-// Stocke les URLs locales (blob:http://...)
 const assetsCache: Record<string, string> = {};
 
 export const preloadAsset = async (fileName: string) => {
@@ -10,7 +7,6 @@ export const preloadAsset = async (fileName: string) => {
         const path = `/assets/glbFile/${fileName}`;
         const response = await fetch(path);
         
-        // VÉRIFICATION AJOUTÉE
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("text/html")) {
             throw new Error(`Le fichier n'existe pas (reçu du HTML au lieu du binaire) : ${path}`);
@@ -23,7 +19,7 @@ export const preloadAsset = async (fileName: string) => {
         assetsCache[fileName] = objectUrl;
         
     } catch (error) {
-        console.error(`Erreur chargement ${fileName}`, error);
+      
     }
 };
 

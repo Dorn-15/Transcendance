@@ -35,15 +35,13 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 				credentials: 'include',
 			});
 
-			if (!res.ok) {
-				console.error('Logout failed with status', res.status);
+			if (!res.ok)
 				return;
-			}
 
 			router.push(`/login/?lang=${currentLang}`);
 			router.refresh();
 		} catch (error) {
-			console.error('Logout error:', error);
+			
 		}
 	};
 

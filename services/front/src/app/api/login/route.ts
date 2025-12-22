@@ -27,12 +27,9 @@ export async function POST(request: Request) {
 
         if (setCookieHeader)
             response.headers.set('Set-Cookie', setCookieHeader);
-        else
-            console.warn("Proxy: Backend returned 200 OK but NO Set-Cookie header found!");
 
         return response;
     } catch (error) {
-        console.error("Proxy Error:", error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -44,7 +44,6 @@ export default function LegalView({ onClose, currentLang }: LegalViewProps) {
       
       <div className="legal-columns-container">
         
-        {/* Privacy Policy Column */}
         <div className="legal-column">
             <button 
                 className={`legal-accordion-btn ${showPrivacy ? 'open' : 'closed'}`}
@@ -82,7 +81,6 @@ export default function LegalView({ onClose, currentLang }: LegalViewProps) {
             )}
         </div>
 
-        {/* Terms of Service Column */}
         <div className="legal-column">
             <button 
                 className={`legal-accordion-btn ${showTerms ? 'open' : 'closed'}`}

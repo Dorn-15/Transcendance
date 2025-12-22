@@ -23,7 +23,6 @@ export async function getAuthStatus(): Promise<AuthStatus> {
         }
         return res.json();
     } catch (e) {
-        console.error("Auth Fetch Error:", e);
         return { authenticated: false };
     }
 }

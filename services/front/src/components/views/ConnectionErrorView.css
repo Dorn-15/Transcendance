@@ -4,15 +4,15 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.85); /* Fond sombre semi-transparent */
+    background-color: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(5px);
-    z-index: 9999; /* Toujours au-dessus */
+    z-index: 9999;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     color: white;
-    font-family: 'Courier New', Courier, monospace; /* Style rétro/terminal */
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .connection-content {

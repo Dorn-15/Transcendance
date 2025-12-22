@@ -22,7 +22,6 @@ export async function POST(request: Request) {
 
 		return response;
 	} catch (error) {
-		console.error('Logout proxy error:', error);
 		return NextResponse.json({ authenticated: false }, { status: 500 });
 	}
 }

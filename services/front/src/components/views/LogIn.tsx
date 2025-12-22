@@ -30,7 +30,6 @@ export default function LogIn() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
 
-	// Préchargement des assets 3D pour qu'ils soient prêts après le login
 	useEffect(() => {
 		const assets = [
 			'Breakout.glb',
@@ -100,7 +99,6 @@ export default function LogIn() {
 				return;
 			}
 		} catch (error) {
-			console.error(error);
 			setErrorMessage('Unexpected error, please retry.');
 		} finally {
 			setIsSubmitting(false);

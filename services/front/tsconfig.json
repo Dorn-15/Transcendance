@@ -22,7 +22,7 @@
         "name": "next"
       }
     ],
-    // C'EST ICI QUE ÇA SE JOUE :
+
     "baseUrl": ".",
     "paths": {
       "@/*": [

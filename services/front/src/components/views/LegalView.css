@@ -1,5 +1,3 @@
-/* views/LegalView.css */
-
 .legal-columns-container {
     display: flex;
     gap: 20px;
@@ -28,7 +26,6 @@
     align-items: center;
 }
 
-/* État fermé */
 .legal-accordion-btn.closed {
     background-color: #444;
 }
@@ -37,9 +34,8 @@
     background-color: #555;
 }
 
-/* État ouvert */
 .legal-accordion-btn.open {
-    background-color: #222; /* Plus sombre quand ouvert */
+    background-color: #222; 
     border: 1px solid #555;
 }
 
@@ -52,12 +48,11 @@
     text-align: left;
     max-height: 300px;
     overflow-y: auto;
-    white-space: pre-line; /* Gère les sauts de ligne */
+    white-space: pre-line; 
     line-height: 1.5;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Gestion du responsive pour les petits écrans */
 @media (max-width: 600px) {
     .legal-columns-container {
         flex-direction: column;

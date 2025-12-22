@@ -16,7 +16,7 @@ import type {
 	PongState,
 	MatchJoin,
 } from '@transcendance/pong';
-import { PongExchangeService } from './pong'; // Assure-toi que le nom du fichier d'import est bon
+import { PongExchangeService } from './pong';
 
 const	COOKIE_NAME = 'pong_ws_token';
 const	activeTokens = new Map<string, string>();

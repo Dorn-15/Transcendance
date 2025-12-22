@@ -10,9 +10,7 @@ export class SessionService implements OnModuleInit {
 		if (!url)
 			throw new Error('REDIS_URL is required for SessionService');
 		this.client = createClient({ url });
-		this.client.on('error', (err) => {
-			console.error('Redis error', err);
-		});
+		this.client.on('error', (err) => {});
 		await this.client.connect();
 	}
 
