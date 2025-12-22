@@ -7,9 +7,8 @@ export class SessionService implements OnModuleInit {
 
 	async onModuleInit() {
 		const url = process.env.REDIS_URL;
-		if (!url) {
+		if (!url)
 			throw new Error('REDIS_URL is required for SessionService');
-		}
 		this.client = createClient({ url });
 		this.client.on('error', (err) => {
 			console.error('Redis error', err);
@@ -18,23 +17,20 @@ export class SessionService implements OnModuleInit {
 	}
 
 	async setSession(cookie: string, login: string, ttlSeconds = 60 * 60 * 24 * 7) {
-		if (!this.client) {
+		if (!this.client)
 			throw new Error('Redis not initialized');
-		}
 		await this.client.set(cookie, login, { EX: ttlSeconds });
 	}
 
 	async getLoginByCookie(cookie: string): Promise<string | null> {
-		if (!this.client) {
+		if (!this.client)
 			throw new Error('Redis not initialized');
-		}
 		return this.client.get(cookie);
 	}
 
 	async deleteSession(cookie: string) {
-		if (!this.client) {
+		if (!this.client)
 			throw new Error('Redis not initialized');
-		}
 		await this.client.del(cookie);
 	}
 }

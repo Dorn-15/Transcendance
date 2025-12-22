@@ -17,9 +17,8 @@ export class UserService implements OnModuleInit {
 
 	constructor() {
 		const connectionString = process.env.DATABASE_URL;
-		if (!connectionString) {
+		if (!connectionString)
 			throw new Error('DATABASE_URL is required for UserService');
-		}
 		this.pool = new Pool({ connectionString });
 	}
 
