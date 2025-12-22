@@ -5,6 +5,7 @@ import {
 	NotFoundException,
 	OnModuleDestroy,
 } from '@nestjs/common';
+
 import type {
 	PongDirection,
 	PongMatch,
@@ -31,6 +32,7 @@ export class PongService implements OnModuleDestroy {
 	private readonly	speedIncrement: number;
 	private readonly	maxBallSpeed: number;
 	private readonly	maxBounceAngle: number;
+	private readonly	aiDeadZone: number;
 
 	constructor() {
 		this.frameRateMs = 1000 / 60;
@@ -39,6 +41,7 @@ export class PongService implements OnModuleDestroy {
 		this.maxBallSpeed = 800;
 		this.maxBounceAngle = Math.PI / 3;
 		this.tickInterval = setInterval(() => this.tick(), this.frameRateMs);
+		this.aiDeadZone = 45;
 	}
 
 	onModuleDestroy(): void {
@@ -50,7 +53,7 @@ export class PongService implements OnModuleDestroy {
 		this.aiPlayers.clear();
 	}
 
-// Game Management =======================================================
+// Game utils =======================================================
 	private createInitialState(matchId: string): PongState {
 		const	width = 800;
 		const	height = 600;
@@ -127,6 +130,15 @@ export class PongService implements OnModuleDestroy {
 		this.resumeIfReady(match);
 	}
 
+	private ensureMatchInputs(matchId: string): MatchInputs {
+		let	matchInputs = this.inputs.get(matchId);
+		if (!matchInputs) {
+			matchInputs = { left: 'none', right: 'none' };
+			this.inputs.set(matchId, matchInputs);
+		}
+		return matchInputs;
+	}
+
 	private resumeIfReady(match: PongMatch): void {
 		if (match.state.status === 'ended')
 			return;
@@ -142,6 +154,74 @@ export class PongService implements OnModuleDestroy {
 			match.state.status = 'waiting';
 	}
 
+// AI Management =======================================================
+	private stopAi(matchId: string): void {
+		const	interval = this.aiIntervals.get(matchId);
+		if (interval)
+			clearInterval(interval);
+		this.aiIntervals.delete(matchId);
+		this.aiPlayers.delete(matchId);
+	}
+	private cumputeAiTarget(state: PongState): number {
+		if (state.ballVX < 0)
+			return state.height / 2;
+
+		let	deltaY: number;
+		deltaY = (Math.abs(state.ballVY) / Math.abs(state.ballVX))
+			* (state.width - state.paddleThickness - state.ballX);
+
+		let	targetY: number;
+		targetY = state.ballY + (state.ballVY > 0 ? deltaY : -deltaY);
+		while (targetY < 0 || targetY > state.height) {
+			if (targetY < 0)
+				targetY = -targetY;
+			else if (targetY > state.height)
+				targetY = 2 * state.height - targetY;
+		}
+		targetY += (Math.random() * 50) * (Math.random() > 0.5 ? 1 : -1);
+		return targetY;
+	}
+
+	private computeAiDirection(state: PongState, targetY: number): PongDirection {
+		const	paddleCenter = state.rightY + state.paddleHeight / 2;
+		const	delta = targetY - paddleCenter;
+		if (delta > this.aiDeadZone)
+			return 'down';
+		if (delta < -this.aiDeadZone)
+			return 'up';
+		return 'none';
+	}
+
+	private startAi(matchId: string): void {
+		if (this.aiIntervals.has(matchId))
+			return;
+
+		let	lastBallVX: number | undefined;
+		let	targetY: number;
+		targetY = 0;
+		const	interval = setInterval(() => {
+			const	match = this.matches.get(matchId);
+			if (!match) {
+				this.stopAi(matchId);
+				return;
+			}
+			else if (match.state.status === 'ended' || match.state.status !== 'running') {
+				this.ensureMatchInputs(matchId).right = 'none';
+				return;
+			}
+
+			if (lastBallVX === undefined || lastBallVX !== match.state.ballVX) {
+				lastBallVX = match.state.ballVX;
+				targetY = this.cumputeAiTarget(match.state);
+			}
+
+			this.ensureMatchInputs(matchId).right = this.computeAiDirection(match.state, targetY);
+		}, 1000 / 5);
+
+		this.aiIntervals.set(matchId, interval);
+	}
+
+// Game Management =======================================================
 	createMatch(playerId: string): PongMatch {
 		const	trimmedPlayerId = this.checkPlayerId(playerId);
 		const	existingMatch = this.findMatchByPlayer(trimmedPlayerId);
@@ -178,65 +258,6 @@ export class PongService implements OnModuleDestroy {
 		this.matches.set(matchId, match);
 		this.inputs.set(matchId, { left: 'none', right: 'none' });
 		return match;
-	}
-
-	private stopAi(matchId: string): void {
-		const	interval = this.aiIntervals.get(matchId);
-		if (interval)
-			clearInterval(interval);
-		this.aiIntervals.delete(matchId);
-		this.aiPlayers.delete(matchId);
-	}
-
-	private ensureMatchInputs(matchId: string): MatchInputs {
-		let	matchInputs = this.inputs.get(matchId);
-		if (!matchInputs) {
-			matchInputs = { left: 'none', right: 'none' };
-			this.inputs.set(matchId, matchInputs);
-		}
-		return matchInputs;
-	}
-
-	private computeAiDirection(state: PongState): PongDirection {
-		const	paddleCenter = state.rightY + state.paddleHeight / 2;
-		const	deadZone = 10;
-
-		let	target: number;
-		if (state.ballVX > 0)
-			target = state.ballY;
-		else
-			target = state.height / 2;
-
-		const	delta = target - paddleCenter;
-		if (delta > deadZone)
-			return 'down';
-		if (delta < -deadZone)
-			return 'up';
-		return 'none';
-	}
-
-	private startAi(matchId: string): void {
-		if (this.aiIntervals.has(matchId))
-			return;
-
-		const	interval = setInterval(() => {
-			const	match = this.matches.get(matchId);
-			if (!match) {
-				this.stopAi(matchId);
-				return;
-			}
-			if (match.state.status === 'ended') {
-				this.ensureMatchInputs(matchId).right = 'none';
-				return;
-			}
-			if (match.state.status !== 'running') {
-				this.ensureMatchInputs(matchId).right = 'none';
-				return;
-			}
-			this.ensureMatchInputs(matchId).right = this.computeAiDirection(match.state);
-		}, 1000 / 60);
-
-		this.aiIntervals.set(matchId, interval);
 	}
 
 	createSoloMatch(playerId: string): PongMatch {
@@ -331,12 +352,8 @@ export class PongService implements OnModuleDestroy {
 		if (match.state.status !== 'running')
 			return match.state;
 
-		let	matchInputs = this.inputs.get(matchId);
-		if (!matchInputs) {
-			matchInputs = { left: 'none', right: 'none' };
-			this.inputs.set(matchId, matchInputs);
-		}
-		else if (player.side === 'left')
+		let	matchInputs = this.ensureMatchInputs(matchId);
+		if (player.side === 'left')
 			matchInputs.left = direction;
 		else
 			matchInputs.right = direction;
