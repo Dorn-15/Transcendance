@@ -18,7 +18,6 @@ export class PongController {
 		const	player = body?.player?.trim();
 		if (!player)
 			throw new BadRequestException('player missing');
-
 		const	match = this.pongService.createMatch(player);
 
 		return {
@@ -35,7 +34,6 @@ export class PongController {
 		const	player = body?.player?.trim();
 		if (!player)
 			throw new BadRequestException('player missing');
-
 		const	match = this.pongService.createSoloMatch(player);
 
 		return {
@@ -53,7 +51,6 @@ export class PongController {
 		const	player = body?.player?.trim();
 		if (!player)
 			throw new BadRequestException('player missing');
-
 		const	match = this.pongService.joinMatch(matchId, player);
 
 		return {
