@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ALL_LANGUAGES, LangKey } from '@/utils/languageData';
 import SettingsView from '../views/SettingsView';
-import SocialView from '../views/SocialView';
 import LegalView from '../views/LegalView';
 import './Navbar.css';
 
@@ -22,7 +21,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 		? (paramValue as LangKey)
 		: 1;
 
-	const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'social' | 'legal'>('menu');
+	const [currentView, setCurrentView] = useState<'menu' | 'settings' | 'legal'>('menu');
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 	const changeLanguage = (langId: LangKey) => {
@@ -51,7 +50,7 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 	const texts = ALL_LANGUAGES[currentLang].defaultInfo;
 	const backToMenu = () => setCurrentView('menu');
 
-	const openViewFromMobile = (view: 'settings' | 'social' | 'legal') => {
+	const openViewFromMobile = (view: 'settings' | 'legal') => {
 		setCurrentView(view);
 		setIsMobileMenuOpen(false);
 	};
@@ -72,7 +71,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 
 					<nav className="main-menu desktop-only">
 						<button onClick={() => setCurrentView('settings')}>{texts.param}</button>
-						<button onClick={() => setCurrentView('social')}>{texts.social}</button>
 						<button onClick={() => setCurrentView('legal')}>{texts.legal}</button>
 					</nav>
 					<div className="user-cluster desktop-only">
@@ -115,12 +113,6 @@ export default function NavbarClient({ userName }: NavbarClientProps) {
 							onClose={backToMenu}
 							currentLang={currentLang}
 							onLanguageChange={changeLanguage}
-						/>
-					)}
-					{currentView === 'social' && (
-						<SocialView
-							onClose={backToMenu}
-							currentLang={currentLang}
 						/>
 					)}
 					{currentView === 'legal' && (

@@ -23,9 +23,11 @@ export class PongService implements OnModuleDestroy {
 	private readonly	matches = new Map<string, PongMatch>();
 	private readonly	inputs = new Map<string, MatchInputs>();
 	private readonly	restartVotes = new Map<string, Set<string>>();
+	private readonly	aiPlayers = new Map<string, string>();
+	private readonly	aiIntervals = new Map<string, ReturnType<typeof setInterval>>();
 	private readonly	frameRateMs: number;
 	private readonly	frameRateS: number;
-	private readonly	tickInterval: NodeJS.Timeout;
+	private readonly	tickInterval: ReturnType<typeof setInterval>;
 	private readonly	speedIncrement: number;
 	private readonly	maxBallSpeed: number;
 	private readonly	maxBounceAngle: number;
@@ -41,6 +43,11 @@ export class PongService implements OnModuleDestroy {
 
 	onModuleDestroy(): void {
 		clearInterval(this.tickInterval);
+		for (const	interval of this.aiIntervals.values()) {
+			clearInterval(interval);
+		}
+		this.aiIntervals.clear();
+		this.aiPlayers.clear();
 	}
 
 // Game Management =======================================================
@@ -173,6 +180,114 @@ export class PongService implements OnModuleDestroy {
 		return match;
 	}
 
+	private stopAi(matchId: string): void {
+		const	interval = this.aiIntervals.get(matchId);
+		if (interval)
+			clearInterval(interval);
+		this.aiIntervals.delete(matchId);
+		this.aiPlayers.delete(matchId);
+	}
+
+	private ensureMatchInputs(matchId: string): MatchInputs {
+		let	matchInputs = this.inputs.get(matchId);
+		if (!matchInputs) {
+			matchInputs = { left: 'none', right: 'none' };
+			this.inputs.set(matchId, matchInputs);
+		}
+		return matchInputs;
+	}
+
+	private computeAiDirection(state: PongState): PongDirection {
+		const	paddleCenter = state.rightY + state.paddleHeight / 2;
+		const	deadZone = 10;
+
+		let	target: number;
+		if (state.ballVX > 0)
+			target = state.ballY;
+		else
+			target = state.height / 2;
+
+		const	delta = target - paddleCenter;
+		if (delta > deadZone)
+			return 'down';
+		if (delta < -deadZone)
+			return 'up';
+		return 'none';
+	}
+
+	private startAi(matchId: string): void {
+		if (this.aiIntervals.has(matchId))
+			return;
+
+		const	interval = setInterval(() => {
+			const	match = this.matches.get(matchId);
+			if (!match) {
+				this.stopAi(matchId);
+				return;
+			}
+			if (match.state.status === 'ended') {
+				this.ensureMatchInputs(matchId).right = 'none';
+				return;
+			}
+			if (match.state.status !== 'running') {
+				this.ensureMatchInputs(matchId).right = 'none';
+				return;
+			}
+			this.ensureMatchInputs(matchId).right = this.computeAiDirection(match.state);
+		}, 1000 / 60);
+
+		this.aiIntervals.set(matchId, interval);
+	}
+
+	createSoloMatch(playerId: string): PongMatch {
+		const	trimmedPlayerId = this.checkPlayerId(playerId);
+		const	existingMatch = this.findMatchByPlayer(trimmedPlayerId);
+		if (existingMatch) {
+			this.markPlayerConnected(existingMatch, trimmedPlayerId);
+			return existingMatch;
+		}
+
+		let	matchId: string;
+		do {
+			matchId = 'P' + Array.from({ length: 5 }, () =>
+				String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+			).join('');
+		} while (this.matches.has(matchId));
+
+		let	state: PongState;
+		state = this.createInitialState(matchId);
+
+		const	aiPlayerId = `AI:${matchId}`;
+
+		let	players: PongPlayer[];
+		players = [
+			{
+				id: trimmedPlayerId,
+				side: 'left',
+				connected: true,
+			},
+			{
+				id: aiPlayerId,
+				side: 'right',
+				connected: true,
+			},
+		];
+
+		let	match: PongMatch;
+		match = {
+			id: matchId,
+			players,
+			state,
+		};
+
+		this.matches.set(matchId, match);
+		this.inputs.set(matchId, { left: 'none', right: 'none' });
+		this.aiPlayers.set(matchId, aiPlayerId);
+		this.resumeIfReady(match);
+		this.startAi(matchId);
+		return match;
+	}
+
 	joinMatch(matchId: string, playerId: string): PongMatch {
 		const	trimmedPlayerId = this.checkPlayerId(playerId);
 		const	existingMatch = this.findMatchByPlayer(trimmedPlayerId);
@@ -238,8 +353,26 @@ export class PongService implements OnModuleDestroy {
 		if (match.state.status !== 'ended')
 			match.state.status = 'paused';
 
+		const	aiPlayerId = this.aiPlayers.get(matchId);
+		if (aiPlayerId) {
+			const	humansDisconnected = match.players
+				.filter((p) => p.id !== aiPlayerId)
+				.every((p) => !p.connected);
+			if (humansDisconnected) {
+				this.stopAi(matchId);
+				this.matches.delete(matchId);
+				this.inputs.delete(matchId);
+				this.restartVotes.delete(matchId);
+				return {
+					matchId,
+					removed: true,
+				};
+			}
+		}
+
 		const	allDisconnected = match.players.every((p) => !p.connected);
 		if (allDisconnected) {
+			this.stopAi(matchId);
 			this.matches.delete(matchId);
 			this.inputs.delete(matchId);
 			this.restartVotes.delete(matchId);
@@ -287,6 +420,7 @@ export class PongService implements OnModuleDestroy {
 		if (!exists)
 			return { matchId, removed: false };
 
+		this.stopAi(matchId);
 		this.matches.delete(matchId);
 		this.inputs.delete(matchId);
 		this.restartVotes.delete(matchId);
@@ -424,6 +558,7 @@ export class PongService implements OnModuleDestroy {
 
 		for (const	[matchId, match] of this.matches.entries()) {
 			if (match.state.status === 'ended' && match.players.every((p) => !p.connected)) {
+				this.stopAi(matchId);
 				this.matches.delete(matchId);
 				this.inputs.delete(matchId);
 				continue;
