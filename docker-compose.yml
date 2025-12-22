@@ -5,30 +5,21 @@ services:
       dockerfile: dockerfile
     container_name: ${PROXY_NAME}
     depends_on:
-      - ${FRONTEND_NAME}
-      - ${AUTH_SERVICE_NAME}
-      - ${SOCIAL_SERVICE_NAME}
-      - ${GAME_SERVICE_NAME}
-      - ${REALTIME_GATEWAY_NAME}
-      # - ${ROOM_SERVICE_NAME}
-      #- ${MATCHMAKING_SERVICE_NAME}
+      - frontend
+      - auth_service
+      - game_service
+      - realtime_gateway
     environment:
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
       - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
-      - ROOM_HOST=${ROOM_SERVICE_NAME}:${ROOM_PORT}
-      - MATCHMAKING_HOST=${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
       - PROMETHEUS_HOST=${PROMETHEUS_NAME}:${PROMETHEUS_PORT}
       - GRAFANA_HOST=${GRAFANA_NAME}:${GRAFANA_PORT}
       - ALERTMANAGER_HOST=${ALERTMANAGER_NAME}:${ALERTMANAGER_PORT}
       - FRONT_PATH=${FRONT_PATH}
       - AUTH_PATH=${AUTH_PATH}
-      - SOCIAL_PATH=${SOCIAL_PATH}
       - GAMES_PATH=${GAMES_PATH}
-      - ROOM_PATH=${ROOM_PATH}
-      - MATCHMAKING_PATH=${MATCHMAKING_PATH}
       - WS_PATH=${WS_PATH}
       - PROMETHEUS_PATH=${PROMETHEUS_PATH:-/prometheus}
       - GRAFANA_PATH=${GRAFANA_PATH:-/grafana}
@@ -83,11 +74,9 @@ services:
       - DOMAIN=${DOMAIN}
       - FRONT_HOST=${FRONTEND_NAME}:${FRONTEND_PORT}
       - AUTH_HOST=${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=${GAME_SERVICE_NAME}:${GAME_PORT}
       - REALTIME_GATEWAY_HOST=${REALTIME_GATEWAY_NAME}:${REALTIME_GATEWAY_PORT}
       - AUTH_PATH=${AUTH_PATH}
-      - SOCIAL_PATH=${SOCIAL_PATH}
       - GAMES_PATH=${GAMES_PATH}
       - WS_PATH=${WS_PATH}
     networks:
@@ -99,66 +88,19 @@ services:
       dockerfile: dockerfile
     container_name: ${AUTH_SERVICE_NAME}
     depends_on:
-      - ${POSTGRES_HOST}
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     expose:
       - "${AUTH_PORT}"
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${AUTH_PORT}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-    networks:
-      - internal
-
-  social_service:
-    build:
-      context: ./services/social
-      dockerfile: dockerfile
-    container_name: ${SOCIAL_SERVICE_NAME}
-    depends_on:
-      - ${POSTGRES_HOST}
-      - ${REDIS_HOST}
-    expose:
-      - "${SOCIAL_PORT}"
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${SOCIAL_PORT}
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
     networks:
       - internal
-
-  # room_service:
-  #   build:
-  #     context: ./services/room
-  #     dockerfile: dockerfile
-  #   container_name: ${ROOM_SERVICE_NAME}
-  #   depends_on:
-  #     - ${POSTGRES_HOST}
-  #   expose:
-  #     - "${ROOM_SERVICE_PORT}"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - PORT=4003
-  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-  #   networks:
-  #     - internal
-
-  # matchmaking_service:
-  #   build:
-  #     context: ./services/matchmaking
-  #     dockerfile: dockerfile
-  #   container_name: ${MATCHMAKING_SERVICE_NAME}
-  #   depends_on:
-  #     - ${REDIS_HOST}
-  #     - ${ROOM_SERVICE_NAME}
-  #   expose:
-  #     - "${MATCHMAKING_SERVICE_PORT}"
-  #   environment:
-  #     - NODE_ENV=${NODE_ENV}
-  #     - PORT=${MATCHMAKING_SERVICE_PORT}
-  #     - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
-  #   networks:
-  #     - internal
 
   game_service:
     build:
@@ -166,7 +108,8 @@ services:
       dockerfile: games/dockerfile
     container_name: ${GAME_SERVICE_NAME}
     depends_on:
-      - ${REDIS_HOST}
+      redis:
+        condition: service_healthy
     expose:
       - "${GAME_PORT}"
     environment:
@@ -182,12 +125,12 @@ services:
       dockerfile: realtime-gateway/dockerfile
     container_name: ${REALTIME_GATEWAY_NAME}
     depends_on:
-      - ${AUTH_SERVICE_NAME}
-      - ${SOCIAL_SERVICE_NAME}
-      - ${GAME_SERVICE_NAME}
-      - ${REDIS_HOST}
-      # - ${ROOM_SERVICE_NAME}
-      # - ${MATCHMAKING_SERVICE_NAME}
+      redis:
+        condition: service_healthy
+      auth_service:
+        condition: service_started
+      game_service:
+        condition: service_started
     expose:
       - ${REALTIME_GATEWAY_PORT}
     environment:
@@ -195,10 +138,7 @@ services:
       - PORT=${REALTIME_GATEWAY_PORT}
       - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
       - AUTH_HOST=http://${AUTH_SERVICE_NAME}:${AUTH_PORT}
-      - SOCIAL_HOST=http://${SOCIAL_SERVICE_NAME}:${SOCIAL_PORT}
       - GAME_HOST=http://${GAME_SERVICE_NAME}:${GAME_PORT}
-      - ROOM_HOST=http://${ROOM_SERVICE_NAME}:${ROOM_PORT}
-      - MATCHMAKING_HOST=http://${MATCHMAKING_SERVICE_NAME}:${MATCHMAKING_PORT}
     networks:
       - internal
 
@@ -212,6 +152,13 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - internal
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -222,6 +169,12 @@ services:
       - "yes"
     networks:
       - internal
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   prometheus:
     image: prom/prometheus:latest
     container_name: ${PROMETHEUS_NAME}
@@ -285,8 +238,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-    ports:
-      - "9100:9100"
+    # No host port binding to avoid conflicts (a host node_exporter may already use 9100).
+    # Prometheus scrapes it over the internal Docker network via node-exporter:9100.
     networks:
       - internal
 

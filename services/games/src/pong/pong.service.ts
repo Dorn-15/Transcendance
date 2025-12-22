@@ -103,12 +103,9 @@ export class PongService implements OnModuleDestroy {
 		for (const	match of this.matches.values()) {
 			if (match.state.status === 'ended')
 				continue;
-
-			const	player = match.players.find((p) => p.id === playerId);
-			if (player)
+			if (match.players.some((p) => p.id === playerId))
 				return match;
 		}
-
 		return undefined;
 	}
 
@@ -126,22 +123,16 @@ export class PongService implements OnModuleDestroy {
 	private resumeIfReady(match: PongMatch): void {
 		if (match.state.status === 'ended')
 			return;
-
-		const	hasTwoPlayers = match.players.length >= 2;
-		if (!hasTwoPlayers) {
+		else if (match.players.length < 2)
 			match.state.status = 'waiting';
-			return;
-		}
-
-		const	allConnected = match.players.every((p) => p.connected);
-		if (allConnected) {
+		else if (match.players.every((p) => p.connected)) {
 			match.state.status = 'running';
 			match.state.lastUpdate = Date.now();
-		} else if (match.players.some((p) => p.connected)) {
-			match.state.status = 'paused';
-		} else {
-			match.state.status = 'waiting';
 		}
+		else if (match.players.some((p) => p.connected))
+			match.state.status = 'paused';
+		else
+			match.state.status = 'waiting';
 	}
 
 	createMatch(playerId: string): PongMatch {
@@ -220,10 +211,8 @@ export class PongService implements OnModuleDestroy {
 	applyInput(matchId: string, playerId: string, direction: PongDirection): PongState {
 		const	trimmedPlayerId = this.checkPlayerId(playerId);
 		const	match = this.checkMatchId(matchId);
-		if (direction !== 'up' && direction !== 'down' && direction !== 'none')
-			throw new BadRequestException('invalid direction');
-
 		const	player = this.checkPlayer(match, trimmedPlayerId);
+
 		if (match.state.status !== 'running')
 			return match.state;
 
@@ -232,8 +221,7 @@ export class PongService implements OnModuleDestroy {
 			matchInputs = { left: 'none', right: 'none' };
 			this.inputs.set(matchId, matchInputs);
 		}
-
-		if (player.side === 'left')
+		else if (player.side === 'left')
 			matchInputs.left = direction;
 		else
 			matchInputs.right = direction;

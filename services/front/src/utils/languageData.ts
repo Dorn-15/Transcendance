@@ -36,8 +36,15 @@ export interface GameInfo {
     passWord: string;
     signOut: string;
     newAccount: string;
+    loginOrEmail: string;
+	email: string;
     confirmPassword: string;
-    
+    confirmPasswordError: string;
+	missingFields: string;
+	emailAlreadyExists: string;
+	userAlreadyExists: string;
+	operationFailed: string;
+
     // Privacy Policy Keys
     privacyPolicy: string;
     effectiveDate: string;
@@ -62,7 +69,7 @@ export interface GameInfo {
     disclaimerDesc: string;
     governingLaw: string;
     governingDesc: string;
-}   
+}
 
 export interface LanguageData {
     defaultInfo: GameInfo;
@@ -105,12 +112,19 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSEREZ UNE PIECE PLUS TARD...",
             alienLate: "LES ALIENS SONT EN RETARD",
             play: "JOUER",
-            running: "EN COURS", 
+            running: "EN COURS",
+			loginOrEmail: "Login ou email",
+			email: "Email",
             passWord: "Mot de passe",
             signOut: "Deconnexion",
             newAccount: "NOUVEAU COMPTE",
             confirmPassword: "Confirmez le mot de passe",
-            
+			confirmPasswordError: "Les mots de passe ne correspondent pas",
+			missingFields: "Champs manquants",
+			emailAlreadyExists: "Email déjà existant",
+			userAlreadyExists: "Utilisateur déjà existant",
+			operationFailed: "Erreur lors de l'opération",
+
             // Privacy
             privacyPolicy: "Politique de confidentialite",
             effectiveDate: "Date d'entrée en vigueur :",
@@ -173,12 +187,19 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSERT COIN LATER...",
             alienLate: "THE ALIENS ARE LATE",
             play: "PLAY",
-            running: "RUNNING", 
+            running: "RUNNING",
+			loginOrEmail: "Login or email",
+			email: "Email",
             passWord: "Password",
             signOut: "Sign out",
             newAccount: "NEW ACCOUNT",
             confirmPassword: "Confirm Password",
-            
+			confirmPasswordError: "The passwords do not match",
+			missingFields: "Missing fields",
+			emailAlreadyExists: "Email already exists",
+			userAlreadyExists: "User already exists",
+			operationFailed: "Operation failed",
+
             // Privacy
             privacyPolicy: "Privacy Policy",
             effectiveDate: "Effective Date:",
@@ -241,12 +262,19 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "INSERTE UNA MONEDA MÁS TARDE...",
             alienLate: "LOS EXTRATERRESTRES LLEGAN TARDE",
             play: "JUGAR",
-            running: "CORRER", 
+            running: "CORRER",
+			loginOrEmail: "Login o email",
+			email: "Email",
             passWord: "Contraseña",
             signOut: "Desconectar",
             newAccount: "NUEVA CUENTA",
             confirmPassword: "Confirmar Contraseña",
-            
+			confirmPasswordError: "Las contraseñas no coinciden",
+			missingFields: "Campos faltantes",
+			emailAlreadyExists: "Email ya existe",
+			userAlreadyExists: "Usuario ya existe",
+			operationFailed: "Error al realizar la operación",
+
             // Privacy
             privacyPolicy: "Política de privacidad",
             effectiveDate: "Fecha de vigencia:",
@@ -309,12 +337,19 @@ export const ALL_LANGUAGES: Record<number, LanguageData> = {
             laterCoin: "WERFEN SIE SPÄTER EINE MÜNZE EIN...",
             alienLate: "DIE ALIENS SIND ZU SPÄT",
             play: "SPIELEN",
-            running: "LÄUFT", 
+            running: "LÄUFT",
+			loginOrEmail: "Login oder Email",
+			email: "Email",
             passWord: "Passwort",
             signOut: "Abmelden",
             newAccount: "NEUES KONTO",
             confirmPassword: "Passwort bestätigen",
-            
+			confirmPasswordError: "Die Passwörter stimmen nicht überein",
+			missingFields: "Fehlende Felder",
+			emailAlreadyExists: "Email bereits existiert",
+			userAlreadyExists: "Benutzer bereits existiert",
+			operationFailed: "Fehler beim Ausführen der Operation",
+
             // Privacy
             privacyPolicy: "Datenschutzrichtlinie",
             effectiveDate: "Datum des Inkrafttretens:",

@@ -8,13 +8,11 @@ export type AuthStatus =
 const AUTH_URL = AUTH_SERVICE_URL;
 
 export async function getAuthStatus(): Promise<AuthStatus> {
-    // Await cookies() to be safe across Next.js versions
     const cookieStore = await cookies();
 
     try {
         const res = await fetch(`${AUTH_URL}/auth/status`, {
             headers: {
-                // Ensure we send the string representation
                 Cookie: cookieStore.toString(),
             },
             cache: 'no-store',

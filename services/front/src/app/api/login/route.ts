@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
 function getAuthServiceUrl(): string {
-    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === null) {
-        return "http://localhost:4001";
-    }
-    return `http://${process.env.AUTH_HOST}`;
+	if (process.env.AUTH_HOST) {
+		return `http://${process.env.AUTH_HOST}`;
+	}
+	return 'http://localhost:4001';
 }
 
 export const AUTH_SERVICE_URL = getAuthServiceUrl();
