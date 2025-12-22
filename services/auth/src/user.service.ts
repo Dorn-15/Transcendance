@@ -23,7 +23,6 @@ export class UserService implements OnModuleInit {
 	}
 
 	async onModuleInit() {
-		// Ensure base table exists at startup
 		await this.pool.query(`
 			CREATE TABLE IF NOT EXISTS users (
 				id SERIAL PRIMARY KEY,

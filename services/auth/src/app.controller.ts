@@ -53,8 +53,6 @@ export class AuthController {
 			response.clearCookie('Authentication', { path: '/' });
 			return { authenticated: false };
 		}
-
-		// Touch last connection for observability
 		await this.userService.updateConnection(login, cookie);
 
 		return {
