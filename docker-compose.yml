@@ -114,6 +114,7 @@ services:
     expose:
       - ${REALTIME_GATEWAY_PORT}
     environment:
+      - DOMAIN=${DOMAIN}
       - NODE_ENV=${NODE_ENV}
       - PORT=${REALTIME_GATEWAY_PORT}
       - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
