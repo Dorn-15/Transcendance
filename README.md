@@ -61,28 +61,6 @@ Projet web **containerisé** organisé en **micro-services**:
 - **Gateway WS dédiée**: simplifie la compatibilité WebSocket côté infra (Nginx/Traefik) et évite de mélanger logique HTTP/WS dans le Game Service.
 - **SQL “raw” + table minimale**: itération rapide (schéma court, création au démarrage) pour valider l’auth et la persistance.
 
----
-
-## Architecture (vue d’ensemble)
-
-```mermaid
-flowchart LR
-    U["User Browser"] -->|HTTPS| N["Nginx reverse proxy"]
-    N -->|/| F["Frontend (Next.js)"]
-    U -->|WS (Socket.IO)| N
-    N -->|/ws/socket.io| G["Realtime Gateway (Nest + Socket.IO)"]
-    G -->|HTTP REST| GS["Game Service (Nest)"]
-    F -->|HTTP REST| AS["Auth Service (Nest)"]
-    AS -->|SQL| PG["PostgreSQL"]
-    AS -->|KV + TTL| R["Redis"]
-```
-
-Notes:
-
-- Nginx route **le Front** et **le WebSocket**. Les appels HTTP vers l’auth sont faits par le Front (SSR / routes API) via `AUTH_HOST`.
-
----
-
 ## Database Schema
 
 ### PostgreSQL: table `users`
