@@ -65,7 +65,11 @@ export function Pong({ userName = 'GUEST', texts }: PongProps) {
 	}, [matchId]);
 
 	useEffect(() => {
-		const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+		const checkMobile = () => {
+			const ua = window.navigator.userAgent;
+			const isTouch = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || navigator.maxTouchPoints > 0;
+			setIsMobile(isTouch);
+		};
 		checkMobile();
 		window.addEventListener('resize', checkMobile);
 		return () => window.removeEventListener('resize', checkMobile);
