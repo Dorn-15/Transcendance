@@ -7,6 +7,7 @@ Projet web **containerisé** organisé en **micro-services**:
 - **Game Service**: NestJS (API du jeu Pong).
 - **Realtime Gateway**: NestJS + Socket.IO qui connecte le Front au Game Service.
 - **Reverse Proxy**: Nginx (template envsubst) + intégration Traefik (prod).
+- **Monitoring**: Prometheus + Grafana + Alertmanager + exporters (Node/Postgres/Redis/Nginx).
 
 ---
 
@@ -190,12 +191,16 @@ Cette section détaille “qui a fait quoi” (approximation basée sur l’hist
 Le `docker-compose.yml` référence notamment:
 
 - **Proxy/Routes**: `PROXY_NAME`, `DOMAIN`, `FRONT_PATH`, `AUTH_PATH`, `GAMES_PATH`, `WS_PATH`
+- **Monitoring (routes)**: `PROMETHEUS_PATH`, `GRAFANA_PATH`, `ALERTMANAGER_PATH`
 - **Frontend**: `FRONTEND_NAME`, `FRONTEND_PORT`
 - **Auth**: `AUTH_SERVICE_NAME`, `AUTH_PORT`
 - **Games**: `GAME_SERVICE_NAME`, `GAME_PORT`
 - **Gateway**: `REALTIME_GATEWAY_NAME`, `REALTIME_GATEWAY_PORT`
 - **Postgres**: `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
 - **Redis**: `REDIS_HOST`, `REDIS_PORT`
+- **Monitoring (containers)**: `PROMETHEUS_NAME`, `PROMETHEUS_PORT`, `GRAFANA_NAME`, `GRAFANA_PORT`, `ALERTMANAGER_NAME`, `ALERTMANAGER_PORT`
+- **Monitoring (auth basic via Nginx)**: `PROMETHEUS_ADMIN_USER`, `PROMETHEUS_ADMIN_PASSWORD`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`, `ALERTMANAGER_ADMIN_USER`, `ALERTMANAGER_ADMIN_PASSWORD`
+- **Alertmanager (SMTP)**: `ALERTMANAGER_EMAIL`, `ALERTMANAGER_SMTP_PASSWORD`
 - **Node**: `NODE_ENV`
 
 ### Lancer le projet
@@ -211,6 +216,18 @@ make up
 make down
 make clean
 ```
+
+---
+
+## Monitoring
+- **Prometheus**: `monitoring/prometheus/prometheus.yml` + règles d’alerting dans `monitoring/prometheus/alerts/`
+- **Grafana**: provisioning + dashboards dans `monitoring/grafana/` (ex: dashboard `Transcendance - Working Dashboard`)
+- **Alertmanager**: routes/receivers dans `monitoring/alertmanager/config.yml` (SMTP requis)
+
+### Accès
+- **Prometheus**: `https://localhost:8443/prometheus` (par défaut)
+- **Grafana**: `https://localhost:8443/grafana/` (par défaut)
+- **Alertmanager**: `https://localhost:8443/alertmanager/` (par défaut)
 
 ---
 
