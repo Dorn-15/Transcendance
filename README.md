@@ -67,14 +67,14 @@ Projet web **containerisé** organisé en **micro-services**:
 
 ```mermaid
 flowchart LR
-	U[User Browser] -->|HTTPS| N[Nginx (reverse proxy)]
-	N -->|/| F[Frontend (Next.js)]
-	U -->|WS (Socket.IO)| N
-	N -->|/ws/socket.io| G[Realtime Gateway (Nest + Socket.IO)]
-	G -->|HTTP REST| GS[Game Service (Nest)]
-	F -->|HTTP REST| AS[Auth Service (Nest)]
-	AS -->|SQL| PG[(PostgreSQL)]
-	AS -->|KV + TTL| R[(Redis)]
+    U["User Browser"] -->|HTTPS| N["Nginx reverse proxy"]
+    N -->|/| F["Frontend (Next.js)"]
+    U -->|WS (Socket.IO)| N
+    N -->|/ws/socket.io| G["Realtime Gateway (Nest + Socket.IO)"]
+    G -->|HTTP REST| GS["Game Service (Nest)"]
+    F -->|HTTP REST| AS["Auth Service (Nest)"]
+    AS -->|SQL| PG["PostgreSQL"]
+    AS -->|KV + TTL| R["Redis"]
 ```
 
 Notes:
