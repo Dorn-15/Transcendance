@@ -29,10 +29,9 @@ export const SocketProvider = ({ children, gatewayConfig }: SocketProviderProps)
 	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 	useEffect(() => {
 		if (isConnected) {
-			if (debounceTimer.current) {
+			if (debounceTimer.current)
 				clearTimeout(debounceTimer.current);
-				setShowErrorScreen(false);
-			}
+			setShowErrorScreen(false);
 		} else {
 			if (debounceTimer.current)
 				clearTimeout(debounceTimer.current);
