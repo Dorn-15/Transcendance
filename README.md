@@ -1,5 +1,7 @@
 #Transcendance
 
+*This project has been created as part of the 42 curriculum by adoireau, sle-nogu, akassous and wbeschon.*
+
 Projet web **containerisé** organisé en **micro-services**:
 
 - **Frontend**: Next.js (SSR) + React, UI “Arcade Room” (Babylon.js) + pages de jeux.
