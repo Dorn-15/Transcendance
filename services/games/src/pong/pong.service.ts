@@ -421,7 +421,9 @@ export class PongService implements OnModuleDestroy {
 		}
 		votes.add(trimmedPlayerId);
 
-		if (votes.size < 2)
+		let	requiredVotes: number;
+		requiredVotes = this.aiPlayers.has(matchId) ? 1 : 2;
+		if (votes.size < requiredVotes)
 			return match.state;
 
 		match.state = this.createInitialState(matchId);
