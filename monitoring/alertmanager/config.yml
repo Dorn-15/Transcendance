@@ -2,8 +2,8 @@ global:
   resolve_timeout: 5m
   # SMTP configuration
   smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'uberintwins@gmail.com'
-  smtp_auth_username: 'uberintwins@gmail.com'
+  smtp_from: '${ALERTMANAGER_EMAIL}'
+  smtp_auth_username: '${ALERTMANAGER_EMAIL}'
   smtp_auth_password: 'qyszofbhafroebcm'
   smtp_require_tls: true
 
@@ -66,7 +66,7 @@ route:
 receivers:
   - name: 'default-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Transcendance] Alert: {{ .GroupLabels.alertname }}'
@@ -86,7 +86,7 @@ receivers:
 
   - name: 'critical-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '🚨 CRITICAL: Transcendance - {{ .GroupLabels.alertname }}'
@@ -106,7 +106,7 @@ receivers:
 
   - name: 'service-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Service] Transcendance - {{ .GroupLabels.alertname }}'
@@ -123,7 +123,7 @@ receivers:
 
   - name: 'database-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Database] Transcendance - {{ .GroupLabels.alertname }}'
@@ -140,7 +140,7 @@ receivers:
 
   - name: 'cache-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Cache/Redis] Transcendance - {{ .GroupLabels.alertname }}'
@@ -157,7 +157,7 @@ receivers:
 
   - name: 'system-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[System] Transcendance - {{ .GroupLabels.alertname }}'
@@ -173,7 +173,7 @@ receivers:
 
   - name: 'performance-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Performance] Transcendance - {{ .GroupLabels.alertname }}'
@@ -190,7 +190,7 @@ receivers:
 
   - name: 'errors-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[Errors] Transcendance - {{ .GroupLabels.alertname }}'
@@ -207,7 +207,7 @@ receivers:
 
   - name: 'websocket-email'
     email_configs:
-      - to: 'uberintwins@gmail.com'
+      - to: '${ALERTMANAGER_EMAIL}'
         send_resolved: true
         headers:
           Subject: '[WebSocket] Transcendance - {{ .GroupLabels.alertname }}'
