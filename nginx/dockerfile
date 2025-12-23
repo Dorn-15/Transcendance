@@ -1,6 +1,6 @@
 FROM nginx:alpine
 
-RUN apk add --no-cache openssl \
+RUN apk add --no-cache openssl apache2-utils \
 	&& mkdir -p /etc/nginx/ssl \
 	&& openssl req -x509 -nodes -days 365 \
 		-newkey rsa:2048 \
@@ -8,5 +8,13 @@ RUN apk add --no-cache openssl \
 		-keyout /etc/nginx/ssl/selfsigned.key \
 		-out /etc/nginx/ssl/selfsigned.crt
 
+# Copy a script to generate .htpasswd from env vars at runtime
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Use nginx.conf as a template for /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
+
