@@ -176,8 +176,10 @@ Cette section détaille “qui a fait quoi” (approximation basée sur l’hist
 
 ### Amine Kassoussi
 
-- **Support**
-	- contributions ponctuelles (auth/front), corrections et itérations.
+- **DevOps/Infra & Monitoring**
+	- Mise en place du monitoring : Prometheus (scraping et règles), Alertmanager (routes/notifications), Grafana (dashboards et provisioning).
+	- Fichiers clés : [monitoring/prometheus/prometheus.yml](monitoring/prometheus/prometheus.yml), [monitoring/prometheus/alerts/transcendance-alerts.yml](monitoring/prometheus/alerts/transcendance-alerts.yml), [monitoring/alertmanager/config.yml](monitoring/alertmanager/config.yml), et les dashboards Grafana dans [monitoring/grafana/dashboards/working-dashboard.json](monitoring/grafana/dashboards/working-dashboard.json).
+	- Intégration des services de monitoring dans la composition Docker et assistance au déploiement/local dev.
 
 ---
 
